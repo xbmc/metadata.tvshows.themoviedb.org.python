@@ -34,40 +34,13 @@ try:
 except ImportError:
     pass
 
-SEARCH_URL = 'http://api.tvmaze.com/search/shows'
-SEARCH_BU_EXTERNAL_ID_URL = 'http://api.tvmaze.com/lookup/shows'
-SHOW_INFO_URL = 'http://api.tvmaze.com/shows/{}'
-EPISODE_LIST_URL = 'http://api.tvmaze.com/shows/{}/episodes'
-EPISODE_INFO_URL = 'http://api.tvmaze.com/episodes/{}'
-
-HEADERS = (
-    ('User-Agent', 'Kodi scraper for tvmaze.com by Roman V.M.; roman1972@gmail.com'),
-    ('Accept', 'application/json'),
-)
-SESSION = requests.Session()
-SESSION.headers.update(dict(HEADERS))
+import tmdbsimple as tmdb
+# Same key as built-in XML scraper
+tmdb.API_KEY = 'f090bb54758cabf231fb605d3e3e0468'
 
 
-def _load_info(url, params=None):
-    # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
-    """
-    Load info from TVmaze
 
-    :param url: API endpoint URL
-    :param params: URL query params
-    :return: API response
-    :raises requests.exceptions.HTTPError: if any error happens
-    """
-    logger.debug('Calling URL "{}" with params {}'.format(url, params))
-    response = SESSION.get(url, params=params)
-    if not response.ok:
-        response.raise_for_status()
-    json_response = response.json()
-    logger.debug('TVmaze response:\n{}'.format(pformat(json_response)))
-    return json_response
-
-
-def search_show(title):
+def search_show(title, year=None):
     # type: (Text) -> List[InfoType]
     """
     Search a single TV show
@@ -75,38 +48,23 @@ def search_show(title):
     :param title: TV show title to search
     :return: a list with found TV shows
     """
-    try:
-        return _load_info(SEARCH_URL, {'q': title})
-    except HTTPError as exc:
-        logger.error('TVmaze returned an error: {}'.format(exc))
-        return []
+    srch = tmdb.Search()
+    if not year:
+        resp = srch.tv(query=title)
+    else:
+        resp = srch.tv(query=title, first_air_date_year=year)
+    return srch.results
 
 
-def filter_by_year(shows, year):
-    # type: (List[InfoType], Text) -> Optional[InfoType]
-    """
-    Filter a show by year
-
-    :param shows: the list of shows from TVmaze
-    :param year: premiere year
-    :return: a found show or None
-    """
-    for show in shows:
-        premiered = safe_get(show['show'], 'premiered', '')
-        if premiered and premiered.startswith(str(year)):
-            return show
-    return None
-
-
-def load_episode_list(show_id):
+def load_episode_list(show_info):
     # type: (Text) -> List[InfoType]
-    """Load episode list from TVmaze API"""
-    episode_list_url = EPISODE_LIST_URL.format(show_id)
-    try:
-        return _load_info(episode_list_url, {'specials': '1'})
-    except HTTPError as exc:
-        logger.error('TVmaze returned an error: {}'.format(exc))
-        return []
+    """Load episode list from themoviedb.org API"""
+    episode_list = []
+    for season in show_info['seasons']:
+        q_season = tmdb.TV_Seasons(show_info['id'], season['season_number'])
+        resp = q_season.info()
+        episode_list = episode_list + resp['episodes']
+    return episode_list
 
 
 def load_show_info(show_id):
@@ -114,42 +72,23 @@ def load_show_info(show_id):
     """
     Get full info for a single show
 
-    :param show_id: TVmaze show ID
+    :param show_id: themoviedb.org show ID
     :return: show info or None
     """
     show_info = cache.load_show_info_from_cache(show_id)
     if show_info is None:
-        show_info_url = SHOW_INFO_URL.format(show_id)
-        params = {'embed[]': ['cast', 'seasons', 'images', 'crew']}
-        try:
-            show_info = _load_info(show_info_url, params)
-        except HTTPError as exc:
-            logger.error('TVmaze returned an error: {}'.format(exc))
-            return None
-        episode_list = load_episode_list(show_id)
-        if isinstance(show_info['_embedded']['images'], list):
-            show_info['_embedded']['images'].sort(key=lambda img: img['main'],
-                                                  reverse=True)
-        process_episode_list(show_info, episode_list)
-        cache.cache_show_info(show_info)
+        show = tmdb.TV(show_id)
+        if show is not None:
+            show_info = show.info()
+            show_info.update(show.credits())
+            show_info.update(show.images())
+            show_info.update(show.content_ratings())
+            show_info.update(show.external_ids())
+            show_info['episodes'] = load_episode_list(show_info)
+            cache.cache_show_info(show_info)
+        else:
+            show_info = None
     return show_info
-
-
-def load_show_info_by_external_id(provider, show_id):
-    # type: (Text, Text) -> Optional[InfoType]
-    """
-    Load show info by external ID (TheTVDB or IMDB)
-
-    :param provider: 'imdb' or 'thetvdb'
-    :param show_id: show ID in the respective provider
-    :return: show info or None
-    """
-    query = {provider: show_id}
-    try:
-        return _load_info(SEARCH_BU_EXTERNAL_ID_URL, query)
-    except HTTPError as exc:
-        logger.error('TVmaze returned an error: {}'.format(exc))
-        return None
 
 
 def load_episode_info(show_id, episode_id):
@@ -165,12 +104,7 @@ def load_episode_info(show_id, episode_id):
     if show_info is not None:
         try:
             episode_info = show_info['episodes'][int(episode_id)]
-        except KeyError:
-            url = EPISODE_INFO_URL.format(episode_id)
-            try:
-                episode_info = _load_info(url)
-            except HTTPError as exc:
-                logger.error('TVmaze returned an error: {}'.format(exc))
-                return None
+        except KeyError, IndexError:
+            episode_info = {}
         return episode_info
     return None

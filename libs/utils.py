@@ -31,7 +31,7 @@ try:
 except ImportError:
     pass
 
-ADDON_ID = 'metadata.tvmaze'
+ADDON_ID = 'metadata.tvshows.themoviedb.org.python'
 ADDON = Addon()
 
 

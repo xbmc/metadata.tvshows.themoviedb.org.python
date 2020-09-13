@@ -42,6 +42,7 @@ SHOW_ID_REGEXPS = (
     r'(thetvdb)\.com/.*?series/(\d+)',
     r'(thetvdb)\.com[\w=&\?/]+id=(\d+)',
     r'(imdb)\.com/[\w/\-]+/(tt\d+)',
+    r'(themoviedb)\.org/tv/(\d+)'
 )
 SUPPORTED_ARTWORK_TYPES = {'poster', 'banner'}
 IMAGE_SIZES = ('large', 'original', 'medium')
@@ -52,6 +53,8 @@ CLEAN_PLOT_REPLACEMENTS = (
     ('</i>', '[/I]'),
     ('</p><p>', '[CR]'),
 )
+
+IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
 
 UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id'])
 
@@ -89,17 +92,15 @@ def _set_cast(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Extract cast from show info dict"""
     cast = []
-    for index, item in enumerate(show_info['_embedded']['cast'], 1):
+    for item in show_info['cast']:
         data = {
-            'name': item['person']['name'],
-            'role': item['character']['name'],
-            'order': index,
+            'name': item['name'],
+            'role': item['character'],
+            'order': item['order'],
         }
         thumb = None
-        if safe_get(item['character'], 'image') is not None:
-            thumb = _extract_artwork_url(item['character']['image'])
-        if not thumb and safe_get(item['person'], 'image') is not None:
-            thumb = _extract_artwork_url(item['person']['image'])
+        if safe_get(item, 'profile_path') is not None:
+            thumb = IMAGEROOTURL + item['profile_path']
         if thumb:
             data['thumbnail'] = thumb
         cast.append(data)
@@ -111,30 +112,29 @@ def _get_credits(show_info):
     # type: (InfoType) -> List[Text]
     """Extract show creator(s) from show info"""
     credits_ = []
-    for item in show_info['_embedded']['crew']:
-        if item['type'].lower() == 'creator':
-            credits_.append(item['person']['name'])
+    for item in show_info['created_by']:
+        credits_.append(item['name'])
     return credits_
 
 
 def _set_unique_ids(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Extract unique ID in various online databases"""
-    unique_ids = {'tvmaze': str(show_info['id'])}
-    for key, value in six.iteritems(safe_get(show_info, 'externals', {})):
-        if key == 'thetvdb':
-            key = key[3:]
-        unique_ids[key] = str(value)
-    list_item.setUniqueIDs(unique_ids, 'tvmaze')
+    unique_ids = {'themoviedb': str(show_info['id'])}
+    for key, value in six.iteritems(safe_get(show_info, 'externals_ids', {})):
+        if not key == 'freebase_mid':
+            key = key[:-3]
+            unique_ids[key] = str(value)
+    list_item.setUniqueIDs(unique_ids, 'themoviedb')
     return list_item
 
 
 def _set_rating(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set show rating"""
-    if show_info['rating'] is not None and show_info['rating']['average'] is not None:
-        rating = float(show_info['rating']['average'])
-        list_item.setRating('tvmaze', rating, defaultt=True)
+    if show_info['vote_average'] is not None:
+        rating = float(show_info['vote_average'])
+        list_item.setRating('themoviedb', rating, defaultt=True)
     return list_item
 
 
@@ -154,13 +154,12 @@ def _extract_artwork_url(resolutions):
 def _add_season_info(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Add info for show seasons"""
-    for season in show_info['_embedded']['seasons']:
-        list_item.addSeason(season['number'], safe_get(season, 'name', ''))
-        image = safe_get(season, 'image')
+    for season in show_info['seasons']:
+        list_item.addSeason(season['season_number'], safe_get(season, 'name', ''))
+        image = safe_get(season, 'poster_path')
         if image is not None:
-            url = _extract_artwork_url(image)
-            if url:
-                list_item.addAvailableArtwork(url, 'poster', season=season['number'])
+            url = IMAGEROOTURL + season['poster_path']
+            list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
     return list_item
 
 
@@ -168,26 +167,29 @@ def set_show_artwork(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set available images for a show"""
     fanart_list = []
-    for item in show_info['_embedded']['images']:
-        resolutions = safe_get(item, 'resolutions', {})
-        url = _extract_artwork_url(resolutions)
-        if item['type'] in SUPPORTED_ARTWORK_TYPES and url:
-            list_item.addAvailableArtwork(url, item['type'])
-        elif item['type'] == 'background' and url:
-            fanart_list.append({'image': url})
+    for backdrop in safe_get(show_info, 'backdrops', {}):
+        url = IMAGEROOTURL + backdrop['file_path']
+        fanart_list.append({'image': url})
     if fanart_list:
         list_item.setAvailableFanart(fanart_list)
+    for poster in safe_get(show_info, 'posters', {}):
+        url = IMAGEROOTURL + poster['file_path']
+        list_item.addAvailableArtwork(url, 'poster')
     return list_item
 
 
 def add_main_show_info(list_item, show_info, full_info=True):
     # type: (ListItem, InfoType, bool) -> ListItem
     """Add main show info to a list item"""
-    plot = _clean_plot(safe_get(show_info, 'summary', ''))
+    plot = _clean_plot(safe_get(show_info, 'overview', ''))
+    genre_list = safe_get(show_info, 'genres', {})
+    genres = []
+    for genre in genre_list:
+        genres.append(genre['name'])
     video = {
         'plot': plot,
         'plotoutline': plot,
-        'genre': safe_get(show_info, 'genres', ''),
+        'genre': genres,
         'title': show_info['name'],
         'tvshowtitle': show_info['name'],
         'status': safe_get(show_info, 'status', ''),
@@ -195,29 +197,23 @@ def add_main_show_info(list_item, show_info, full_info=True):
         # This property is passed as "url" parameter to getepisodelist call
         'episodeguide': str(show_info['id']),
     }
-    if show_info['network'] is not None:
-        country = show_info['network']['country']
-        video['studio'] = '{0} ({1})'.format(show_info['network']['name'], country['code'])
-        video['country'] = country['name']
-    elif show_info['webChannel'] is not None:
-        video['studio'] = show_info['webChannel']['name']
-        # Global Web Channels do not have a country specified
-        if show_info['webChannel']['country'] is not None:
-            country = show_info['webChannel']['country']
-            video['country'] = country['name']
-            video['studio'] += ' ({})'.format(country['code'])
-    if show_info['premiered'] is not None:
-        video['year'] = int(show_info['premiered'][:4])
-        video['premiered'] = show_info['premiered']
+    if show_info['networks'] is not None:
+        network = show_info['networks'][0]
+        country = network['origin_country']
+        video['studio'] = '{0} ({1})'.format(network['name'], country)
+        video['country'] = country
+    if show_info['first_air_date'] is not None:
+        video['year'] = int(show_info['first_air_date'][:4])
+        video['premiered'] = show_info['first_air_date']
     if full_info:
         video['credits'] = _get_credits(show_info)
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info, list_item)
     else:
-        image = safe_get(show_info, 'image', {})
-        image_url = _extract_artwork_url(image)
-        if image_url:
+        image = safe_get(show_info, 'poster_path', '')
+        if image:
+            image_url = IMAGEROOTURL + image
             list_item.addAvailableArtwork(image_url, 'poster')
     list_item.setInfo('video', video)
     list_item = _set_rating(show_info, list_item)
@@ -231,26 +227,24 @@ def add_episode_info(list_item, episode_info, full_info=True):
     """Add episode info to a list item"""
     video = {
         'title': episode_info['name'],
-        'season': episode_info['season'],
-        'episode': episode_info['number'],
+        'season': episode_info['season_number'],
+        'episode': episode_info['episode_number'],
         'mediatype': 'episode',
     }
-    if episode_info['airdate'] is not None:
-        video['aired'] = episode_info['airdate']
+    if episode_info['air_date'] is not None:
+        video['aired'] = episode_info['air_date']
     if full_info:
-        summary = safe_get(episode_info, 'summary')
+        summary = safe_get(episode_info, 'overview')
         if summary is not None:
             video['plot'] = video['plotoutline'] = _clean_plot(summary)
-        if episode_info['runtime'] is not None:
-            video['duration'] = episode_info['runtime'] * 60
-        if episode_info['airdate'] is not None:
-            video['premiered'] = episode_info['airdate']
+        if episode_info['air_date'] is not None:
+            video['premiered'] = episode_info['air_date']
     list_item.setInfo('video', video)
-    image = safe_get(episode_info, 'image', {})
-    image_url = _extract_artwork_url(image)
-    if image_url:
+    image = safe_get(episode_info, 'still_path', '')
+    if image:
+        image_url = IMAGEROOTURL + image
         list_item.addAvailableArtwork(image_url, 'thumb')
-    list_item.setUniqueIDs({'tvmaze': str(episode_info['id'])}, 'tvmaze')
+    list_item.setUniqueIDs({'themoviedb': str(episode_info['id'])}, 'themoviedb')
     return list_item
 
 

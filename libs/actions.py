@@ -46,21 +46,19 @@ def find_show(title, year=None):
     if not isinstance(title, six.text_type):
         title = title.decode('utf-8')
     logger.debug('Searching for TV show {} ({})'.format(title, year))
-    search_results = tvmaze.search_show(title)
-    if year is not None:
-        search_result = tvmaze.filter_by_year(search_results, year)
-        search_results = (search_result,) if search_result else ()
+    search_results = tmdb.search_show(title, year)
     for search_result in search_results:
-        show_name = search_result['show']['name']
-        if search_result['show']['premiered']:
-            show_name += ' ({})'.format(search_result['show']['premiered'][:4])
+        show_name = search_result['name']
+        if search_result['first_air_date']:
+            show_name += ' ({})'.format(search_result['first_air_date'][:4])
         list_item = xbmcgui.ListItem(show_name, offscreen=True)
-        list_item = data_utils.add_main_show_info(list_item, search_result['show'], False)
+        show_info = tmdb.load_show_info(search_result['id'])
+        list_item = data_utils.add_main_show_info(list_item, show_info, False)
         # Below "url" is some unique ID string (may be an actual URL to a show page)
         # that is used to get information about a specific TV show.
         xbmcplugin.addDirectoryItem(
             HANDLE,
-            url=str(search_result['show']['id']),
+            url=str(search_result['id']),
             listitem=list_item,
             isFolder=True
         )
@@ -81,13 +79,8 @@ def get_show_id_from_nfo(nfo):
     logger.debug('Parsing NFO file:\n{}'.format(nfo))
     parse_result = data_utils.parse_nfo_url(nfo)
     if parse_result:
-        if parse_result.provider == 'tvmaze':
-            show_info = tvmaze.load_show_info(parse_result.show_id)
-        else:
-            show_info = tvmaze.load_show_info_by_external_id(
-                parse_result.provider,
-                parse_result.show_id
-            )
+        if parse_result.provider == 'themoviedb':
+            show_info = tmdb.load_show_info(parse_result.show_id)
         if show_info is not None:
             list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
             # "url" is some string that unique identifies a show.
@@ -104,7 +97,7 @@ def get_details(show_id):
     # type: (Text) -> None
     """Get details about a specific show"""
     logger.debug('Getting details for show id {}'.format(show_id))
-    show_info = tvmaze.load_show_info(show_id)
+    show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
         list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
         list_item = data_utils.add_main_show_info(list_item, show_info)
@@ -123,23 +116,22 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
         parse_result = data_utils.parse_nfo_url(show_id)
         if not parse_result:
             return
-        if parse_result.provider == 'tvmaze':
-            show_info = tvmaze.load_show_info(parse_result.show_id)
+        if parse_result.provider == 'themoviedb':
+            show_info = tmdb.load_show_info(parse_result.show_id)
         else:
-            brief_show_info = tvmaze.load_show_info_by_external_id(
-                parse_result.provider,
-                parse_result.show_id
-            )
-            show_info = tvmaze.load_show_info(brief_show_info['id'])
+            return
     else:
-        show_info = tvmaze.load_show_info(show_id)
+        show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
-        for episode in six.itervalues(show_info['episodes']):
+        #CHANGED HERE
+        theindex = 0
+        for episode in show_info['episodes']:
             list_item = xbmcgui.ListItem(episode['name'], offscreen=True)
             list_item = data_utils.add_episode_info(list_item, episode, full_info=False)
             encoded_ids = urllib_parse.urlencode(
-                {'show_id': str(show_info['id']), 'episode_id': str(episode['id'])}
+                {'show_id': str(show_info['id']), 'episode_id': str(theindex)}
             )
+            theindex = theindex + 1
             # Below "url" is some unique ID string (may be an actual URL to an episode page)
             # that allows to retrieve information about a specific episode.
             url = urllib_parse.quote(encoded_ids)
@@ -156,7 +148,7 @@ def get_episode_details(encoded_ids):  # pylint: disable=missing-docstring
     encoded_ids = urllib_parse.unquote(encoded_ids)
     decoded_ids = dict(urllib_parse.parse_qsl(encoded_ids))
     logger.debug('Getting episode details for {}'.format(decoded_ids))
-    episode_info = tvmaze.load_episode_info(
+    episode_info = tmdb.load_episode_info(
         decoded_ids['show_id'], decoded_ids['episode_id']
     )
     if episode_info:
@@ -175,7 +167,7 @@ def get_artwork(show_id):
     :param show_id: default unique ID set by setUniqueIDs() method
     """
     logger.debug('Getting artwork for show ID {}'.format(show_id))
-    show_info = tvmaze.load_show_info(show_id)
+    show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
         list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
         list_item = data_utils.set_show_artwork(show_info, list_item)
