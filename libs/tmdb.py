@@ -25,7 +25,6 @@ import requests
 from requests.exceptions import HTTPError
 
 from . import cache
-from .data_utils import process_episode_list
 from .utils import logger, safe_get
 
 try:
@@ -104,7 +103,7 @@ def load_episode_info(show_id, episode_id):
     if show_info is not None:
         try:
             episode_info = show_info['episodes'][int(episode_id)]
-        except KeyError, IndexError:
+        except KeyError:
             episode_info = {}
         return episode_info
     return None

@@ -59,25 +59,6 @@ IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
 UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id'])
 
 
-def process_episode_list(show_info, episode_list):
-    # type: (InfoType, List[InfoType]) -> None
-    """Convert embedded episode list to a dict"""
-    episodes = OrderedDict()
-    specials_list = []
-    for episode in episode_list:
-        # xbmc/video/VideoInfoScanner.cpp ~ line 1010
-        # "episode 0 with non-zero season is valid! (e.g. prequel episode)"
-        if episode['number'] is not None:
-            episodes[episode['id']] = episode
-        else:
-            specials_list.append(episode)
-    specials_list.sort(key=lambda ep: ep['airdate'])
-    for ep_number, special in enumerate(specials_list, 1):
-        special['season'] = 0
-        special['number'] = ep_number
-        episodes[special['id']] = special
-    show_info['episodes'] = episodes
-
 
 def _clean_plot(plot):
     # type: (Text) -> Text
@@ -132,7 +113,7 @@ def _set_unique_ids(show_info, list_item):
 def _set_rating(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set show rating"""
-    if show_info['vote_average'] is not None:
+    if safe_get(show_info, 'vote_average') is not None:
         rating = float(show_info['vote_average'])
         list_item.setRating('themoviedb', rating, defaultt=True)
     return list_item
@@ -197,12 +178,12 @@ def add_main_show_info(list_item, show_info, full_info=True):
         # This property is passed as "url" parameter to getepisodelist call
         'episodeguide': str(show_info['id']),
     }
-    if show_info['networks'] is not None:
+    if show_info['networks']:
         network = show_info['networks'][0]
         country = network['origin_country']
         video['studio'] = '{0} ({1})'.format(network['name'], country)
         video['country'] = country
-    if show_info['first_air_date'] is not None:
+    if show_info['first_air_date']:
         video['year'] = int(show_info['first_air_date'][:4])
         video['premiered'] = show_info['first_air_date']
     if full_info:
@@ -231,13 +212,13 @@ def add_episode_info(list_item, episode_info, full_info=True):
         'episode': episode_info['episode_number'],
         'mediatype': 'episode',
     }
-    if episode_info['air_date'] is not None:
+    if safe_get(episode_info, 'air_date') is not None:
         video['aired'] = episode_info['air_date']
     if full_info:
         summary = safe_get(episode_info, 'overview')
         if summary is not None:
             video['plot'] = video['plotoutline'] = _clean_plot(summary)
-        if episode_info['air_date'] is not None:
+        if safe_get(episode_info, 'air_date') is not None:
             video['premiered'] = episode_info['air_date']
     list_item.setInfo('video', video)
     image = safe_get(episode_info, 'still_path', '')

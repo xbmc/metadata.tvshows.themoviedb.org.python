@@ -81,6 +81,8 @@ def get_show_id_from_nfo(nfo):
     if parse_result:
         if parse_result.provider == 'themoviedb':
             show_info = tmdb.load_show_info(parse_result.show_id)
+        else:
+            show_info = None
         if show_info is not None:
             list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
             # "url" is some string that unique identifies a show.
