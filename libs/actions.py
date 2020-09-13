@@ -80,7 +80,7 @@ def get_show_id_from_nfo(nfo):
     parse_result = data_utils.parse_nfo_url(nfo)
     if parse_result:
         if parse_result.provider == 'themoviedb':
-            show_info = tmdb.load_show_info(parse_result.show_id)
+            show_info = tmdb.load_show_info(parse_result.show_id, ep_grouping=parse_result.ep_grouping)
         else:
             show_info = None
         if show_info is not None:
@@ -125,7 +125,6 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
     else:
         show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
-        #CHANGED HERE
         theindex = 0
         for episode in show_info['episodes']:
             list_item = xbmcgui.ListItem(episode['name'], offscreen=True)

@@ -36,6 +36,13 @@ except ImportError:
 import tmdbsimple as tmdb
 # Same key as built-in XML scraper
 tmdb.API_KEY = 'f090bb54758cabf231fb605d3e3e0468'
+EPISODE_GROUP_URL = 'https://api.themoviedb.org/3/tv/episode_group/{}?api_key=%s' % tmdb.API_KEY
+HEADERS = (
+    ('User-Agent', 'Kodi scraper for tvmaze.com by pkscout; pkscout@kodi.tv'),
+    ('Accept', 'application/json'),
+)
+SESSION = requests.Session()
+SESSION.headers.update(dict(HEADERS))
 
 
 
@@ -55,10 +62,52 @@ def search_show(title, year=None):
     return srch.results
 
 
+def _load_info(url, params=None):
+    # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
+    """
+    Load info from themoviedb
+
+    :param url: API endpoint URL
+    :param params: URL query params
+    :return: API response
+    :raises requests.exceptions.HTTPError: if any error happens
+    """
+    logger.debug('Calling URL "{}" with params {}'.format(url, params))
+    response = SESSION.get(url, params=params)
+    if not response.ok:
+        response.raise_for_status()
+    json_response = response.json()
+    logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
+    return json_response
+
+
 def load_episode_list(show_info):
     # type: (Text) -> List[InfoType]
     """Load episode list from themoviedb.org API"""
     episode_list = []
+    if show_info['ep_grouping'] is not None:
+        # tmdbsimple doesn't have an abstraction for episode groups, so we have to do this by hand
+        episode_group_url = EPISODE_GROUP_URL.format(show_info['ep_grouping'])
+        try:
+            custom_order = _load_info(episode_group_url)
+        except HTTPError as exc:
+            logger.error('themoviedb returned an error: {}'.format(exc))
+            custom_order = None
+        if custom_order is not None:
+            try:
+                custom_eps_list = custom_order['groups'][0]['episodes']
+            except (IndexError, KeyError):
+                custom_eps_list = []
+            season = 9999
+            for episode in custom_eps_list:
+                if season != episode['season_number']:
+                    ep_num = 1
+                    season = episode['season_number']
+                episode['episode_number'] = ep_num
+                episode_list.append(episode)
+                ep_num = ep_num + 1
+            if episode_list:
+                return episode_list
     for season in show_info['seasons']:
         q_season = tmdb.TV_Seasons(show_info['id'], season['season_number'])
         resp = q_season.info()
@@ -66,7 +115,7 @@ def load_episode_list(show_info):
     return episode_list
 
 
-def load_show_info(show_id):
+def load_show_info(show_id, ep_grouping=None):
     # type: (Text) -> Optional[InfoType]
     """
     Get full info for a single show
@@ -83,6 +132,7 @@ def load_show_info(show_id):
             show_info.update(show.images())
             show_info.update(show.content_ratings())
             show_info.update(show.external_ids())
+            show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
             cache.cache_show_info(show_info)
         else:

@@ -42,6 +42,7 @@ SHOW_ID_REGEXPS = (
     r'(thetvdb)\.com/.*?series/(\d+)',
     r'(thetvdb)\.com[\w=&\?/]+id=(\d+)',
     r'(imdb)\.com/[\w/\-]+/(tt\d+)',
+    r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',
     r'(themoviedb)\.org/tv/(\d+)'
 )
 SUPPORTED_ARTWORK_TYPES = {'poster', 'banner'}
@@ -56,7 +57,7 @@ CLEAN_PLOT_REPLACEMENTS = (
 
 IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
 
-UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id'])
+UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id', 'ep_grouping'])
 
 
 
@@ -235,5 +236,9 @@ def parse_nfo_url(nfo):
     for regexp in SHOW_ID_REGEXPS:
         show_id_match = re.search(regexp, nfo, re.I)
         if show_id_match:
-            return UrlParseResult(show_id_match.group(1), show_id_match.group(2))
+            try:
+                ep_grouping = show_id_match.group(3)
+            except IndexError:
+                ep_grouping = None
+            return UrlParseResult(show_id_match.group(1), show_id_match.group(2), ep_grouping)
     return None
