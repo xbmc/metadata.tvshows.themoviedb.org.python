@@ -30,7 +30,7 @@ import xbmcplugin
 from six.moves import urllib_parse
 
 from . import tmdb, data_utils
-from .utils import logger
+from .utils import logger, safe_get
 
 try:
     from typing import Optional, Text, Union, ByteString  # pylint: disable=unused-import
@@ -49,7 +49,7 @@ def find_show(title, year=None):
     search_results = tmdb.search_show(title, year)
     for search_result in search_results:
         show_name = search_result['name']
-        if search_result['first_air_date']:
+        if safe_get(search_result, 'first_air_date') is not None:
             show_name += ' ({})'.format(search_result['first_air_date'][:4])
         list_item = xbmcgui.ListItem(show_name, offscreen=True)
         show_info = tmdb.load_show_info(search_result['id'])
