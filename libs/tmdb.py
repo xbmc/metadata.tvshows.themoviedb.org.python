@@ -95,17 +95,18 @@ def load_episode_list(show_info):
             custom_order = None
         if custom_order is not None:
             try:
-                custom_eps_list = custom_order['groups'][0]['episodes']
+                custom_list = custom_order['groups']
             except (IndexError, KeyError):
-                custom_eps_list = []
-            season = 9999
-            for episode in custom_eps_list:
-                if season != episode['season_number']:
-                    ep_num = 1
-                    season = episode['season_number']
-                episode['episode_number'] = ep_num
-                episode_list.append(episode)
-                ep_num = ep_num + 1
+                custom_list = []
+            season_num = 1
+            for season in custom_list:
+                ep_num = 1
+                for episode in season['episodes']:
+                    episode['season_number'] = season_num
+                    episode['episode_number'] = ep_num
+                    episode_list.append(episode)
+                    ep_num = ep_num + 1
+                season_num = season_num + 1
             if episode_list:
                 return episode_list
     for season in show_info['seasons']:
