@@ -24,10 +24,9 @@ from __future__ import absolute_import, unicode_literals
 
 import re
 from collections import OrderedDict, namedtuple
-
 import six
-
 from .utils import safe_get, logger
+from . import settings
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
@@ -55,8 +54,6 @@ CLEAN_PLOT_REPLACEMENTS = (
     ('</p><p>', '[CR]'),
 )
 
-IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
-
 UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id', 'ep_grouping'])
 
 
@@ -82,7 +79,7 @@ def _set_cast(show_info, list_item):
         }
         thumb = None
         if safe_get(item, 'profile_path') is not None:
-            thumb = IMAGEROOTURL + item['profile_path']
+            thumb = settings.IMAGEROOTURL + item['profile_path']
         if thumb:
             data['thumbnail'] = thumb
         cast.append(data)
@@ -140,7 +137,7 @@ def _add_season_info(show_info, list_item):
         list_item.addSeason(season['season_number'], safe_get(season, 'name', ''))
         image = safe_get(season, 'poster_path')
         if image is not None:
-            url = IMAGEROOTURL + season['poster_path']
+            url = settings.IMAGEROOTURL + season['poster_path']
             list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
     return list_item
 
@@ -150,12 +147,12 @@ def set_show_artwork(show_info, list_item):
     """Set available images for a show"""
     fanart_list = []
     for backdrop in safe_get(show_info, 'backdrops', {}):
-        url = IMAGEROOTURL + backdrop['file_path']
+        url = settings.IMAGEROOTURL + backdrop['file_path']
         fanart_list.append({'image': url})
     if fanart_list:
         list_item.setAvailableFanart(fanart_list)
     for poster in safe_get(show_info, 'posters', {}):
-        url = IMAGEROOTURL + poster['file_path']
+        url = settings.IMAGEROOTURL + poster['file_path']
         list_item.addAvailableArtwork(url, 'poster')
     return list_item
 
@@ -195,7 +192,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
-            image_url = IMAGEROOTURL + image
+            image_url = settings.IMAGEROOTURL + image
             list_item.addAvailableArtwork(image_url, 'poster')
     list_item.setInfo('video', video)
     list_item = _set_rating(show_info, list_item)
@@ -224,7 +221,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
     list_item.setInfo('video', video)
     image = safe_get(episode_info, 'still_path', '')
     if image:
-        image_url = IMAGEROOTURL + image
+        image_url = settings.IMAGEROOTURL + image
         list_item.addAvailableArtwork(image_url, 'thumb')
     list_item.setUniqueIDs({'themoviedb': str(episode_info['id'])}, 'themoviedb')
     return list_item

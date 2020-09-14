@@ -19,11 +19,11 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import xbmcaddon, json
+import json
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
-from . import cache
+from . import cache, settings
 from .utils import logger, safe_get
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -34,10 +34,6 @@ import tmdbsimple as tmdb
 
 # Same key as built-in XML scraper
 tmdb.API_KEY = 'f090bb54758cabf231fb605d3e3e0468'
-ADDON_SETTINGS = xbmcaddon.Addon()
-LANG = ADDON_SETTINGS.getSettingString('language')
-CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry')
-CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
 
 EPISODE_GROUP_URL = 'https://api.themoviedb.org/3/tv/episode_group/{}?api_key=%s' % tmdb.API_KEY
 HEADERS = (
@@ -133,7 +129,7 @@ def load_show_info(show_id, ep_grouping=None):
         logger.debug('no cache file found, loading from scratch')
         show = tmdb.TV(show_id)
         if show is not None:
-            show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=LANG)
+            show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=settings.LANG)
             show_info.update(show.images())
             show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
