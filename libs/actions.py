@@ -80,10 +80,6 @@ def get_show_id_from_nfo(nfo):
     parse_result = data_utils.parse_nfo_url(nfo)
     if parse_result:
         if parse_result.provider == 'themoviedb':
-            if parse_result.ep_grouping is not None:
-                logger.debug('about to try to load show info with episode group of ' + parse_result.ep_grouping)
-            else:
-                logger.debug('about to try to load show info with no episode group')
             show_info = tmdb.load_show_info(parse_result.show_id, ep_grouping=parse_result.ep_grouping)
         else:
             show_info = None

@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import xbmcaddon
+import xbmcaddon, json
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
@@ -88,7 +88,7 @@ def load_episode_list(show_info):
     """Load episode list from themoviedb.org API"""
     episode_list = []
     if show_info['ep_grouping'] is not None:
-        logger.debug('OK, this is it. getting episodes with episode grouping of ' + show_info['ep_grouping'])
+        logger.debug('Getting episodes with episode grouping of ' + show_info['ep_grouping'])
         # tmdbsimple doesn't have an abstraction for episode groups, so we have to do this by hand
         episode_group_url = EPISODE_GROUP_URL.format(show_info['ep_grouping'])
         try:
@@ -128,22 +128,20 @@ def load_show_info(show_id, ep_grouping=None):
     :param show_id: themoviedb.org show ID
     :return: show info or None
     """
-    if ep_grouping is not None:
-        logger.debug('last step before loading show, still have an episode group of ' + ep_grouping)
-    else:
-        logger.debug('last step before loading show, no episide group')
     show_info = cache.load_show_info_from_cache(show_id)
     if show_info is None:
         logger.debug('no cache file found, loading from scratch')
         show = tmdb.TV(show_id)
         if show is not None:
-            show_info = show.info(language=LANG)
-            show_info.update(show.credits(language=LANG))
+            show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=LANG)
+#            show_info.update(show.credits(language=LANG))
             show_info.update(show.images())
-            show_info.update(show.content_ratings(language=LANG))
-            show_info.update(show.external_ids())
+#            show_info.update(show.content_ratings(language=LANG))
+#            show_info.update(show.external_ids(language=LANG))
             show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
+            logger.debug('saving this show info to the cache')
+            logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
             cache.cache_show_info(show_info)
         else:
             show_info = None

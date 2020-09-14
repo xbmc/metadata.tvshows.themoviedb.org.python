@@ -74,7 +74,7 @@ def _set_cast(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Extract cast from show info dict"""
     cast = []
-    for item in show_info['cast']:
+    for item in show_info['credits']['cast']:
         data = {
             'name': item['name'],
             'role': item['character'],
@@ -234,7 +234,7 @@ def parse_nfo_url(nfo):
     # type: (Text) -> Optional[UrlParseResult]
     """Extract show ID from NFO file contents"""
     for regexp in SHOW_ID_REGEXPS:
-        logger.debug('****** trying regex:')
+        logger.debug('****** trying regex to match service from parsing nfo:')
         logger.debug(regexp)
         show_id_match = re.search(regexp, nfo, re.I)
         if show_id_match:
