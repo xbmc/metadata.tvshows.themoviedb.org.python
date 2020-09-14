@@ -21,19 +21,15 @@ from __future__ import absolute_import, unicode_literals
 
 import xbmcaddon
 from pprint import pformat
-
 import requests
 from requests.exceptions import HTTPError
-
 from . import cache
 from .utils import logger, safe_get
-
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
 except ImportError:
     pass
-
 import tmdbsimple as tmdb
 
 # Same key as built-in XML scraper
@@ -50,7 +46,6 @@ HEADERS = (
 )
 SESSION = requests.Session()
 SESSION.headers.update(dict(HEADERS))
-
 
 
 def search_show(title, year=None):
@@ -93,6 +88,7 @@ def load_episode_list(show_info):
     """Load episode list from themoviedb.org API"""
     episode_list = []
     if show_info['ep_grouping'] is not None:
+        logger.debug('OK, this is it. getting episodes with episode grouping of ' + show_info['ep_grouping'])
         # tmdbsimple doesn't have an abstraction for episode groups, so we have to do this by hand
         episode_group_url = EPISODE_GROUP_URL.format(show_info['ep_grouping'])
         try:
@@ -116,9 +112,10 @@ def load_episode_list(show_info):
                 season_num = season_num + 1
             if episode_list:
                 return episode_list
+    logger.debug('loading standard episode order')
     for season in show_info['seasons']:
         q_season = tmdb.TV_Seasons(show_info['id'], season['season_number'])
-        resp = q_season.info()
+        resp = q_season.info(language=LANG)
         episode_list = episode_list + resp['episodes']
     return episode_list
 
@@ -131,8 +128,13 @@ def load_show_info(show_id, ep_grouping=None):
     :param show_id: themoviedb.org show ID
     :return: show info or None
     """
+    if ep_grouping is not None:
+        logger.debug('last step before loading show, still have an episode group of ' + ep_grouping)
+    else:
+        logger.debug('last step before loading show, no episide group')
     show_info = cache.load_show_info_from_cache(show_id)
     if show_info is None:
+        logger.debug('no cache file found, loading from scratch')
         show = tmdb.TV(show_id)
         if show is not None:
             show_info = show.info(language=LANG)

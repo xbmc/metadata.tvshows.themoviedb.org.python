@@ -27,7 +27,7 @@ from collections import OrderedDict, namedtuple
 
 import six
 
-from .utils import safe_get
+from .utils import safe_get, logger
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
@@ -234,11 +234,19 @@ def parse_nfo_url(nfo):
     # type: (Text) -> Optional[UrlParseResult]
     """Extract show ID from NFO file contents"""
     for regexp in SHOW_ID_REGEXPS:
+        logger.debug('****** trying regex:')
+        logger.debug(regexp)
         show_id_match = re.search(regexp, nfo, re.I)
         if show_id_match:
+            logger.debug('match group 1: ' + show_id_match.group(1))
+            logger.debug('match group 2: ' + show_id_match.group(2))
             try:
                 ep_grouping = show_id_match.group(3)
             except IndexError:
                 ep_grouping = None
+            if ep_grouping is not None:
+                logger.debug('match group 3: ' + ep_grouping)
+            else:
+                logger.debug('match group 3: None')
             return UrlParseResult(show_id_match.group(1), show_id_match.group(2), ep_grouping)
     return None
