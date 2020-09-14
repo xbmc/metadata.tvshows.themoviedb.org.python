@@ -19,6 +19,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import xbmcaddon
 from pprint import pformat
 
 import requests
@@ -34,8 +35,14 @@ except ImportError:
     pass
 
 import tmdbsimple as tmdb
+
 # Same key as built-in XML scraper
 tmdb.API_KEY = 'f090bb54758cabf231fb605d3e3e0468'
+ADDON_SETTINGS = xbmcaddon.Addon()
+LANG = ADDON_SETTINGS.getSettingString('language')
+CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry')
+CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
+
 EPISODE_GROUP_URL = 'https://api.themoviedb.org/3/tv/episode_group/{}?api_key=%s' % tmdb.API_KEY
 HEADERS = (
     ('User-Agent', 'Kodi scraper for tvmaze.com by pkscout; pkscout@kodi.tv'),
@@ -128,10 +135,10 @@ def load_show_info(show_id, ep_grouping=None):
     if show_info is None:
         show = tmdb.TV(show_id)
         if show is not None:
-            show_info = show.info()
-            show_info.update(show.credits())
+            show_info = show.info(language=LANG)
+            show_info.update(show.credits(language=LANG))
             show_info.update(show.images())
-            show_info.update(show.content_ratings())
+            show_info.update(show.content_ratings(language=LANG))
             show_info.update(show.external_ids())
             show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
