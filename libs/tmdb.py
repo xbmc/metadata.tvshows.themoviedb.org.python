@@ -134,10 +134,7 @@ def load_show_info(show_id, ep_grouping=None):
         show = tmdb.TV(show_id)
         if show is not None:
             show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=LANG)
-#            show_info.update(show.credits(language=LANG))
             show_info.update(show.images())
-#            show_info.update(show.content_ratings(language=LANG))
-#            show_info.update(show.external_ids(language=LANG))
             show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
             logger.debug('saving this show info to the cache')
