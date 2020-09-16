@@ -161,55 +161,55 @@ def add_main_show_info(list_item, show_info, full_info=True):
     # type: (ListItem, InfoType, bool) -> ListItem
     """Add main show info to a list item"""
     plot = _clean_plot(safe_get(show_info, 'overview', ''))
-    genre_list = safe_get(show_info, 'genres', {})
-    genres = []
-    for genre in genre_list:
-        genres.append(genre['name'])
     video = {
         'plot': plot,
         'plotoutline': plot,
-        'genre': genres,
         'title': show_info['name'],
         'tvshowtitle': show_info['name'],
-        'status': safe_get(show_info, 'status', ''),
         'mediatype': 'tvshow',
         # This property is passed as "url" parameter to getepisodelist call
         'episodeguide': str(show_info['id']),
     }
-    if show_info['networks']:
-        network = show_info['networks'][0]
-        country = network['origin_country']
-        video['studio'] = '{0} ({1})'.format(network['name'], country)
-        video['country'] = country
     if show_info['first_air_date']:
         video['year'] = int(show_info['first_air_date'][:4])
         video['premiered'] = show_info['first_air_date']
-    content_ratings = show_info.get('content_ratings', {}).get('results', {})
-    if content_ratings:
-        mpaa = ''
-        mpaa_backup = ''
-        for content_rating in content_ratings:
-            iso = content_rating.get('iso_3166_1', '').lower()
-            if iso == 'us':
-                mpaa_backup = content_rating.get('rating')
-            if iso == settings.CERT_COUNTRY.lower():
-                mpaa = content_rating.get('rating', '')
-        if not mpaa:
-            mpaa = mpaa_backup
-        if mpaa:
-            video['Mpaa'] = settings.CERT_PREFIX + mpaa
     if full_info:
+        video['status'] = safe_get(show_info, 'status', '')
+        genre_list = safe_get(show_info, 'genres', {})
+        genres = []
+        for genre in genre_list:
+            genres.append(genre['name'])
+        video['genre'] = genres
+        if show_info['networks']:
+            network = show_info['networks'][0]
+            country = network['origin_country']
+            video['studio'] = '{0} ({1})'.format(network['name'], country)
+            video['country'] = country
+        content_ratings = show_info.get('content_ratings', {}).get('results', {})
+        if content_ratings:
+            mpaa = ''
+            mpaa_backup = ''
+            for content_rating in content_ratings:
+                iso = content_rating.get('iso_3166_1', '').lower()
+                if iso == 'us':
+                    mpaa_backup = content_rating.get('rating')
+                if iso == settings.CERT_COUNTRY.lower():
+                    mpaa = content_rating.get('rating', '')
+            if not mpaa:
+                mpaa = mpaa_backup
+            if mpaa:
+                video['Mpaa'] = settings.CERT_PREFIX + mpaa
         video['credits'] = _get_credits(show_info)
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
+        list_item = _set_rating(show_info, list_item)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
             image_url = settings.IMAGEROOTURL + image
             list_item.addAvailableArtwork(image_url, 'poster')
     list_item.setInfo('video', video)
-    list_item = _set_rating(show_info, list_item)
     # This is needed for getting artwork
     list_item = _set_unique_ids(show_info, list_item)
     return list_item

@@ -134,10 +134,10 @@ def load_show_info(show_id, ep_grouping=None):
             show_info['ep_grouping'] = ep_grouping
             show_info['episodes'] = load_episode_list(show_info)
             logger.debug('saving this show info to the cache')
+            logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
             cache.cache_show_info(show_info)
         else:
-            show_info = None
-    logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
+            return None
     return show_info
 
 

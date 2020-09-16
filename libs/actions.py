@@ -52,8 +52,8 @@ def find_show(title, year=None):
         if safe_get(search_result, 'first_air_date') is not None:
             show_name += ' ({})'.format(search_result['first_air_date'][:4])
         list_item = xbmcgui.ListItem(show_name, offscreen=True)
-        show_info = tmdb.load_show_info(search_result['id'])
-        list_item = data_utils.add_main_show_info(list_item, show_info, False)
+        show_info = search_result
+        list_item = data_utils.add_main_show_info(list_item, show_info, full_info=False)
         # Below "url" is some unique ID string (may be an actual URL to a show page)
         # that is used to get information about a specific TV show.
         xbmcplugin.addDirectoryItem(
@@ -130,7 +130,7 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
             list_item = xbmcgui.ListItem(episode['name'], offscreen=True)
             list_item = data_utils.add_episode_info(list_item, episode, full_info=False)
             encoded_ids = urllib_parse.urlencode(
-                {'show_id': str(show_info['id']), 'episode_id': str(theindex)} # NEED TO CHECK THIS
+                {'show_id': str(show_info['id']), 'episode_id': str(theindex)}
             )
             theindex = theindex + 1
             # Below "url" is some unique ID string (may be an actual URL to an episode page)
