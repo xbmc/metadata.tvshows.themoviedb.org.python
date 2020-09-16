@@ -82,6 +82,8 @@ def _load_info(url, params=None):
 def load_episode_list(show_info):
     # type: (Text) -> List[InfoType]
     """Load episode list from themoviedb.org API"""
+    if show_info.get('episodes'):
+        return show_info['episodes']
     episode_list = []
     custom_list = {}
     if show_info['ep_grouping'] is not None:

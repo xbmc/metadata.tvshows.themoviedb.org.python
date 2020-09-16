@@ -170,7 +170,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         # This property is passed as "url" parameter to getepisodelist call
         'episodeguide': str(show_info['id']),
     }
-    if show_info['first_air_date']:
+    if show_info.get('first_air_date'):
         video['year'] = int(show_info['first_air_date'][:4])
         video['premiered'] = show_info['first_air_date']
     if full_info:
