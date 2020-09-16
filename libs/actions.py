@@ -23,15 +23,12 @@
 from __future__ import absolute_import, unicode_literals
 
 import sys
-
 import six
 import xbmcgui
 import xbmcplugin
 from six.moves import urllib_parse
-
 from . import tmdb, data_utils
 from .utils import logger, safe_get
-
 try:
     from typing import Optional, Text, Union, ByteString  # pylint: disable=unused-import
 except ImportError:
@@ -124,6 +121,7 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
             return
     else:
         show_info = tmdb.load_show_info(show_id)
+    show_info['episodes'] = tmdb.load_episode_list(show_info)
     if show_info is not None:
         theindex = 0
         for episode in show_info['episodes']:

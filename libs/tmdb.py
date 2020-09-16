@@ -113,6 +113,8 @@ def load_episode_list(show_info):
                 except KeyError:
                     pass
             episode_list.append(resp)
+    show_info['episodes'] = episode_list
+    cache.cache_show_info(show_info)
     return episode_list
 
 
@@ -132,7 +134,7 @@ def load_show_info(show_id, ep_grouping=None):
             show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=settings.LANG)
             show_info.update(show.images()) # if you request images above, you might get none back b/c of language
             show_info['ep_grouping'] = ep_grouping
-            show_info['episodes'] = load_episode_list(show_info)
+            # show_info['episodes'] = load_episode_list(show_info)
             logger.debug('saving this show info to the cache')
             logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
             cache.cache_show_info(show_info)
