@@ -104,7 +104,7 @@ def load_episode_list(show_info):
     for season in show_info['seasons']:
         for ep_num in range(1, season['episode_count'] + 1):
             ep = tmdb.TV_Episodes(show_info['id'], season['season_number'], ep_num)
-            resp = ep.info(append_to_response='images')
+            resp = ep.info(append_to_response='credits,images')
             if custom_list:
                 try:
                     resp['season_number'] = custom_list[str(resp['id'])]['season_number']

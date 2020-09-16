@@ -67,11 +67,11 @@ def _clean_plot(plot):
     return plot
 
 
-def _set_cast(show_info, list_item):
+def _set_cast(cast_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
-    """Extract cast from show info dict"""
+    """Save cast info to list item"""
     cast = []
-    for item in show_info['credits']['cast']:
+    for item in cast_info:
         data = {
             'name': item['name'],
             'role': item['character'],
@@ -202,7 +202,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         video['credits'] = _get_credits(show_info)
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
-        list_item = _set_cast(show_info, list_item)
+        list_item = _set_cast(show_info['credits']['cast'], list_item)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
@@ -233,6 +233,8 @@ def add_episode_info(list_item, episode_info, full_info=True):
         if safe_get(episode_info, 'air_date') is not None:
             video['premiered'] = episode_info['air_date']
     list_item.setInfo('video', video)
+    all_cast = episode_info['credits']['cast'] + episode_info['credits']['guest_stars']
+    list_item = _set_cast(all_cast, list_item)
     for image in episode_info.get('images', {}).get('stills', []):
         img_path = image.get('file_path')
         if img_path:
