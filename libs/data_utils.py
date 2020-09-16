@@ -232,14 +232,13 @@ def add_episode_info(list_item, episode_info, full_info=True):
             video['plot'] = video['plotoutline'] = _clean_plot(summary)
         if safe_get(episode_info, 'air_date') is not None:
             video['premiered'] = episode_info['air_date']
+        list_item = _set_cast(episode_info['credits']['guest_stars'], list_item)
+        for image in episode_info.get('stills', []):
+            img_path = image.get('file_path')
+            if img_path:
+                image_url = settings.IMAGEROOTURL + img_path
+                list_item.addAvailableArtwork(image_url, 'thumb')
     list_item.setInfo('video', video)
-    all_cast = episode_info['credits']['cast'] + episode_info['credits']['guest_stars']
-    list_item = _set_cast(all_cast, list_item)
-    for image in episode_info.get('stills', []):
-        img_path = image.get('file_path')
-        if img_path:
-            image_url = settings.IMAGEROOTURL + img_path
-            list_item.addAvailableArtwork(image_url, 'thumb')
     list_item.setUniqueIDs({'themoviedb': str(episode_info['id'])}, 'themoviedb')
     return list_item
 
