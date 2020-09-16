@@ -83,6 +83,7 @@ def load_episode_list(show_info):
     # type: (Text) -> List[InfoType]
     """Load episode list from themoviedb.org API"""
     episode_list = []
+    custom_list = {}
     if show_info['ep_grouping'] is not None:
         logger.debug('Getting episodes with episode grouping of ' + show_info['ep_grouping'])
         # tmdbsimple doesn't have an abstraction for episode groups, so we have to do this by hand
@@ -93,26 +94,24 @@ def load_episode_list(show_info):
             logger.error('themoviedb returned an error: {}'.format(exc))
             custom_order = None
         if custom_order is not None:
-            try:
-                custom_list = custom_order['groups']
-            except (IndexError, KeyError):
-                custom_list = []
             season_num = 1
-            for season in custom_list:
+            for season in custom_order.get('groups', []):
                 ep_num = 1
                 for episode in season['episodes']:
-                    episode['season_number'] = season_num
-                    episode['episode_number'] = ep_num
-                    episode_list.append(episode)
+                    custom_list[str(episode['id'])] = {'season_number': season_num, 'episode_number': ep_num}
                     ep_num = ep_num + 1
                 season_num = season_num + 1
-            if episode_list:
-                return episode_list
-    logger.debug('loading standard episode order')
     for season in show_info['seasons']:
-        q_season = tmdb.TV_Seasons(show_info['id'], season['season_number'])
-        resp = q_season.info(language=LANG)
-        episode_list = episode_list + resp['episodes']
+        for ep_num in range(1, season['episode_count'] + 1):
+            ep = tmdb.TV_Episodes(show_info['id'], season['season_number'], ep_num)
+            resp = ep.info(append_to_response='images')
+            if custom_list:
+                try:
+                    resp['season_number'] = custom_list[str(resp['id'])]['season_number']
+                    resp['episode_number'] = custom_list[str(resp['id'])]['episode_number']
+                except KeyError:
+                    pass
+            episode_list.append(resp)
     return episode_list
 
 
