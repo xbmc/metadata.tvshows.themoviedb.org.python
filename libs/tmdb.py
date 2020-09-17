@@ -120,8 +120,6 @@ def load_episode_list(show_info):
                 episode_list.append(episode)
                 ep_num = ep_num + 1
     show_info['episodes'] = episode_list
-    # logger.debug('adding the following episode list')
-    # logger.debug(json.dumps(episode_list, sort_keys=True, indent=2, separators=(',', ': ')))
     cache.cache_show_info(show_info)
     return episode_list
 
@@ -142,8 +140,7 @@ def load_show_info(show_id, ep_grouping=None):
             show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=settings.LANG)
             show_info.update(show.images()) # if you request images above, you might get none back b/c of language
             show_info['ep_grouping'] = ep_grouping
-            # logger.debug('saving this show info to the cache')
-            # logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
+            logger.debug('saving show info to the cache')
             cache.cache_show_info(show_info)
         else:
             return None
@@ -161,14 +158,12 @@ def load_episode_info(show_id, episode_id):
     """
     show_info = load_show_info(show_id)
     if show_info is not None:
-        # logger.debug('got this show info from the cache')
-        # logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
         try:
             episode_info = show_info['episodes'][int(episode_id)]
         except KeyError:
             return None
         ep = tmdb.TV_Episodes(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
-        resp = ep.info(append_to_response='credits', language=settings.LANG)
+        resp = ep.info(append_to_response='credits,external_ids', language=settings.LANG)
         resp.update(ep.images()) # if you request images above, you might get none back b/c of language
         # this ensures we are using the season/ep from the episode grouping if provided
         resp['season_number'] = episode_info['season_number']
@@ -177,7 +172,5 @@ def load_episode_info(show_id, episode_id):
         resp['org_epnum'] = episode_info['org_epnum']
         show_info['episodes'][int(episode_id)] = resp
         cache.cache_show_info(show_info)
-        # logger.debug('using this episode information for details')
-        # logger.debug(json.dumps(resp, sort_keys=True, indent=2, separators=(',', ': ')))
         return resp
     return None

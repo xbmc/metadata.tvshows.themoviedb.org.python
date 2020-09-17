@@ -53,6 +53,7 @@ CLEAN_PLOT_REPLACEMENTS = (
     ('</i>', '[/I]'),
     ('</p><p>', '[CR]'),
 )
+VALIDEXTIDS = ['tmdb_id', 'imdb_id', 'tvdb_id']
 
 UrlParseResult = namedtuple('UrlParseResult', ['provider', 'show_id', 'ep_grouping'])
 
@@ -96,15 +97,15 @@ def _get_credits(show_info):
     return credits_
 
 
-def _set_unique_ids(show_info, list_item):
+def _set_unique_ids(ext_ids, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Extract unique ID in various online databases"""
-    unique_ids = {'themoviedb': str(show_info['id'])}
-    for key, value in six.iteritems(safe_get(show_info, 'externals_ids', {})):
-        if not key == 'freebase_mid':
+    unique_ids = {}
+    for key, value in six.iteritems(ext_ids):
+        if key in VALIDEXTIDS:
             key = key[:-3]
             unique_ids[key] = str(value)
-    list_item.setUniqueIDs(unique_ids, 'themoviedb')
+    list_item.setUniqueIDs(unique_ids, 'tmdb')
     return list_item
 
 
@@ -180,9 +181,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
         for genre in genre_list:
             genres.append(genre['name'])
         video['genre'] = genres
-        if show_info['networks']:
-            network = show_info['networks'][0]
-            country = network['origin_country']
+        network = show_info.get('networks', [])[0]
+        country = network.get('origin_country', '')
+        if network and country:
             video['studio'] = '{0} ({1})'.format(network['name'], country)
             video['country'] = country
         content_ratings = show_info.get('content_ratings', {}).get('results', {})
@@ -204,6 +205,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
         list_item = _set_rating(show_info, list_item)
+        ext_ids = {'tmdb_id': show_info['id']}
+        ext_ids.update(show_info.get('external_ids', {}))
+        list_item =  _set_unique_ids(ext_ids, list_item)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
@@ -233,7 +237,9 @@ def add_episode_info(list_item, episode_info, full_info=True):
         if safe_get(episode_info, 'air_date') is not None:
             video['premiered'] = episode_info['air_date']
         list_item = _set_cast(episode_info['credits']['guest_stars'], list_item)
-        list_item.setUniqueIDs({'themoviedb': str(episode_info['id'])}, 'themoviedb')
+        ext_ids = {'tmdb_id': episode_info['id']}
+        ext_ids.update(episode_info.get('external_ids', {}))
+        list_item =  _set_unique_ids(ext_ids, list_item)
         for image in episode_info.get('stills', []):
             img_path = image.get('file_path')
             if img_path:
