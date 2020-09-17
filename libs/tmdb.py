@@ -100,22 +100,28 @@ def load_episode_list(show_info):
             for season in custom_order.get('groups', []):
                 ep_num = 1
                 for episode in season['episodes']:
-                    custom_list[str(episode['id'])] = {'season_number': season_num, 'episode_number': ep_num}
+                    episode['org_seasonnum'] = episode['season_number']
+                    episode['org_epnum'] = episode['episode_number']
+                    episode['season_number'] = season_num
+                    episode['episode_number'] = ep_num
+                    episode_list.append(episode)
                     ep_num = ep_num + 1
                 season_num = season_num + 1
-    for season in show_info['seasons']:
-        for ep_num in range(1, season['episode_count'] + 1):
-            ep = tmdb.TV_Episodes(show_info['id'], season['season_number'], ep_num)
-            resp = ep.info(append_to_response='credits', language=settings.LANG)
-            resp.update(ep.images()) # if you request images above, you might get none back b/c of language
-            if custom_list:
-                try:
-                    resp['season_number'] = custom_list[str(resp['id'])]['season_number']
-                    resp['episode_number'] = custom_list[str(resp['id'])]['episode_number']
-                except KeyError:
-                    pass
-            episode_list.append(resp)
+    else:
+        for season in show_info.get('seasons', []):
+            for ep_num in range(1, season['episode_count'] + 1):
+                episode = {}
+                episode['org_seasonnum'] = season['season_number']
+                episode['org_epnum'] = ep_num
+                episode['season_number'] = season['season_number']
+                episode['episode_number'] = ep_num
+                # using placeholder name b/c the actual name gets pulled when getting episode details
+                episode['name'] = 'S%sE%s' % (str(season['season_number']), str(ep_num))
+                episode_list.append(episode)
+                ep_num = ep_num + 1
     show_info['episodes'] = episode_list
+    # logger.debug('adding the following episode list')
+    # logger.debug(json.dumps(episode_list, sort_keys=True, indent=2, separators=(',', ': ')))
     cache.cache_show_info(show_info)
     return episode_list
 
@@ -136,9 +142,8 @@ def load_show_info(show_id, ep_grouping=None):
             show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=settings.LANG)
             show_info.update(show.images()) # if you request images above, you might get none back b/c of language
             show_info['ep_grouping'] = ep_grouping
-            # show_info['episodes'] = load_episode_list(show_info)
-            logger.debug('saving this show info to the cache')
-            logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
+            # logger.debug('saving this show info to the cache')
+            # logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
             cache.cache_show_info(show_info)
         else:
             return None
@@ -156,9 +161,23 @@ def load_episode_info(show_id, episode_id):
     """
     show_info = load_show_info(show_id)
     if show_info is not None:
+        # logger.debug('got this show info from the cache')
+        # logger.debug(json.dumps(show_info, sort_keys=True, indent=2, separators=(',', ': ')))
         try:
             episode_info = show_info['episodes'][int(episode_id)]
         except KeyError:
-            episode_info = {}
-        return episode_info
+            return None
+        ep = tmdb.TV_Episodes(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
+        resp = ep.info(append_to_response='credits', language=settings.LANG)
+        resp.update(ep.images()) # if you request images above, you might get none back b/c of language
+        # this ensures we are using the season/ep from the episode grouping if provided
+        resp['season_number'] = episode_info['season_number']
+        resp['episode_number'] = episode_info['episode_number']
+        resp['org_seasonnum'] = episode_info['org_seasonnum']
+        resp['org_epnum'] = episode_info['org_epnum']
+        show_info['episodes'][int(episode_id)] = resp
+        cache.cache_show_info(show_info)
+        # logger.debug('using this episode information for details')
+        # logger.debug(json.dumps(resp, sort_keys=True, indent=2, separators=(',', ': ')))
+        return resp
     return None
