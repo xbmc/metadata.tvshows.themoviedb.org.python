@@ -1,8 +1,132 @@
-<?xml version="1.0" encoding="utf-8"?>
-<settings>
-	<category label="$LOCALIZE[128]">
-		<setting label="30002" type="select" values="ar-AE|ar-SA|be-BY|bg-BG|bn-BD|ca-ES|ch-GU|cs-CZ|da-DK|de-DE|el-GR|en-US|eo-EO|es-ES|es-MX|et-EE|eu-ES|fa-IR|fi-FI|fr-CA|fr-FR|gl-ES|he-IL|hi-IN|hr-HR|hu-HU|id-ID|it-IT|ja-JP|ka-GE|ko-KR|lt-LT|lv-LV|ml-IN|nb-NO|nl-NL|no-NO|pl-PL|pt-BR|pt-PT|ro-RO|ru-RU|sk-SK|sl-SI|sr-RS|sv-SE|ta-IN|th-TH|tr-TR|uk-UA|vi-VN|zh-CN|zh-HK|zh-TW" id="language" default="en-US"/>
-		<setting label="30006" type="select" values="au|bg|br|by|ca|cz|ge|de|dk|ee|es|fi|fr|gb|gr|hr|hu|id|il|in|it|ir|jp|kr|lt|lv|mx|nl|no|pl|pt|ru|si|sv|th|tr|ua|us|vn|zh" id="tmdbcertcountry" default="us"/>
-		<setting label="30008" type="text" id="certprefix" default="Rated " />
-	</category>
+<?xml version="1.0" ?>
+<settings version="1">
+	<section id="metadata.tvshows.themoviedb.org.python">
+		<category id="general" label="128" help="">
+			<group id="1">
+				<setting id="language" type="string" label="30002" help="">
+					<level>0</level>
+					<default>en-US</default>
+					<constraints>
+						<options>
+							<option>ar-AE</option>
+							<option>ar-SA</option>
+							<option>be-BY</option>
+							<option>bg-BG</option>
+							<option>bn-BD</option>
+							<option>ca-ES</option>
+							<option>ch-GU</option>
+							<option>cs-CZ</option>
+							<option>da-DK</option>
+							<option>de-DE</option>
+							<option>el-GR</option>
+							<option>en-US</option>
+							<option>eo-EO</option>
+							<option>es-ES</option>
+							<option>es-MX</option>
+							<option>et-EE</option>
+							<option>eu-ES</option>
+							<option>fa-IR</option>
+							<option>fi-FI</option>
+							<option>fr-CA</option>
+							<option>fr-FR</option>
+							<option>gl-ES</option>
+							<option>he-IL</option>
+							<option>hi-IN</option>
+							<option>hr-HR</option>
+							<option>hu-HU</option>
+							<option>id-ID</option>
+							<option>it-IT</option>
+							<option>ja-JP</option>
+							<option>ka-GE</option>
+							<option>ko-KR</option>
+							<option>lt-LT</option>
+							<option>lv-LV</option>
+							<option>ml-IN</option>
+							<option>nb-NO</option>
+							<option>nl-NL</option>
+							<option>no-NO</option>
+							<option>pl-PL</option>
+							<option>pt-BR</option>
+							<option>pt-PT</option>
+							<option>ro-RO</option>
+							<option>ru-RU</option>
+							<option>sk-SK</option>
+							<option>sl-SI</option>
+							<option>sr-RS</option>
+							<option>sv-SE</option>
+							<option>ta-IN</option>
+							<option>th-TH</option>
+							<option>tr-TR</option>
+							<option>uk-UA</option>
+							<option>vi-VN</option>
+							<option>zh-CN</option>
+							<option>zh-HK</option>
+							<option>zh-TW</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30002</heading>
+					</control>
+				</setting>
+				<setting id="tmdbcertcountry" type="string" label="30006" help="">
+					<level>0</level>
+					<default>us</default>
+					<constraints>
+						<options>
+							<option>au</option>
+							<option>bg</option>
+							<option>br</option>
+							<option>by</option>
+							<option>ca</option>
+							<option>cz</option>
+							<option>ge</option>
+							<option>de</option>
+							<option>dk</option>
+							<option>ee</option>
+							<option>es</option>
+							<option>fi</option>
+							<option>fr</option>
+							<option>gb</option>
+							<option>gr</option>
+							<option>hr</option>
+							<option>hu</option>
+							<option>id</option>
+							<option>il</option>
+							<option>in</option>
+							<option>it</option>
+							<option>ir</option>
+							<option>jp</option>
+							<option>kr</option>
+							<option>lt</option>
+							<option>lv</option>
+							<option>mx</option>
+							<option>nl</option>
+							<option>no</option>
+							<option>pl</option>
+							<option>pt</option>
+							<option>ru</option>
+							<option>si</option>
+							<option>sv</option>
+							<option>th</option>
+							<option>tr</option>
+							<option>ua</option>
+							<option>us</option>
+							<option>vn</option>
+							<option>zh</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30006</heading>
+					</control>
+				</setting>
+				<setting id="certprefix" type="string" label="30008" help="">
+					<level>0</level>
+					<default>Rated </default>
+					<control type="edit" format="string">
+						<heading>30008</heading>
+					</control>
+				</setting>
+			</group>
+		</category>
+	</section>
 </settings>
