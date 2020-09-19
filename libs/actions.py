@@ -99,7 +99,7 @@ def get_details(show_id):
     show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
         list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
-        list_item = data_utils.add_main_show_info(list_item, show_info)
+        list_item = data_utils.add_main_show_info(list_item, show_info, full_info=True)
         xbmcplugin.setResolvedUrl(HANDLE, True, list_item)
     else:
         xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem(offscreen=True))

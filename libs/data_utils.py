@@ -22,7 +22,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import re
+import re, json
 from collections import OrderedDict, namedtuple
 import six
 from .utils import safe_get, logger
@@ -135,11 +135,16 @@ def _extract_artwork_url(resolutions):
 def _add_season_info(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Add info for show seasons"""
+    logger.debug('****got to add season info with:')
+    logger.debug(json.dumps(show_info, indent=4))
     for season in show_info['seasons']:
         list_item.addSeason(season['season_number'], safe_get(season, 'name', ''))
-        image = safe_get(season, 'poster_path')
-        if image is not None:
-            url = settings.IMAGEROOTURL + season['poster_path']
+        image = season.get('poster_path', '')
+        if image:
+            url = settings.IMAGEROOTURL + image
+            list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
+        for image in season.get('images',{}).get('posters', []):
+            url = settings.IMAGEROOTURL + image['file_path']
             list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
     return list_item
 
@@ -240,13 +245,17 @@ def add_episode_info(list_item, episode_info, full_info=True):
         list_item = _set_cast(episode_info['credits']['guest_stars'], list_item)
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
-        list_item =  _set_unique_ids(ext_ids, list_item)
+        list_item = _set_unique_ids(ext_ids, list_item)
         list_item = _set_rating(episode_info, list_item)
         for image in episode_info.get('images', {}).get('stills', []):
             img_path = image.get('file_path')
             if img_path:
                 image_url = settings.IMAGEROOTURL + img_path
                 list_item.addAvailableArtwork(image_url, 'thumb')
+        # need to load show info from cache, match the original season, then see if the images dict exists
+        # if it doesn't, load the season info from the API then add the season info with
+        # list_item = _add_season_info(show_info, list_item)
+        # then update the show info and save that update to the cache
     list_item.setInfo('video', video)
     return list_item
 

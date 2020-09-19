@@ -38,6 +38,7 @@ LANG_BASE = '&language=' + settings.LANG
 EPISODE_GROUP_URL = BASE_URL + 'tv/episode_group/{}' + API_BASE
 SEARCH_URL = BASE_URL + 'search/tv' + API_BASE + LANG_BASE
 SHOW_URL = BASE_URL +'tv/{}' + API_BASE + LANG_BASE
+SEASON_URL = BASE_URL +'tv/{}/season/{}' + API_BASE + LANG_BASE
 EPISODE_URL = BASE_URL + 'tv/{}/season/{}/episode/{}' + API_BASE + LANG_BASE
 HEADERS = (
     ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
@@ -96,7 +97,6 @@ def load_episode_list(show_info):
     custom_list = {}
     if show_info['ep_grouping'] is not None:
         logger.debug('Getting episodes with episode grouping of ' + show_info['ep_grouping'])
-        # tmdbsimple doesn't have an abstraction for episode groups, so we have to do this by hand
         episode_group_url = EPISODE_GROUP_URL.format(show_info['ep_grouping'])
         try:
             custom_order = _load_info(episode_group_url)
@@ -117,16 +117,10 @@ def load_episode_list(show_info):
                 season_num = season_num + 1
     else:
         for season in show_info.get('seasons', []):
-            for ep_num in range(1, season['episode_count'] + 1):
-                episode = {}
-                episode['org_seasonnum'] = season['season_number']
-                episode['org_epnum'] = ep_num
-                episode['season_number'] = season['season_number']
-                episode['episode_number'] = ep_num
-                # using placeholder name b/c the actual name gets pulled when getting episode details
-                episode['name'] = 'S%sE%s' % (str(season['season_number']), str(ep_num))
+            for episode in season.get('episodes', []):
+                episode['org_seasonnum'] = episode['season_number']
+                episode['org_epnum'] = episode['episode_number']
                 episode_list.append(episode)
-                ep_num = ep_num + 1
     show_info['episodes'] = episode_list
     cache.cache_show_info(show_info)
     return episode_list
@@ -153,6 +147,20 @@ def load_show_info(show_id, ep_grouping=None):
             logger.error('themoviedb returned an error: {}'.format(exc))
             return None
         show_info['ep_grouping'] = ep_grouping
+        i = 0
+        for season in show_info.get('seasons', []):
+            season_url = SEASON_URL.format(show_id, season['season_number'])
+            params = {}
+            params['append_to_response'] = 'images'
+            params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+            try:
+                season_info = _load_info(season_url, params)
+            except HTTPError as exc:
+                logger.error('themoviedb returned an error: {}'.format(exc))
+                season_info = None
+            if season_info:
+                show_info['seasons'][i] = season_info
+            i = i + 1
         logger.debug('saving show info to the cache')
         cache.cache_show_info(show_info)
     return show_info
