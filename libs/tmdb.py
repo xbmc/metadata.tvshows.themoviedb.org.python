@@ -30,34 +30,21 @@ try:
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
 except ImportError:
     pass
-import tmdbsimple as tmdb
 
 # Same key as built-in XML scraper
-tmdb.API_KEY = 'f090bb54758cabf231fb605d3e3e0468'
-
-EPISODE_GROUP_URL = 'https://api.themoviedb.org/3/tv/episode_group/{}?api_key=%s' % tmdb.API_KEY
+BASE_URL = 'https://api.themoviedb.org/3/'
+API_BASE = '?api_key=f090bb54758cabf231fb605d3e3e0468'
+LANG_BASE = '&language=' + settings.LANG
+EPISODE_GROUP_URL = BASE_URL + 'tv/episode_group/{}' + API_BASE
+SEARCH_URL = BASE_URL + 'search/tv' + API_BASE + LANG_BASE
+SHOW_URL = BASE_URL +'tv/{}' + API_BASE + LANG_BASE
+EPISODE_URL = BASE_URL + 'tv/{}/season/{}/episode/{}' + API_BASE + LANG_BASE
 HEADERS = (
-    ('User-Agent', 'Kodi scraper for tvmaze.com by pkscout; pkscout@kodi.tv'),
+    ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
     ('Accept', 'application/json'),
 )
 SESSION = requests.Session()
 SESSION.headers.update(dict(HEADERS))
-
-
-def search_show(title, year=None):
-    # type: (Text) -> List[InfoType]
-    """
-    Search a single TV show
-
-    :param title: TV show title to search
-    :return: a list with found TV shows
-    """
-    srch = tmdb.Search()
-    if not year:
-        resp = srch.tv(query=title)
-    else:
-        resp = srch.tv(query=title, first_air_date_year=year)
-    return srch.results
 
 
 def _load_info(url, params=None):
@@ -77,6 +64,27 @@ def _load_info(url, params=None):
     json_response = response.json()
     logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
     return json_response
+
+
+def search_show(title, year=None):
+    # type: (Text) -> List[InfoType]
+    """
+    Search for a single TV show
+
+    :param title: TV show title to search
+    : param year: the year to search (optional)
+    :return: a list with found TV shows
+    """
+    params = {'query': title}
+    if year:
+        params.update({'first_air_date_year': str(year)})
+    try:
+        resp = _load_info(SEARCH_URL, params)
+        results = resp.get('results', [])
+    except HTTPError as exc:
+        logger.error('themoviedb returned an error: {}'.format(exc))
+        results = []
+    return results
 
 
 def load_episode_list(show_info):
@@ -135,15 +143,18 @@ def load_show_info(show_id, ep_grouping=None):
     show_info = cache.load_show_info_from_cache(show_id)
     if show_info is None:
         logger.debug('no cache file found, loading from scratch')
-        show = tmdb.TV(show_id)
-        if show is not None:
-            show_info = show.info(append_to_response='credits,content_ratings,external_ids', language=settings.LANG)
-            show_info.update(show.images()) # if you request images above, you might get none back b/c of language
-            show_info['ep_grouping'] = ep_grouping
-            logger.debug('saving show info to the cache')
-            cache.cache_show_info(show_info)
-        else:
+        show_url = SHOW_URL.format(show_id)
+        params = {}
+        params['append_to_response'] = 'credits,content_ratings,external_ids,images'
+        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+        try:
+            show_info = _load_info(show_url, params)
+        except HTTPError as exc:
+            logger.error('themoviedb returned an error: {}'.format(exc))
             return None
+        show_info['ep_grouping'] = ep_grouping
+        logger.debug('saving show info to the cache')
+        cache.cache_show_info(show_info)
     return show_info
 
 
@@ -162,15 +173,21 @@ def load_episode_info(show_id, episode_id):
             episode_info = show_info['episodes'][int(episode_id)]
         except KeyError:
             return None
-        ep = tmdb.TV_Episodes(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
-        resp = ep.info(append_to_response='credits,external_ids', language=settings.LANG)
-        resp.update(ep.images()) # if you request images above, you might get none back b/c of language
         # this ensures we are using the season/ep from the episode grouping if provided
-        resp['season_number'] = episode_info['season_number']
-        resp['episode_number'] = episode_info['episode_number']
-        resp['org_seasonnum'] = episode_info['org_seasonnum']
-        resp['org_epnum'] = episode_info['org_epnum']
-        show_info['episodes'][int(episode_id)] = resp
+        ep_url = EPISODE_URL.format(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
+        params = {}
+        params['append_to_response'] = 'credits,external_ids,images'
+        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+        try:
+            ep_return = _load_info(ep_url, params)
+        except HTTPError as exc:
+            logger.error('themoviedb returned an error: {}'.format(exc))
+            return None
+        ep_return['season_number'] = episode_info['season_number']
+        ep_return['episode_number'] = episode_info['episode_number']
+        ep_return['org_seasonnum'] = episode_info['org_seasonnum']
+        ep_return['org_epnum'] = episode_info['org_epnum']
+        show_info['episodes'][int(episode_id)] = ep_return
         cache.cache_show_info(show_info)
-        return resp
+        return ep_return
     return None

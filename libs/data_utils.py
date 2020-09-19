@@ -147,12 +147,12 @@ def set_show_artwork(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set available images for a show"""
     fanart_list = []
-    for backdrop in safe_get(show_info, 'backdrops', {}):
+    for backdrop in show_info.get('images', {}).get('backdrops', []):
         url = settings.IMAGEROOTURL + backdrop['file_path']
         fanart_list.append({'image': url})
     if fanart_list:
         list_item.setAvailableFanart(fanart_list)
-    for poster in safe_get(show_info, 'posters', {}):
+    for poster in show_info.get('images', {}).get('posters', []):
         url = settings.IMAGEROOTURL + poster['file_path']
         list_item.addAvailableArtwork(url, 'poster')
     return list_item
@@ -240,7 +240,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
         list_item =  _set_unique_ids(ext_ids, list_item)
-        for image in episode_info.get('stills', []):
+        for image in episode_info.get('images', {}).get('stills', []):
             img_path = image.get('file_path')
             if img_path:
                 image_url = settings.IMAGEROOTURL + img_path
