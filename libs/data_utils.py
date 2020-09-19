@@ -109,12 +109,13 @@ def _set_unique_ids(ext_ids, list_item):
     return list_item
 
 
-def _set_rating(show_info, list_item):
+def _set_rating(the_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set show rating"""
-    if safe_get(show_info, 'vote_average') is not None:
-        rating = float(show_info['vote_average'])
-        list_item.setRating('themoviedb', rating, defaultt=True)
+    rating = float(the_info.get('vote_average', '0'))
+    votes = int(the_info.get('vote_count', '0'))
+    if rating > 0:
+        list_item.setRating('tmdb', rating, votes=votes, defaultt=True)
     return list_item
 
 
@@ -240,6 +241,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
         list_item =  _set_unique_ids(ext_ids, list_item)
+        list_item = _set_rating(episode_info, list_item)
         for image in episode_info.get('images', {}).get('stills', []):
             img_path = image.get('file_path')
             if img_path:
