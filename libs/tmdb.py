@@ -32,15 +32,13 @@ except ImportError:
     pass
 
 # Same key as built-in XML scraper
-BASE_URL = 'https://api.themoviedb.org/3/'
-API_BASE = '?api_key=f090bb54758cabf231fb605d3e3e0468'
-LANG_BASE = '&language=' + settings.LANG
-EPISODE_GROUP_URL = BASE_URL + 'tv/episode_group/{}' + API_BASE
-SEARCH_URL = BASE_URL + 'search/tv' + API_BASE + LANG_BASE
-FIND_URL = BASE_URL + 'find/{}' + API_BASE + LANG_BASE
-SHOW_URL = BASE_URL +'tv/{}' + API_BASE + LANG_BASE
-SEASON_URL = BASE_URL +'tv/{}/season/{}' + API_BASE + LANG_BASE
-EPISODE_URL = BASE_URL + 'tv/{}/season/{}/episode/{}' + API_BASE + LANG_BASE
+BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=f090bb54758cabf231fb605d3e3e0468&language=' + settings.LANG
+EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
+SEARCH_URL = BASE_URL.format('search/tv')
+FIND_URL = BASE_URL.format('find/{}')
+SHOW_URL = BASE_URL.format('tv/{}')
+SEASON_URL = BASE_URL.format('tv/{}/season/{}')
+EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
 HEADERS = (
     ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
     ('Accept', 'application/json'),
