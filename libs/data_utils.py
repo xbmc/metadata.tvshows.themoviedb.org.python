@@ -135,8 +135,6 @@ def _extract_artwork_url(resolutions):
 def _add_season_info(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Add info for show seasons"""
-    logger.debug('****got to add season info with:')
-    logger.debug(json.dumps(show_info, indent=4))
     for season in show_info['seasons']:
         list_item.addSeason(season['season_number'], safe_get(season, 'name', ''))
         image = season.get('poster_path', '')

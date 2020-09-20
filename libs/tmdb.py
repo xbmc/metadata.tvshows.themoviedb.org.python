@@ -19,7 +19,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import json
+import json, six
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
@@ -96,42 +96,49 @@ def search_show(title, year=None):
     return results
 
 
-def load_episode_list(show_info):
+def load_episode_list(show_info, season_map, ep_grouping):
     # type: (Text) -> List[InfoType]
     """Load episode list from themoviedb.org API"""
-    if show_info.get('episodes'):
-        return show_info['episodes']
     episode_list = []
-    custom_list = {}
-    if show_info['ep_grouping'] is not None:
-        logger.debug('Getting episodes with episode grouping of ' + show_info['ep_grouping'])
-        episode_group_url = EPISODE_GROUP_URL.format(show_info['ep_grouping'])
+    if ep_grouping is not None:
+        logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
+        episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
         try:
             custom_order = _load_info(episode_group_url)
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             custom_order = None
         if custom_order is not None:
+            show_info['seasons'] = []
             season_num = 1
-            for season in custom_order.get('groups', []):
+            for custom_season in custom_order.get('groups', []):
                 ep_num = 1
-                for episode in season['episodes']:
+                season_episodes = []
+                current_season = season_map.get(str(custom_season['episodes'][0]['season_number']), {}).copy()
+                current_season['name'] = custom_season['name']
+                current_season['season_number'] = season_num
+                for episode in custom_season['episodes']:
                     episode['org_seasonnum'] = episode['season_number']
                     episode['org_epnum'] = episode['episode_number']
                     episode['season_number'] = season_num
                     episode['episode_number'] = ep_num
+                    season_episodes.append(episode)
                     episode_list.append(episode)
                     ep_num = ep_num + 1
+                current_season['episodes'] = season_episodes
+                show_info['seasons'].append(current_season)
                 season_num = season_num + 1
     else:
+        show_info['seasons'] = []
+        for key, value in six.iteritems(season_map):
+            show_info['seasons'].append(value)
         for season in show_info.get('seasons', []):
             for episode in season.get('episodes', []):
                 episode['org_seasonnum'] = episode['season_number']
                 episode['org_epnum'] = episode['episode_number']
                 episode_list.append(episode)
     show_info['episodes'] = episode_list
-    cache.cache_show_info(show_info)
-    return episode_list
+    return show_info
 
 
 def load_show_info(show_id, ep_grouping=None):
@@ -154,8 +161,7 @@ def load_show_info(show_id, ep_grouping=None):
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             return None
-        show_info['ep_grouping'] = ep_grouping
-        i = 0
+        season_map = {}
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
             params = {}
@@ -165,10 +171,10 @@ def load_show_info(show_id, ep_grouping=None):
                 season_info = _load_info(season_url, params)
             except HTTPError as exc:
                 logger.error('themoviedb returned an error: {}'.format(exc))
-                season_info = None
-            if season_info:
-                show_info['seasons'][i] = season_info
-            i = i + 1
+                season_info = {}
+            season_map[str(season['season_number'])] = season_info
+            
+        show_info = load_episode_list(show_info, season_map, ep_grouping)
         cast_check = []
         cast = []
         for season in reversed(show_info.get('seasons', [])):
@@ -177,7 +183,7 @@ def load_show_info(show_id, ep_grouping=None):
                     cast.append(cast_member)
                     cast_check.append(cast_member['name'])
         show_info['credits']['cast'] = cast
-        logger.debug('saving show info to the cache')
+        logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
         cache.cache_show_info(show_info)
     return show_info
 
