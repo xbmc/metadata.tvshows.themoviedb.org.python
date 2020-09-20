@@ -151,7 +151,7 @@ def load_show_info(show_id, ep_grouping=None):
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
             params = {}
-            params['append_to_response'] = 'images'
+            params['append_to_response'] = 'credits,images'
             params['include_image_language'] = '%s,null' % settings.LANG[0:2]
             try:
                 season_info = _load_info(season_url, params)
@@ -161,6 +161,14 @@ def load_show_info(show_id, ep_grouping=None):
             if season_info:
                 show_info['seasons'][i] = season_info
             i = i + 1
+        cast_check = []
+        cast = []
+        for season in reversed(show_info.get('seasons', [])):
+            for cast_member in season.get('credits', {}).get('cast', []):
+                if cast_member['name'] not in cast_check:
+                    cast.append(cast_member)
+                    cast_check.append(cast_member['name'])
+        show_info['credits']['cast'] = cast
         logger.debug('saving show info to the cache')
         cache.cache_show_info(show_info)
     return show_info
