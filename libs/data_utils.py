@@ -102,7 +102,7 @@ def _set_unique_ids(ext_ids, list_item):
     """Extract unique ID in various online databases"""
     unique_ids = {}
     for key, value in six.iteritems(ext_ids):
-        if key in VALIDEXTIDS:
+        if key in VALIDEXTIDS and value:
             key = key[:-3]
             unique_ids[key] = str(value)
     list_item.setUniqueIDs(unique_ids, 'tmdb')
