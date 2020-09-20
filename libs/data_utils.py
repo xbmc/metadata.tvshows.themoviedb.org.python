@@ -280,3 +280,14 @@ def parse_nfo_url(nfo):
                 logger.debug('match group 3: None')
             return UrlParseResult(show_id_match.group(1), show_id_match.group(2), ep_grouping)
     return None
+
+
+def parse_media_id(title):
+    title = title.lower()
+    if title.startswith('tt') and title[2:].isdigit():
+        return {'type': 'imdb_id', 'title': title} # IMDB ID works alone because it is clear
+    elif title.startswith('imdb/tt') and title[7:].isdigit(): # IMDB ID with prefix to match
+        return {'type': 'imdb_id', 'title': title[5:]} # IMDB ID works alone because it is clear
+    elif title.startswith('tvdb/') and title[5:].isdigit(): # TVDB ID
+        return {'type': 'tvdb_id', 'title': title[5:]}
+    return None

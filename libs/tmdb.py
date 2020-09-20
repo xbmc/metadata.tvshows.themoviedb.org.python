@@ -23,8 +23,8 @@ import json
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
-from . import cache, settings
-from .utils import logger, safe_get
+from . import cache, data_utils, settings
+from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
@@ -66,17 +66,6 @@ def _load_info(url, params=None):
     return json_response
 
 
-def _parse_media_id(title):
-    title = title.lower()
-    if title.startswith('tt') and title[2:].isdigit():
-        return {'type': 'imdb_id', 'title': title} # IMDB ID works alone because it is clear
-    elif title.startswith('imdb/tt') and title[7:].isdigit(): # IMDB ID with prefix to match
-        return {'type': 'imdb_id', 'title': title[5:]} # IMDB ID works alone because it is clear
-    elif title.startswith('tvdb/') and title[5:].isdigit(): # TVDB ID
-        return {'type': 'tvdb_id', 'title': title[5:]}
-    return None
-
-
 def search_show(title, year=None):
     # type: (Text) -> List[InfoType]
     """
@@ -87,7 +76,7 @@ def search_show(title, year=None):
     :return: a list with found TV shows
     """
     results = []
-    ext_media_id = _parse_media_id(title)
+    ext_media_id = data_utils.parse_media_id(title)
     if ext_media_id:
         search_url = FIND_URL.format(ext_media_id['title'])
         params = {'external_source':ext_media_id['type']}
