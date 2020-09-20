@@ -37,6 +37,7 @@ API_BASE = '?api_key=f090bb54758cabf231fb605d3e3e0468'
 LANG_BASE = '&language=' + settings.LANG
 EPISODE_GROUP_URL = BASE_URL + 'tv/episode_group/{}' + API_BASE
 SEARCH_URL = BASE_URL + 'search/tv' + API_BASE + LANG_BASE
+FIND_URL = BASE_URL + 'find/{}' + API_BASE + LANG_BASE
 SHOW_URL = BASE_URL +'tv/{}' + API_BASE + LANG_BASE
 SEASON_URL = BASE_URL +'tv/{}/season/{}' + API_BASE + LANG_BASE
 EPISODE_URL = BASE_URL + 'tv/{}/season/{}/episode/{}' + API_BASE + LANG_BASE
@@ -67,6 +68,17 @@ def _load_info(url, params=None):
     return json_response
 
 
+def _parse_media_id(title):
+    title = title.lower()
+    if title.startswith('tt') and title[2:].isdigit():
+        return {'type': 'imdb_id', 'title': title} # IMDB ID works alone because it is clear
+    elif title.startswith('imdb/tt') and title[7:].isdigit(): # IMDB ID with prefix to match
+        return {'type': 'imdb_id', 'title': title[5:]} # IMDB ID works alone because it is clear
+    elif title.startswith('tvdb/') and title[5:].isdigit(): # TVDB ID
+        return {'type': 'tvdb_id', 'title': title[5:]}
+    return None
+
+
 def search_show(title, year=None):
     # type: (Text) -> List[InfoType]
     """
@@ -76,15 +88,24 @@ def search_show(title, year=None):
     : param year: the year to search (optional)
     :return: a list with found TV shows
     """
-    params = {'query': title}
-    if year:
-        params.update({'first_air_date_year': str(year)})
+    results = []
+    ext_media_id = _parse_media_id(title)
+    if ext_media_id:
+        search_url = FIND_URL.format(ext_media_id['title'])
+        params = {'external_source':ext_media_id['type']}
+    else:
+        search_url = SEARCH_URL
+        params = {'query': title}
+        if year:
+            params.update({'first_air_date_year': str(year)})
     try:
-        resp = _load_info(SEARCH_URL, params)
-        results = resp.get('results', [])
+        resp = _load_info(search_url, params)
+        if ext_media_id:
+            results = resp.get('tv_results', [])
+        else:
+            results = resp.get('results', [])
     except HTTPError as exc:
         logger.error('themoviedb returned an error: {}'.format(exc))
-        results = []
     return results
 
 
