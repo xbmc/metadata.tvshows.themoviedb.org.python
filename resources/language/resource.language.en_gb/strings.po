@@ -17,15 +17,15 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgctxt "#30000"
-msgid "Enable fanart from TMDb"
+msgid "Preferred Language"
 msgstr ""
 
 msgctxt "#30001"
-msgid "Prefer Trailer from HD-Trailers.net"
+msgid "Preferred Certification Country"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Preferred Language"
+msgid "Certification Prefix"
 msgstr ""
 
 msgctxt "#30003"
@@ -33,43 +33,17 @@ msgid "Default Rating from"
 msgstr ""
 
 msgctxt "#30004"
-msgid "Enable Trailer (YouTube)"
+msgid "Also add IMDb ratings"
 msgstr ""
 
 msgctxt "#30005"
-msgid "Keep Original Title"
+msgid "Also add Trakt.tv ratings"
 msgstr ""
 
-msgctxt "#30006"
-msgid "Preferred Certification Country"
-msgstr ""
-
-msgctxt "#30007"
-msgid "Add also IMDb ratings"
-msgstr ""
-
-msgctxt "#30008"
-msgid "Certification Prefix"
-msgstr ""
-
-msgctxt "#30009"
-msgid "Add multiple studios"
-msgstr ""
-
-msgctxt "#30010"
-msgid "Add also Trakt.tv ratings"
-msgstr ""
-
-msgctxt "#30011"
-msgid "Add keywords as tags"
-msgstr ""
-
-msgctxt "#30012"
-msgid "Separate TMDb fanart with title to landscape"
-msgstr ""
+# emptry strings from 30016 to 30099
 
 msgctxt "#30100"
-msgid "Language for Fanart.tv artwork"
+msgid "Fanart.tv"
 msgstr ""
 
 msgctxt "#30101"
@@ -77,65 +51,30 @@ msgid "Fanart.tv personal API key (optional)"
 msgstr ""
 
 msgctxt "#30102"
-msgid "Enable fanart from Fanart.tv"
+msgid "Enable fanart"
 msgstr ""
 
 msgctxt "#30103"
-msgid "Enable poster from Fanart.tv"
+msgid "Enable poster"
 msgstr ""
 
 msgctxt "#30104"
-msgid "Enable clearlogo from Fanart.tv"
+msgid "Enable banner"
 msgstr ""
 
 msgctxt "#30105"
-msgid "Enable clearart from Fanart.tv"
+msgid "Enable clearlogo"
 msgstr ""
 
 msgctxt "#30106"
-msgid "Enable discart from Fanart.tv"
+msgid "Enable clearart"
 msgstr ""
 
 msgctxt "#30107"
-msgid "Enable banner from Fanart.tv"
+msgid "Enable season poster"
 msgstr ""
 
 msgctxt "#30108"
-msgid "Enable landscape from Fanart.tv"
+msgid "Enable season banner"
 msgstr ""
 
-msgctxt "#30109"
-msgid "Enable set fanart from Fanart.tv"
-msgstr ""
-
-msgctxt "#30110"
-msgid "Enable set poster from Fanart.tv"
-msgstr ""
-
-msgctxt "#30111"
-msgid "Enable set clearlogo from Fanart.tv"
-msgstr ""
-
-msgctxt "#30112"
-msgid "Enable set clearart from Fanart.tv"
-msgstr ""
-
-msgctxt "#30113"
-msgid "Enable set discart from Fanart.tv"
-msgstr ""
-
-msgctxt "#30114"
-msgid "Enable set banner from Fanart.tv"
-msgstr ""
-
-msgctxt "#30115"
-msgid "Enable set landscape from Fanart.tv"
-msgstr ""
-
-msgctxt "#30116"
-msgid "Enable keyart from Fanart.tv"
-msgstr ""
-
-msgctxt "#30117"
-msgid "Enable set keyart from Fanart.tv"
-msgstr ""
