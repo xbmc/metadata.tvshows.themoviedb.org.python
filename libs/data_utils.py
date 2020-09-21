@@ -152,12 +152,18 @@ def set_show_artwork(show_info, list_item):
     """Set available images for a show"""
     fanart_list = []
     for backdrop in show_info.get('images', {}).get('backdrops', []):
-        url = settings.IMAGEROOTURL + backdrop['file_path']
+        if backdrop.get('type') == 'fanarttv':
+            url = backdrop['file_path']
+        else:
+            url = settings.IMAGEROOTURL + backdrop['file_path']
         fanart_list.append({'image': url})
     if fanart_list:
         list_item.setAvailableFanart(fanart_list)
     for poster in show_info.get('images', {}).get('posters', []):
-        url = settings.IMAGEROOTURL + poster['file_path']
+        if poster.get('type') == 'fanarttv':
+            url = poster['file_path']
+        else:
+            url = settings.IMAGEROOTURL + poster['file_path']
         list_item.addAvailableArtwork(url, 'poster')
     return list_item
 

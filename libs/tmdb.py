@@ -39,6 +39,7 @@ FIND_URL = BASE_URL.format('find/{}')
 SHOW_URL = BASE_URL.format('tv/{}')
 SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
+FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=384afe262ee0962545a752ff340e3ce4'
 HEADERS = (
     ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
     ('Accept', 'application/json'),
@@ -62,7 +63,7 @@ def _load_info(url, params=None):
     if not response.ok:
         response.raise_for_status()
     json_response = response.json()
-    logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
+    # logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
     return json_response
 
 
@@ -173,7 +174,7 @@ def load_show_info(show_id, ep_grouping=None):
                 logger.error('themoviedb returned an error: {}'.format(exc))
                 season_info = {}
             season_map[str(season['season_number'])] = season_info
-            
+        show_info = load_fanarttv_art(show_info)
         show_info = load_episode_list(show_info, season_map, ep_grouping)
         cast_check = []
         cast = []
@@ -221,3 +222,44 @@ def load_episode_info(show_id, episode_id):
         cache.cache_show_info(show_info)
         return ep_return
     return None
+
+
+def load_fanarttv_art(show_info):
+    # type: (Text) -> Optional[InfoType]
+    """
+    Add fanart.tv images for a show
+
+    :param show_info: the current show info
+    :return: show info
+    """
+    mapping = { 'showbackground':'backdrops',
+                'tvposter':'posters',
+              }
+    artwork_enabled = False
+    for artcheck in settings.FANARTTV_ART:
+        artwork_enabled = artwork_enabled or artcheck
+        if artwork_enabled:
+            break
+    tvdb_id = show_info.get('external_ids', {}).get('tvdb_id')
+    if tvdb_id and artwork_enabled:
+        fanarttv_url = FANARTTV_URL.format(tvdb_id)
+        try:
+            artwork = _load_info(fanarttv_url)
+        except HTTPError as exc:
+            logger.error('fanart.tv returned an error: {}'.format(exc))
+            return show_info
+        logger.debug('fanart.tv response:\n{}'.format(pformat(artwork)))
+        for fanarttv_type, tmdb_type in six.iteritems(mapping):
+            logger.debug('********trying to load fanart.tv art')
+            if settings.FANARTTV_ART[fanarttv_type]:
+                if not show_info['images'].get(tmdb_type):
+                    show_info['images'][tmdb_type] = []
+                for item in artwork.get(fanarttv_type, []):
+                    lang = item.get('lang')
+                    logger.debug('the lang for item %s is %s' % (item['id'], lang))
+                    if lang == '' or lang == '00' or lang == settings.LANG[0:2]:
+                        filepath = item.get('url')
+                        if filepath:
+                            show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv'})
+    return show_info
+    
