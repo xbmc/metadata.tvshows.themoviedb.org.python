@@ -1,4 +1,19 @@
-import xbmcaddon
+import xbmcaddon, six
+
+IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
+FANARTTV_MAPPING = { 'showbackground': 'backdrops',
+                     'tvposter': 'posters',
+                     'tvbanner': 'banner',
+                     'hdtvlogo': 'clearlogo',
+                     'clearlogo': 'clearlogo',
+                     'hdclearart': 'clearart',
+                     'clearart': 'clearart',
+                     'tvthumb': 'landscape',
+                     'characterart': 'characterart',
+                     'seasonposter':'seasonposters',
+                     'seasonbanner':'seasonbanner',
+                     'seasonthumb': 'seasonlandscape'
+                   }
 
 ADDON_SETTINGS = xbmcaddon.Addon()
 LANG = ADDON_SETTINGS.getSettingString('language')
@@ -7,12 +22,6 @@ CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
 
 FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
 FANARTTV_ART = {}
-FANARTTV_ART['showbackground'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_fanart')
-FANARTTV_ART['tvposter'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_poster')
-FANARTTV_ART['tvbanner'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_banner')
-FANARTTV_ART['hdtvlogo'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_clearlogo')
-FANARTTV_ART['hdclearart'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_clearart')
-FANARTTV_ART['seasonposter'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_seasonposter')
-FANARTTV_ART['seasonbanner'] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_seasonbanner')
+for fanarttv_type, tmdb_type in six.iteritems(FANARTTV_MAPPING):
+    FANARTTV_ART[tmdb_type] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_%s' % tmdb_type)
 
-IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'

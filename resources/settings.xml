@@ -158,6 +158,11 @@
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
+				<setting id="keeporiginaltitle" type="boolean" label="30006" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
 			</group>
 		</category>
 		<category id="fanarttv" label="30100" help="">
@@ -172,12 +177,12 @@
 						<heading>30101</heading>
 					</control>
 				</setting>
-				<setting id="enable_fanarttv_fanart" type="boolean" label="30102" help="">
+				<setting id="enable_fanarttv_backdrops" type="boolean" label="30102" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="enable_fanarttv_poster" type="boolean" label="30103" help="">
+				<setting id="enable_fanarttv_posters" type="boolean" label="30103" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
@@ -197,12 +202,27 @@
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="enable_fanarttv_seasonposter" type="boolean" label="30107" help="">
+				<setting id="enable_fanarttv_landscape" type="boolean" label="30107" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="enable_fanarttv_seasonbanner" type="boolean" label="30108" help="">
+				<setting id="enable_fanarttv_characterart" type="boolean" label="30108" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="enable_fanarttv_seasonposters" type="boolean" label="30150" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="enable_fanarttv_seasonbanner" type="boolean" label="30151" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="enable_fanarttv_seasonlandscape" type="boolean" label="30152" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>

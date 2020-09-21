@@ -92,7 +92,7 @@ def _get_credits(show_info):
     # type: (InfoType) -> List[Text]
     """Extract show creator(s) from show info"""
     credits_ = []
-    for item in show_info['created_by']:
+    for item in show_info.get('created_by', []):
         credits_.append(item['name'])
     return credits_
 
@@ -119,19 +119,6 @@ def _set_rating(the_info, list_item):
     return list_item
 
 
-def _extract_artwork_url(resolutions):
-    # type: (Dict[Text, Text]) -> Text
-    """Extract image URL from the list of available resolutions"""
-    url = ''
-    for image_size in IMAGE_SIZES:
-        url = safe_get(resolutions, image_size, '')
-        if not isinstance(url, six.text_type):
-            url = safe_get(url, 'url', '')
-            if url:
-                break
-    return url
-
-
 def _add_season_info(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Add info for show seasons"""
@@ -150,21 +137,28 @@ def _add_season_info(show_info, list_item):
 def set_show_artwork(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set available images for a show"""
-    fanart_list = []
-    for backdrop in show_info.get('images', {}).get('backdrops', []):
-        if backdrop.get('type') == 'fanarttv':
-            url = backdrop['file_path']
+    for image_type, image_list in six.iteritems(show_info.get('images', {})):
+        if image_type == 'backdrops':
+            fanart_list = []
+            for image in image_list:
+                if image.get('type') == 'fanarttv':
+                    theurl = image['file_path']
+                else:
+                    theurl = settings.IMAGEROOTURL + image['file_path']
+                fanart_list.append({'image': theurl})
+            if fanart_list:
+                list_item.setAvailableFanart(fanart_list)
         else:
-            url = settings.IMAGEROOTURL + backdrop['file_path']
-        fanart_list.append({'image': url})
-    if fanart_list:
-        list_item.setAvailableFanart(fanart_list)
-    for poster in show_info.get('images', {}).get('posters', []):
-        if poster.get('type') == 'fanarttv':
-            url = poster['file_path']
-        else:
-            url = settings.IMAGEROOTURL + poster['file_path']
-        list_item.addAvailableArtwork(url, 'poster')
+            if image_type == 'posters':
+                destination = 'poster'
+            else:
+                destination = image_type
+            for image in image_list:
+                if image.get('type') == 'fanarttv':
+                    theurl = image['file_path']
+                else:
+                    theurl = settings.IMAGEROOTURL + image['file_path']
+                list_item.addAvailableArtwork(theurl, destination)
     return list_item
 
 
@@ -256,10 +250,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             if img_path:
                 image_url = settings.IMAGEROOTURL + img_path
                 list_item.addAvailableArtwork(image_url, 'thumb')
-        # need to load show info from cache, match the original season, then see if the images dict exists
-        # if it doesn't, load the season info from the API then add the season info with
-        # list_item = _add_season_info(show_info, list_item)
-        # then update the show info and save that update to the cache
+        video['credits'] = _get_credits(episode_info)
     list_item.setInfo('video', video)
     return list_item
 

@@ -17,19 +17,19 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgctxt "#30000"
-msgid "Preferred Language"
+msgid "Preferred language"
 msgstr ""
 
 msgctxt "#30001"
-msgid "Preferred Certification Country"
+msgid "Preferred certification country"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Certification Prefix"
+msgid "Certification prefix"
 msgstr ""
 
 msgctxt "#30003"
-msgid "Default Rating from"
+msgid "Default rating from"
 msgstr ""
 
 msgctxt "#30004"
@@ -40,7 +40,11 @@ msgctxt "#30005"
 msgid "Also add Trakt.tv ratings"
 msgstr ""
 
-# emptry strings from 30016 to 30099
+msgctxt "#30006"
+msgid "Keep original title"
+msgstr ""
+
+# emptry strings from 30007 to 30099
 
 msgctxt "#30100"
 msgid "Fanart.tv"
@@ -71,10 +75,24 @@ msgid "Enable clearart"
 msgstr ""
 
 msgctxt "#30107"
-msgid "Enable season poster"
+msgid "Enable landscape"
 msgstr ""
 
 msgctxt "#30108"
+msgid "Enable character art"
+msgstr ""
+
+# emptry strings from 30109 to 30149
+
+msgctxt "#30150"
+msgid "Enable season poster"
+msgstr ""
+
+msgctxt "#30151"
 msgid "Enable season banner"
+msgstr ""
+
+msgctxt "#30152"
+msgid "Enable season landscape"
 msgstr ""
 

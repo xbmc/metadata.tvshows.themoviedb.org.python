@@ -232,15 +232,12 @@ def load_fanarttv_art(show_info):
     :param show_info: the current show info
     :return: show info
     """
-    mapping = { 'showbackground':'backdrops',
-                'tvposter':'posters',
-              }
+    tvdb_id = show_info.get('external_ids', {}).get('tvdb_id')
     artwork_enabled = False
     for artcheck in settings.FANARTTV_ART:
         artwork_enabled = artwork_enabled or artcheck
         if artwork_enabled:
             break
-    tvdb_id = show_info.get('external_ids', {}).get('tvdb_id')
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
         try:
@@ -248,18 +245,19 @@ def load_fanarttv_art(show_info):
         except HTTPError as exc:
             logger.error('fanart.tv returned an error: {}'.format(exc))
             return show_info
-        logger.debug('fanart.tv response:\n{}'.format(pformat(artwork)))
-        for fanarttv_type, tmdb_type in six.iteritems(mapping):
-            logger.debug('********trying to load fanart.tv art')
-            if settings.FANARTTV_ART[fanarttv_type]:
+        for fanarttv_type, tmdb_type in six.iteritems(settings.FANARTTV_MAPPING):
+            if settings.FANARTTV_ART[tmdb_type]:
                 if not show_info['images'].get(tmdb_type):
                     show_info['images'][tmdb_type] = []
                 for item in artwork.get(fanarttv_type, []):
                     lang = item.get('lang')
-                    logger.debug('the lang for item %s is %s' % (item['id'], lang))
+                    filepath = ''
                     if lang == '' or lang == '00' or lang == settings.LANG[0:2]:
                         filepath = item.get('url')
-                        if filepath:
+                    if filepath:
+                        if fanarttv_type.startswith('season'):
+                            pass # need to do something special to get these into the seasons
+                        else:
                             show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv'})
     return show_info
     
