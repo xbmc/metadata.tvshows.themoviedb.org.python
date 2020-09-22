@@ -90,11 +90,29 @@ def _set_cast(cast_info, list_item):
 
 def _get_credits(show_info):
     # type: (InfoType) -> List[Text]
-    """Extract show creator(s) from show info"""
+    """Extract show creator(s) and writer(s) from show info"""
     credits_ = []
+    logger.debug('****adding creators and writers')
     for item in show_info.get('created_by', []):
         credits_.append(item['name'])
+        logger.debug('adding %s from creator list' % item['name'])
+    for item in show_info.get('credits', {}).get('crew', []):
+        if item.get('job') == 'Writer' and item.get('name') not in credits_:
+            credits_.append(item['name'])
+            logger.debug('adding %s from crew list' % item['name'])
     return credits_
+
+
+def _get_directors(episode_info):
+    # type: (InfoType) -> List[Text]
+    """Extract episode writer(s) from episode info"""
+    logger.debug('****adding directors')
+    directors_ = []
+    for item in episode_info.get('credits', {}).get('crew', []):
+        if item.get('job') == 'Director':
+            logger.debug('adding %s from crew list' % item['name'])
+            directors_.append(item['name'])
+    return directors_
 
 
 def _set_unique_ids(ext_ids, list_item):
@@ -217,7 +235,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 mpaa = mpaa_backup
             if mpaa:
                 video['Mpaa'] = settings.CERT_PREFIX + mpaa
-        video['credits'] = _get_credits(show_info)
+        video['credits'] = video['writer'] = _get_credits(show_info)
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
@@ -263,7 +281,8 @@ def add_episode_info(list_item, episode_info, full_info=True):
             if img_path:
                 image_url = settings.IMAGEROOTURL + img_path
                 list_item.addAvailableArtwork(image_url, 'thumb')
-        video['credits'] = _get_credits(episode_info)
+        video['credits'] = video['writer'] = _get_credits(episode_info)
+        video['director'] = _get_directors(episode_info)
     list_item.setInfo('video', video)
     return list_item
 
