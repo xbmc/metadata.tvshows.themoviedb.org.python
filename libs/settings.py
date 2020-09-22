@@ -1,5 +1,6 @@
 import xbmcaddon, six
 
+MAXIMAGES = 350
 IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
 FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'tvposter': 'posters',

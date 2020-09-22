@@ -92,25 +92,20 @@ def _get_credits(show_info):
     # type: (InfoType) -> List[Text]
     """Extract show creator(s) and writer(s) from show info"""
     credits_ = []
-    logger.debug('****adding creators and writers')
     for item in show_info.get('created_by', []):
         credits_.append(item['name'])
-        logger.debug('adding %s from creator list' % item['name'])
     for item in show_info.get('credits', {}).get('crew', []):
         if item.get('job') == 'Writer' and item.get('name') not in credits_:
             credits_.append(item['name'])
-            logger.debug('adding %s from crew list' % item['name'])
     return credits_
 
 
 def _get_directors(episode_info):
     # type: (InfoType) -> List[Text]
     """Extract episode writer(s) from episode info"""
-    logger.debug('****adding directors')
     directors_ = []
     for item in episode_info.get('credits', {}).get('crew', []):
         if item.get('job') == 'Director':
-            logger.debug('adding %s from crew list' % item['name'])
             directors_.append(item['name'])
     return directors_
 

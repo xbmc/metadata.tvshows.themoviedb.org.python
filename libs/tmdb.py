@@ -20,6 +20,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import json, six
+from math import floor
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
@@ -186,6 +187,7 @@ def load_show_info(show_id, ep_grouping=None):
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
         show_info = load_fanarttv_art(show_info)
+        show_info = trim_artwork(show_info)
         cast_check = []
         cast = []
         for season in reversed(show_info.get('seasons', [])):
@@ -194,7 +196,7 @@ def load_show_info(show_id, ep_grouping=None):
                     cast.append(cast_member)
                     cast_check.append(cast_member['name'])
         show_info['credits']['cast'] = cast
-        logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
+        # logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
         cache.cache_show_info(show_info)
     return show_info
 
@@ -279,4 +281,63 @@ def load_fanarttv_art(show_info):
                         else:
                             show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv'})
     return show_info
-    
+
+
+def trim_artwork(show_info):
+    # type: (Text) -> Optional[InfoType]
+    """
+    Trim artwork to keep the text blob below 65K characters
+
+    :param show_info: the current show info
+    :return: show info
+    """
+    image_counts = {}
+    image_total = 0
+    backdrops_total = 0
+    for image_type, image_list in six.iteritems(show_info.get('images', {})):
+        total = len(image_list)
+        if image_type == 'backdrops':
+            backdrops_total = backdrops_total + total
+        else:
+            image_counts[image_type] = {'total':total}
+            image_total = image_total + total
+    for season in show_info.get('seasons', []):
+        for image_type, image_list in six.iteritems(season.get('images', {})):
+            total = len(image_list)
+            thetype = '%s_%s' % (str(season['season_number']), image_type)
+            image_counts[thetype] = {'total':total}
+            image_total = image_total + total
+    if image_total <= settings.MAXIMAGES and backdrops_total <= settings.MAXIMAGES:
+        return show_info
+    if backdrops_total > settings.MAXIMAGES:
+        logger.error('there are %s fanart images' % str(backdrops_total))
+        logger.error('that is more than the max of %s, image results will be trimmed to the max' % str(settings.MAXIMAGES))
+        reduce = -1 * (backdrops_total - settings.MAXIMAGES )
+        del show_info['images']['backdrops'][reduce:]
+    if image_total > settings.MAXIMAGES:
+        logger.error('there are %s non-fanart images' % str(image_total))
+        logger.error('that is more than the max of %s, image results will be trimmed by %s' % (str(settings.MAXIMAGES), str(reduction)))
+        reduction = (image_total - settings.MAXIMAGES)/image_total
+        for key, value in six.iteritems(image_counts):
+            total = value['total']
+            reduce = int(floor(total * reduction))
+            target = total - reduce
+            if target < 5:
+                reduce = 0
+            else:
+                reduce = -1 * reduce
+            image_counts[key]['reduce'] = reduce
+            logger.debug('%s: %s' % (key, pformat(image_counts[key])))
+        for image_type, image_list in six.iteritems(show_info.get('images', {})):
+            if image_type == 'backdrops':
+                continue # already handled backdrops above
+            reduce = image_counts[image_type]['reduce']
+            if reduce != 0:
+                del show_info['images'][image_type][reduce:]
+        for s in range(len(show_info.get('seasons', []))):
+            for image_type, image_list in six.iteritems(show_info['seasons'][s].get('images', {})):
+                thetype = '%s_%s' % (str(show_info['seasons'][s]['season_number']), image_type)
+                reduce = image_counts[thetype]['reduce']
+                if reduce != 0:
+                    del show_info['seasons'][s]['images'][image_type][reduce:]
+    return show_info
