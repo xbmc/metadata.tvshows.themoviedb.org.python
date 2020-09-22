@@ -79,8 +79,12 @@ def search_show(title, year=None):
     results = []
     ext_media_id = data_utils.parse_media_id(title)
     if ext_media_id:
-        search_url = FIND_URL.format(ext_media_id['title'])
-        params = {'external_source':ext_media_id['type']}
+        if ext_media_id['type'] == 'tmdb_id':
+            search_url = SHOW_URL.format(ext_media_id['title'])
+            params = {}
+        else:
+            search_url = FIND_URL.format(ext_media_id['title'])
+            params = {'external_source':ext_media_id['type']}
     else:
         search_url = SEARCH_URL
         params = {'query': title}
@@ -89,7 +93,13 @@ def search_show(title, year=None):
     try:
         resp = _load_info(search_url, params)
         if ext_media_id:
-            results = resp.get('tv_results', [])
+            if ext_media_id['type'] == 'tmdb_id':
+                if resp.get('success') == 'false':
+                    results = []
+                else:
+                    results = [resp]
+            else:
+                results = resp.get('tv_results', [])
         else:
             results = resp.get('results', [])
     except HTTPError as exc:
