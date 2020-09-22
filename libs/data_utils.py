@@ -174,11 +174,16 @@ def add_main_show_info(list_item, show_info, full_info=True):
     # type: (ListItem, InfoType, bool) -> ListItem
     """Add main show info to a list item"""
     plot = _clean_plot(safe_get(show_info, 'overview', ''))
+    original_name = show_info.get('original_name')
+    if settings.KEEPTITLE and original_name:
+        showname = original_name
+    else:
+        showname = show_info['name']
     video = {
         'plot': plot,
         'plotoutline': plot,
-        'title': show_info['name'],
-        'tvshowtitle': show_info['name'],
+        'title': showname,
+        'tvshowtitle': showname,
         'mediatype': 'tvshow',
         # This property is passed as "url" parameter to getepisodelist call
         'episodeguide': str(show_info['id']),
