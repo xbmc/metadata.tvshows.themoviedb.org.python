@@ -32,15 +32,14 @@ try:
 except ImportError:
     pass
 
-# Same key as built-in XML scraper
-BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=f090bb54758cabf231fb605d3e3e0468&language=' + settings.LANG
+BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=af3a53eb387d57fc935e9128468b1899&language=' + settings.LANG
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
 FIND_URL = BASE_URL.format('find/{}')
 SHOW_URL = BASE_URL.format('tv/{}')
 SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
-FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=384afe262ee0962545a752ff340e3ce4'
+FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=b018086af0e1478479adfc55634db97d'
 HEADERS = (
     ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
     ('Accept', 'application/json'),
