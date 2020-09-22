@@ -174,8 +174,8 @@ def load_show_info(show_id, ep_grouping=None):
                 logger.error('themoviedb returned an error: {}'.format(exc))
                 season_info = {}
             season_map[str(season['season_number'])] = season_info
-        show_info = load_fanarttv_art(show_info)
         show_info = load_episode_list(show_info, season_map, ep_grouping)
+        show_info = load_fanarttv_art(show_info)
         cast_check = []
         cast = []
         for season in reversed(show_info.get('seasons', [])):
@@ -247,7 +247,7 @@ def load_fanarttv_art(show_info):
             return show_info
         for fanarttv_type, tmdb_type in six.iteritems(settings.FANARTTV_MAPPING):
             if settings.FANARTTV_ART[tmdb_type]:
-                if not show_info['images'].get(tmdb_type):
+                if not show_info['images'].get(tmdb_type) and not tmdb_type.startswith('season'):
                     show_info['images'][tmdb_type] = []
                 for item in artwork.get(fanarttv_type, []):
                     lang = item.get('lang')
@@ -255,8 +255,17 @@ def load_fanarttv_art(show_info):
                     if lang == '' or lang == '00' or lang == settings.LANG[0:2]:
                         filepath = item.get('url')
                     if filepath:
-                        if fanarttv_type.startswith('season'):
-                            pass # need to do something special to get these into the seasons
+                        if tmdb_type.startswith('season'):
+                            image_type = tmdb_type[6:]
+                            for s in range(len(show_info.get('seasons', []))):
+                                season_num = show_info['seasons'][s]['season_number']
+                                artseason = item.get('season', '')
+                                if not show_info['seasons'][s].get('images'):
+                                    show_info['seasons'][s]['images'] = {}
+                                if not show_info['seasons'][s]['images'].get(image_type):
+                                    show_info['seasons'][s]['images'][image_type] = []                                
+                                if artseason == '' or artseason == str(season_num):
+                                    show_info['seasons'][s]['images'][image_type].append({'file_path':filepath, 'type':'fanarttv'})
                         else:
                             show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv'})
     return show_info

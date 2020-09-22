@@ -128,9 +128,17 @@ def _add_season_info(show_info, list_item):
         if image:
             url = settings.IMAGEROOTURL + image
             list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
-        for image in season.get('images',{}).get('posters', []):
-            url = settings.IMAGEROOTURL + image['file_path']
-            list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
+        for image_type, image_list in six.iteritems(season.get('images', {})):
+            if image_type == 'posters':
+                destination = 'poster'
+            else:
+                destination = image_type
+            for image in image_list:
+                if image.get('type') == 'fanarttv':
+                    theurl = image['file_path']
+                else:
+                    theurl = settings.IMAGEROOTURL + image['file_path']
+                list_item.addAvailableArtwork(theurl, destination, season=season['season_number'])
     return list_item
 
 
