@@ -126,7 +126,7 @@
 						<heading>30008</heading>
 					</control>
 				</setting>
-<!--				<setting id="RatingS" type="string" label="30003" help="">
+				<setting id="RatingS" type="string" label="30003" help="">
 					<level>0</level>
 					<default>TMDb</default>
 					<constraints>
@@ -157,7 +157,7 @@
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
-				</setting> -->
+				</setting>
 				<setting id="keeporiginaltitle" type="boolean" label="30006" help="">
 					<level>0</level>
 					<default>false</default>
