@@ -1,5 +1,7 @@
 import xbmcaddon, six
 
+TMDB_CLOWNCAR = 'af3a53eb387d57fc935e9128468b1899'
+FANARTTV_CLOWNCAR = 'b018086af0e1478479adfc55634db97d'
 MAXIMAGES = 350
 IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
 FANARTTV_MAPPING = { 'showbackground': 'backdrops',
