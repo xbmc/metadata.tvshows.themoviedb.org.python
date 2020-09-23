@@ -66,7 +66,7 @@ def _load_info(url, params=None):
     if not response.ok:
         response.raise_for_status()
     json_response = response.json()
-    logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
+    # logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
     return json_response
 
 
