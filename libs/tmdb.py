@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Functions to interact with TVmaze API"""
+"""Functions to interact with TMdB API"""
 
 from __future__ import absolute_import, unicode_literals
 
@@ -32,14 +32,17 @@ try:
 except ImportError:
     pass
 
-BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=af3a53eb387d57fc935e9128468b1899&language=' + settings.LANG
+BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=%s&language=%s' % (settings.TMDB_CLOWNCAR, settings.LANG)
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
 FIND_URL = BASE_URL.format('find/{}')
 SHOW_URL = BASE_URL.format('tv/{}')
 SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
-FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=b018086af0e1478479adfc55634db97d'
+if settings.FANARTTV_CLIENTKEY:
+    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s&client_key=%s' % (settings.FANARTTV_CLOWNCAR, settings.FANARTTV_CLIENTKEY)
+else:
+    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s' % settings.FANARTTV_CLOWNCAR
 HEADERS = (
     ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
     ('Accept', 'application/json'),
@@ -63,7 +66,7 @@ def _load_info(url, params=None):
     if not response.ok:
         response.raise_for_status()
     json_response = response.json()
-    # logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
+    logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
     return json_response
 
 
@@ -195,7 +198,7 @@ def load_show_info(show_id, ep_grouping=None):
                     cast.append(cast_member)
                     cast_check.append(cast_member['name'])
         show_info['credits']['cast'] = cast
-        # logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
+        logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
         cache.cache_show_info(show_info)
     return show_info
 

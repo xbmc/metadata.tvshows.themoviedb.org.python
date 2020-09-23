@@ -51,7 +51,7 @@ msgid "Fanart.tv"
 msgstr ""
 
 msgctxt "#30101"
-msgid "Fanart.tv personal API key (optional)"
+msgid "Client key (optional)"
 msgstr ""
 
 msgctxt "#30102"
