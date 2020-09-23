@@ -19,10 +19,11 @@ FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                    }
 
 ADDON_SETTINGS = xbmcaddon.Addon()
-LANG = ADDON_SETTINGS.getSettingString('language')
+LANG = ADDON_SETTINGS.getSettingString('language').replace('-', '_')
 CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry').lower()
 CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
 KEEPTITLE = ADDON_SETTINGS.getSettingBool('keeporiginaltitle')
+VERBOSELOG = ADDON_SETTINGS.getSettingBool('verboselog')
 
 FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
 FANARTTV_ART = {}
