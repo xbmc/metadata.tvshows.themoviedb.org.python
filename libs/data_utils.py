@@ -286,7 +286,7 @@ def parse_nfo_url(nfo):
     # type: (Text) -> Optional[UrlParseResult]
     """Extract show ID from NFO file contents"""
     for regexp in SHOW_ID_REGEXPS:
-        logger.debug('****** trying regex to match service from parsing nfo:')
+        logger.debug('trying regex to match service from parsing nfo:')
         logger.debug(regexp)
         show_id_match = re.search(regexp, nfo, re.I)
         if show_id_match:

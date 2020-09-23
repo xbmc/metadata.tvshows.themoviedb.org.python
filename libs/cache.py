@@ -89,5 +89,5 @@ def load_show_info_from_cache(show_id):
             return None
         return cache['show_info']
     except (IOError, pickle.PickleError) as exc:
-        logger.debug('Cache error: {} {}'.format(type(exc), exc))
+        logger.debug('Cache message: {} {}'.format(type(exc), exc))
         return None

@@ -83,6 +83,7 @@ def search_show(title, year=None):
     results = []
     ext_media_id = data_utils.parse_media_id(title)
     if ext_media_id:
+        logger.debug('using %s of %s to find show' % (ext_media_id['type'], ext_media_id['title']))
         if ext_media_id['type'] == 'tmdb_id':
             search_url = SHOW_URL.format(ext_media_id['title'])
             params = {}
@@ -90,6 +91,7 @@ def search_show(title, year=None):
             search_url = FIND_URL.format(ext_media_id['title'])
             params = {'external_source':ext_media_id['type']}
     else:
+        logger.debug('using title of %s to find show' % title)
         search_url = SEARCH_URL
         params = {'query': title}
         if year:
@@ -144,6 +146,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
                 show_info['seasons'].append(current_season)
                 season_num = season_num + 1
     else:
+        logger.debug('Getting episodes from standard season list')
         show_info['seasons'] = []
         for key, value in six.iteritems(season_map):
             show_info['seasons'].append(value)
@@ -203,6 +206,8 @@ def load_show_info(show_id, ep_grouping=None):
         if settings.VERBOSELOG:
             logger.debug(format(pformat(show_info)))
         cache.cache_show_info(show_info)
+    else:
+        logger.debug('using cached show info')
     return show_info
 
 
