@@ -25,6 +25,15 @@ CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
 KEEPTITLE = ADDON_SETTINGS.getSettingBool('keeporiginaltitle')
 VERBOSELOG = ADDON_SETTINGS.getSettingBool('verboselog')
 
+primary_rating = ADDON_SETTINGS.getSettingString('RatingS').lower()
+RATING_TYPES = [primary_rating]
+if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'imdb':
+    RATING_TYPES.append('imdb')
+if ADDON_SETTINGS.getSettingBool('traktanyway') and primary_rating != 'trakt':
+    RATING_TYPES.append('trakt')
+if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'tmdb':
+    RATING_TYPES.append('tmdb')
+
 FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
 FANARTTV_ART = {}
 for fanarttv_type, tmdb_type in six.iteritems(FANARTTV_MAPPING):

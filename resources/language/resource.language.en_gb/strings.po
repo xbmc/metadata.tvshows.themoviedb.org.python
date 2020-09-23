@@ -41,6 +41,10 @@ msgid "Also add Trakt.tv ratings"
 msgstr ""
 
 msgctxt "#30006"
+msgid "Also add TMDb ratings"
+msgstr ""
+
+msgctxt "#30007"
 msgid "Keep original title"
 msgstr ""
 

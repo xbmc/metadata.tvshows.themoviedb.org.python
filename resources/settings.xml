@@ -158,7 +158,17 @@
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
-				<setting id="keeporiginaltitle" type="boolean" label="30006" help="">
+				<setting id="tmdbanyway" type="boolean" label="30006" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="!is" setting="RatingS">TMDb</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting id="keeporiginaltitle" type="boolean" label="30007" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
