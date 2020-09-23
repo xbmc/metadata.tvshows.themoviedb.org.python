@@ -160,7 +160,7 @@
 				</setting>
 				<setting id="tmdbanyway" type="boolean" label="30006" help="">
 					<level>0</level>
-					<default>false</default>
+					<default>true</default>
 					<dependencies>
 						<dependency type="visible">
 							<condition operator="!is" setting="RatingS">TMDb</condition>

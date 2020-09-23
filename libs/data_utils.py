@@ -126,17 +126,8 @@ def _set_rating(the_info, list_item, episode=False):
     # type: (InfoType, ListItem) -> ListItem
     """Set show/episode rating"""
     first = True
-    if episode:
-        rating_type = 'tmdb'
-        logger.debug('adding episode rating type of %s' % rating_type)
-        rating = float(the_info.get('ratings', {}).get(rating_type, {}).get('rating', '0'))
-        votes = int(the_info.get('ratings', {}).get(rating_type, {}).get('votes', '0'))
-        logger.debug("adding rating of %s and votes of %s" % (str(rating), str(votes)))
-        if rating > 0:
-            list_item.setRating(rating_type, rating, votes=votes, defaultt=first)
-        return list_item
     for rating_type in settings.RATING_TYPES:
-        logger.debug('adding show rating type of %s' % rating_type)
+        logger.debug('adding rating type of %s' % rating_type)
         rating = float(the_info.get('ratings', {}).get(rating_type, {}).get('rating', '0'))
         votes = int(the_info.get('ratings', {}).get(rating_type, {}).get('votes', '0'))
         logger.debug("adding rating of %s and votes of %s" % (str(rating), str(votes)))
