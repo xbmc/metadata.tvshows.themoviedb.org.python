@@ -24,7 +24,7 @@ from math import floor
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
-from . import cache, data_utils, settings, imdbratings
+from . import cache, data_utils, settings, imdbratings, traktratings
 from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -253,16 +253,19 @@ def load_ratings(the_info, episode=False):
     if episode:
         ratings['tmdb'] = {'votes': the_info['vote_count'], 'rating': the_info['vote_average']}
         return ratings
+    imdb_id = the_info.get('external_ids', {}).get('imdb_id')
     for rating_type in settings.RATING_TYPES:
         logger.debug('setting rating using %s' % rating_type)
         if rating_type == 'tmdb':
             ratings['tmdb'] = {'votes': the_info['vote_count'], 'rating': the_info['vote_average']}
-        if rating_type == 'imdb':
-            imdb_id = the_info.get('external_ids', {}).get('imdb_id')
-            if imdb_id:
-                imdb_rating = imdbratings.get_details(imdb_id).get('ratings')
-                if imdb_rating:
-                    ratings.update(imdb_rating)
+        elif rating_type == 'imdb' and imdb_id:
+            imdb_rating = imdbratings.get_details(imdb_id).get('ratings')
+            if imdb_rating:
+                ratings.update(imdb_rating)
+        elif rating_type == 'trakt' and imdb_id:
+            trakt_rating = traktratings.get_ratinginfo(imdb_id).get('ratings')
+            if trakt_rating:
+                ratings.update(trakt_rating)
     logger.debug('returning ratings of\n{}'.format(pformat(ratings)))
     return ratings
 
