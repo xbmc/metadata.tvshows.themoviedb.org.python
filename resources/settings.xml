@@ -229,5 +229,14 @@
 				</setting>
 			</group>
 		</category>
+		<category id="advanced" label="30200" help="">
+		    <group id="1">
+				<setting id="verboselog" type="boolean" label="30201" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
 	</section>
 </settings>

@@ -66,7 +66,8 @@ def _load_info(url, params=None):
     if not response.ok:
         response.raise_for_status()
     json_response = response.json()
-    # logger.debug('themoviedb response:\n{}'.format(pformat(json_response)))
+    if settings.VERBOSELOG:
+        logger.debug('the api response:\n{}'.format(pformat(json_response)))
     return json_response
 
 
@@ -198,7 +199,9 @@ def load_show_info(show_id, ep_grouping=None):
                     cast.append(cast_member)
                     cast_check.append(cast_member['name'])
         show_info['credits']['cast'] = cast
-        logger.debug('saving show info to the cache:\n{}'.format(pformat(show_info)))
+        logger.debug('saving show info to the cache')
+        if settings.VERBOSELOG:
+            logger.debug(format(pformat(show_info)))
         cache.cache_show_info(show_info)
     return show_info
 

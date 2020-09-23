@@ -44,7 +44,7 @@ msgctxt "#30006"
 msgid "Keep original title"
 msgstr ""
 
-# emptry strings from 30007 to 30099
+# empty strings from 30007 to 30099
 
 msgctxt "#30100"
 msgid "Fanart.tv"
@@ -82,7 +82,7 @@ msgctxt "#30108"
 msgid "Enable character art"
 msgstr ""
 
-# emptry strings from 30109 to 30149
+# empty strings from 30109 to 30149
 
 msgctxt "#30150"
 msgid "Enable season poster"
@@ -94,5 +94,15 @@ msgstr ""
 
 msgctxt "#30152"
 msgid "Enable season landscape"
+msgstr ""
+
+# empty strings from 30153 to 30200
+
+msgctxt "#30200"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#30201"
+msgid "Verbose debug logging"
 msgstr ""
 
