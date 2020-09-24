@@ -8,10 +8,9 @@
 		<setting label="30004" type="bool" id="keeporiginaltitle" default="false"/>
 	</category>
 	<category label="30300">
-		<setting label="30301" type="labelenum" values="TMDb|IMDb|Trakt" id="ratings" default="TMDb"/>
+		<setting label="30301" type="labelenum" values="TMDb|IMDb" id="ratings" default="TMDb"/>
 		<setting label="30302" type="bool" id="imdbanyway" enable="!eq(-1,1)" default="false"/>
-		<setting label="30303" type="bool" id="traktanyway" enable="!eq(-2,2)" default="false"/>		
-		<setting label="30304" type="bool" id="tmdbanyway" enable="!eq(-3,0)" default="true"/>		
+		<setting label="30304" type="bool" id="tmdbanyway" enable="!eq(-2,0)" default="true"/>		
 	</category>
 	<category label="30100">
 		<setting label="30101" type="text" id="fanarttv_clientkey" default="" />
