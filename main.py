@@ -16,7 +16,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # pylint: disable=missing-docstring
 #
-# This is based on the metadata.tvmaze scrapper by Roman Miroshnychenko aka Roman V.M. 
+# Code attribution:
+# core based on metadata.tvmaze scrapper by Roman Miroshnychenko aka Roman V.M. 
+# IMDb ratings based on code in metadata.themoviedb.org.python by Team Kodi
 
 from __future__ import absolute_import
 
