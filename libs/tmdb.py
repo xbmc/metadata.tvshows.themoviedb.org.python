@@ -24,7 +24,7 @@ from math import floor
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
-from . import cache, data_utils, settings, imdbratings, traktratings
+from . import cache, data_utils, settings, imdbratings
 from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -259,16 +259,6 @@ def load_ratings(the_info, show_imdb_id=''):
             imdb_rating = imdbratings.get_details(imdb_id).get('ratings')
             if imdb_rating:
                 ratings.update(imdb_rating)
-        elif rating_type == 'Trakt':
-            if show_imdb_id: # this is an episode and Trakt retrieves that differently
-                season = the_info['org_seasonnum']
-                episode = the_info['org_epnum']
-                resp = traktratings.get_ratinginfo(show_imdb_id, season=season, episode=episode)
-            else:
-                resp = traktratings.get_ratinginfo(imdb_id)
-            trakt_rating = resp.get('ratings')
-            if trakt_rating:
-                ratings.update(trakt_rating)
     logger.debug('returning ratings of\n{}'.format(pformat(ratings)))
     return ratings
 

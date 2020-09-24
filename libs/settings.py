@@ -33,8 +33,6 @@ primary_rating = ADDON_SETTINGS.getSettingString('ratings')
 RATING_TYPES = [primary_rating]
 if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'IMDb':
     RATING_TYPES.append('IMDb')
-if ADDON_SETTINGS.getSettingBool('traktanyway') and primary_rating != 'Trackt':
-    RATING_TYPES.append('Trakt')
 if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'TMDb':
     RATING_TYPES.append('TMDb')
 

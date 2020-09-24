@@ -152,7 +152,6 @@
 						<options>
 							<option label="TMDb">TMDb</option>
 							<option label="IMDb">IMDb</option>
-							<option label="Trakt">Trakt</option>
 						</options>
 					</constraints>
 					<control type="spinner" format="string"/>
@@ -163,16 +162,6 @@
 					<dependencies>
 						<dependency type="enable">
 							<condition operator="!is" setting="ratings">IMDb</condition>
-						</dependency>
-					</dependencies>
-					<control type="toggle"/>
-				</setting>
-				<setting id="traktanyway" type="boolean" label="30303" parent="ratings" help="">
-					<level>0</level>
-					<default>false</default>
-					<dependencies>
-						<dependency type="enable">
-							<condition operator="!is" setting="ratings">Trakt</condition>
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
