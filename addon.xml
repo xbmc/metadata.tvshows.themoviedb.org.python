@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="The Movie DB TV Shows Python"
-  version="1.1.10
+  version="1.1.10"
   provider-name="Team Kodi">
   <requires>
-    <import addon="xbmc.python" version="2.26.0"/>
-    <import addon="xbmc.metadata" version="2.1.0"/>
+    <import addon="xbmc.python" version="2.26.0" />
+    <import addon="xbmc.metadata" version="2.1.0" />
     <import addon="script.module.six" version="1.13.0" />
     <import addon="script.module.requests" version="2.22.0" />
   </requires>
