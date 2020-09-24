@@ -133,7 +133,7 @@
 						</dependency>
 					</dependencies>
 					<control type="edit" format="string">
-						<heading>30008</heading>
+						<heading>30003</heading>
 					</control>
 				</setting>
 				<setting id="keeporiginaltitle" type="boolean" label="30004" help="">
