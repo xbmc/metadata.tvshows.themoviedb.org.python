@@ -19,11 +19,24 @@ FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                    }
 
 ADDON_SETTINGS = xbmcaddon.Addon()
-LANG = ADDON_SETTINGS.getSettingString('language').replace('-', '_')
-CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry').lower()
-CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
 KEEPTITLE = ADDON_SETTINGS.getSettingBool('keeporiginaltitle')
 VERBOSELOG = ADDON_SETTINGS.getSettingBool('verboselog')
+LANG = ADDON_SETTINGS.getSettingString('language').replace('-', '_')
+CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry').lower()
+
+if ADDON_SETTINGS.getSettingBool('usecertprefix'):
+    CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
+else:
+    CERT_PREFIX = ''
+
+primary_rating = ADDON_SETTINGS.getSettingString('ratings').lower()
+RATING_TYPES = [primary_rating]
+if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'imdb':
+    RATING_TYPES.append('imdb')
+if ADDON_SETTINGS.getSettingBool('traktanyway') and primary_rating != 'trakt':
+    RATING_TYPES.append('trakt')
+if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'tmdb':
+    RATING_TYPES.append('tmdb')
 
 FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
 FANARTTV_ART = {}

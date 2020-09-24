@@ -25,22 +25,14 @@ msgid "Preferred certification country"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Certification prefix"
+msgid "Include certification prefix"
 msgstr ""
 
 msgctxt "#30003"
-msgid "Default rating from"
+msgid "Prefix"
 msgstr ""
 
 msgctxt "#30004"
-msgid "Also add IMDb ratings"
-msgstr ""
-
-msgctxt "#30005"
-msgid "Also add Trakt.tv ratings"
-msgstr ""
-
-msgctxt "#30006"
 msgid "Keep original title"
 msgstr ""
 
@@ -104,5 +96,27 @@ msgstr ""
 
 msgctxt "#30201"
 msgid "Verbose debug logging"
+msgstr ""
+
+# emptry strings from 30202 to 30299
+
+msgctxt "#30300"
+msgid "Ratings"
+msgstr ""
+
+msgctxt "#30301"
+msgid "Default rating from"
+msgstr ""
+
+msgctxt "#30302"
+msgid "Also add IMDb ratings"
+msgstr ""
+
+msgctxt "#30303"
+msgid "Also add Trakt.tv ratings"
+msgstr ""
+
+msgctxt "#30304"
+msgid "Also add TMDb ratings"
 msgstr ""
 
