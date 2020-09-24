@@ -24,7 +24,7 @@ from math import floor
 from pprint import pformat
 import requests
 from requests.exceptions import HTTPError
-from . import cache, data_utils, settings, imdbratings, traktratings
+from . import cache, data_utils, settings, imdbratings
 from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -253,22 +253,12 @@ def load_ratings(the_info, show_imdb_id=''):
     imdb_id = the_info.get('external_ids', {}).get('imdb_id')
     for rating_type in settings.RATING_TYPES:
         logger.debug('setting rating using %s' % rating_type)
-        if rating_type == 'tmdb':
-            ratings['tmdb'] = {'votes': the_info['vote_count'], 'rating': the_info['vote_average']}
-        elif rating_type == 'imdb' and imdb_id:
+        if rating_type == 'TMDb':
+            ratings['TMDb'] = {'votes': the_info['vote_count'], 'rating': the_info['vote_average']}
+        elif rating_type == 'IMDb' and imdb_id:
             imdb_rating = imdbratings.get_details(imdb_id).get('ratings')
             if imdb_rating:
                 ratings.update(imdb_rating)
-        elif rating_type == 'trakt':
-            if show_imdb_id: # this is an episode and Trakt retrieves that differently
-                season = the_info['org_seasonnum']
-                episode = the_info['org_epnum']
-                resp = traktratings.get_ratinginfo(show_imdb_id, season=season, episode=episode)
-            else:
-                resp = traktratings.get_ratinginfo(imdb_id)
-            trakt_rating = resp.get('ratings')
-            if trakt_rating:
-                ratings.update(trakt_rating)
     logger.debug('returning ratings of\n{}'.format(pformat(ratings)))
     return ratings
 
