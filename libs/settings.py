@@ -29,14 +29,14 @@ if ADDON_SETTINGS.getSettingBool('usecertprefix'):
 else:
     CERT_PREFIX = ''
 
-primary_rating = ADDON_SETTINGS.getSettingString('ratings').lower()
+primary_rating = ADDON_SETTINGS.getSettingString('ratings')
 RATING_TYPES = [primary_rating]
-if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'imdb':
-    RATING_TYPES.append('imdb')
-if ADDON_SETTINGS.getSettingBool('traktanyway') and primary_rating != 'trakt':
-    RATING_TYPES.append('trakt')
-if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'tmdb':
-    RATING_TYPES.append('tmdb')
+if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'IMDb':
+    RATING_TYPES.append('IMDb')
+if ADDON_SETTINGS.getSettingBool('traktanyway') and primary_rating != 'Trackt':
+    RATING_TYPES.append('Trakt')
+if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'TMDb':
+    RATING_TYPES.append('TMDb')
 
 FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
 FANARTTV_ART = {}
