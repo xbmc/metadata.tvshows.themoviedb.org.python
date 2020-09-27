@@ -37,12 +37,12 @@ if source_settings.get('usecertprefix', True):
     CERT_PREFIX = source_settings.get('certprefix', 'Rated ')
 else:
     CERT_PREFIX = ''
-primary_rating = source_settings.get('ratings', 'TMDb')
+primary_rating = source_settings.get('ratings', 'TMDb').lower()
 RATING_TYPES = [primary_rating]
-if source_settings.get('imdbanyway', False) and primary_rating != 'IMDb':
-    RATING_TYPES.append('IMDb')
-if source_settings.get('tmdbanyway', False) and primary_rating != 'TMDb':
-    RATING_TYPES.append('TMDb')
+if source_settings.get('imdbanyway', False) and primary_rating != 'imdb':
+    RATING_TYPES.append('imdb')
+if source_settings.get('tmdbanyway', False) and primary_rating != 'tmdb':
+    RATING_TYPES.append('tmdb')
 FANARTTV_CLIENTKEY = source_settings.get('fanarttv_clientkey', '')
 FANARTTV_ART = {}
 for fanarttv_type, tmdb_type in six.iteritems(FANARTTV_MAPPING):
