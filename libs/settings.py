@@ -1,4 +1,8 @@
-import xbmcaddon, six
+import json, six, sys
+from six.moves import urllib_parse
+from .utils import logger
+from pprint import pformat
+
 
 TMDB_CLOWNCAR = 'af3a53eb387d57fc935e9128468b1899'
 FANARTTV_CLOWNCAR = 'b018086af0e1478479adfc55634db97d'
@@ -17,27 +21,29 @@ FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'seasonbanner':'seasonbanner',
                      'seasonthumb': 'seasonlandscape'
                    }
+try:
+    source_params = dict(urllib_parse.parse_qsl(sys.argv[2]))
+except IndexError:
+    source_params = {}
+source_settings = json.loads(source_params.get('pathSettings', {}))
+logger.debug('the source settings are:\n{}'.format(pformat(source_settings)))
 
-ADDON_SETTINGS = xbmcaddon.Addon()
-KEEPTITLE = ADDON_SETTINGS.getSettingBool('keeporiginaltitle')
-VERBOSELOG = ADDON_SETTINGS.getSettingBool('verboselog')
-LANG = ADDON_SETTINGS.getSettingString('language').replace('-', '_')
-CERT_COUNTRY = ADDON_SETTINGS.getSettingString('tmdbcertcountry').lower()
+KEEPTITLE =source_settings.get('keeporiginaltitle', False)
+VERBOSELOG =  source_settings.get('verboselog', False)
+LANG = source_settings.get('language', 'en-US')
+CERT_COUNTRY = source_settings.get('tmdbcertcountry', 'us').lower()
 
-if ADDON_SETTINGS.getSettingBool('usecertprefix'):
-    CERT_PREFIX = ADDON_SETTINGS.getSettingString('certprefix')
+if source_settings.get('usecertprefix', True):
+    CERT_PREFIX = source_settings.get('certprefix', 'Rated ')
 else:
     CERT_PREFIX = ''
-
-primary_rating = ADDON_SETTINGS.getSettingString('ratings')
+primary_rating = source_settings.get('ratings', 'TMDb').lower()
 RATING_TYPES = [primary_rating]
-if ADDON_SETTINGS.getSettingBool('imdbanyway') and primary_rating != 'IMDb':
-    RATING_TYPES.append('IMDb')
-if ADDON_SETTINGS.getSettingBool('tmdbanyway') and primary_rating != 'TMDb':
-    RATING_TYPES.append('TMDb')
-
-FANARTTV_CLIENTKEY = ADDON_SETTINGS.getSettingString('fanarttv_clientkey')
+if source_settings.get('imdbanyway', False) and primary_rating != 'imdb':
+    RATING_TYPES.append('imdb')
+if source_settings.get('tmdbanyway', False) and primary_rating != 'tmdb':
+    RATING_TYPES.append('tmdb')
+FANARTTV_CLIENTKEY = source_settings.get('fanarttv_clientkey', '')
 FANARTTV_ART = {}
 for fanarttv_type, tmdb_type in six.iteritems(FANARTTV_MAPPING):
-    FANARTTV_ART[tmdb_type] = ADDON_SETTINGS.getSettingBool('enable_fanarttv_%s' % tmdb_type)
-
+    FANARTTV_ART[tmdb_type] = source_settings.get('enable_fanarttv_%s' % tmdb_type, False)
