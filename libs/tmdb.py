@@ -32,7 +32,6 @@ try:
 except ImportError:
     pass
 
-
 BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=%s&language=%s' % (settings.TMDB_CLOWNCAR, settings.LANG)
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
@@ -174,7 +173,7 @@ def load_show_info(show_id, ep_grouping=None):
         show_url = SHOW_URL.format(show_id)
         params = {}
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
-        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
         try:
             show_info = _load_info(show_url, params)
         except HTTPError as exc:
@@ -185,7 +184,7 @@ def load_show_info(show_id, ep_grouping=None):
             season_url = SEASON_URL.format(show_id, season['season_number'])
             params = {}
             params['append_to_response'] = 'credits,images'
-            params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
+            params['include_image_language'] = '%s,null' % settings.LANG[0:2]
             try:
                 season_info = _load_info(season_url, params)
             except HTTPError as exc:
@@ -232,7 +231,7 @@ def load_episode_info(show_id, episode_id):
         ep_url = EPISODE_URL.format(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
         params = {}
         params['append_to_response'] = 'credits,external_ids,images'
-        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
         try:
             ep_return = _load_info(ep_url, params)
         except HTTPError as exc:
@@ -291,7 +290,7 @@ def load_fanarttv_art(show_info):
                 for item in artwork.get(fanarttv_type, []):
                     lang = item.get('lang')
                     filepath = ''
-                    if lang == '' or lang == '00' or lang == 'en' or lang == settings.LANG[0:2]:
+                    if lang == '' or lang == '00' or lang == settings.LANG[0:2]:
                         filepath = item.get('url')
                     if filepath:
                         if tmdb_type.startswith('season'):
