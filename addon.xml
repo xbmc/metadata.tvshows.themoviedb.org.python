@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.1.11"
+  version="1.1.12"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="2.26.0" />
@@ -24,3 +24,4 @@
     <source>https://github.com/pkscout/metadata.tvshows.themoviedb.org.python</source>
   </extension>
 </addon>
+
