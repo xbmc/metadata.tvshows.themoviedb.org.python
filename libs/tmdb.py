@@ -1,6 +1,7 @@
 # coding: utf-8
 #
 # Copyright (C) 2019, Roman Miroshnychenko aka Roman V.M. <roman1972@gmail.com>
+# Copyright (C) 2020, Kyle Johnson <pkscout@kodi.tv>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +20,11 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import json, six
+import six
+from requests.exceptions import HTTPError
 from math import floor
 from pprint import pformat
-import requests
-from requests.exceptions import HTTPError
-from . import cache, data_utils, settings, imdbratings
+from . import cache, data_utils, api_utils, settings, imdbratings, traktratings
 from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -43,32 +43,6 @@ if settings.FANARTTV_CLIENTKEY:
     FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s&client_key=%s' % (settings.FANARTTV_CLOWNCAR, settings.FANARTTV_CLIENTKEY)
 else:
     FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s' % settings.FANARTTV_CLOWNCAR
-HEADERS = (
-    ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
-    ('Accept', 'application/json'),
-)
-SESSION = requests.Session()
-SESSION.headers.update(dict(HEADERS))
-
-
-def _load_info(url, params=None):
-    # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
-    """
-    Load info from themoviedb
-
-    :param url: API endpoint URL
-    :param params: URL query params
-    :return: API response
-    :raises requests.exceptions.HTTPError: if any error happens
-    """
-    logger.debug('Calling URL "{}" with params {}'.format(url, params))
-    response = SESSION.get(url, params=params)
-    if not response.ok:
-        response.raise_for_status()
-    json_response = response.json()
-    if settings.VERBOSELOG:
-        logger.debug('the api response:\n{}'.format(pformat(json_response)))
-    return json_response
 
 
 def search_show(title, year=None):
@@ -97,7 +71,7 @@ def search_show(title, year=None):
         if year:
             params.update({'first_air_date_year': str(year)})
     try:
-        resp = _load_info(search_url, params)
+        resp = api_utils.load_info(search_url, params)
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
                 if resp.get('success') == 'false':
@@ -121,7 +95,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
         logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
         try:
-            custom_order = _load_info(episode_group_url)
+            custom_order = api_utils.load_info(episode_group_url)
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             custom_order = None
@@ -175,7 +149,7 @@ def load_show_info(show_id, ep_grouping=None):
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,null' % settings.LANG[0:2]
         try:
-            show_info = _load_info(show_url, params)
+            show_info = api_utils.load_info(show_url, params)
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             return None
@@ -186,7 +160,7 @@ def load_show_info(show_id, ep_grouping=None):
             params['append_to_response'] = 'credits,images'
             params['include_image_language'] = '%s,null' % settings.LANG[0:2]
             try:
-                season_info = _load_info(season_url, params)
+                season_info = api_utils.load_info(season_url, params)
             except HTTPError as exc:
                 logger.error('themoviedb returned an error: {}'.format(exc))
                 season_info = {}
@@ -233,7 +207,7 @@ def load_episode_info(show_id, episode_id):
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,null' % settings.LANG[0:2]
         try:
-            ep_return = _load_info(ep_url, params)
+            ep_return = api_utils.load_info(ep_url, params)
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             return None
@@ -259,6 +233,17 @@ def load_ratings(the_info, show_imdb_id=''):
             imdb_rating = imdbratings.get_details(imdb_id).get('ratings')
             if imdb_rating:
                 ratings.update(imdb_rating)
+        elif rating_type == 'trakt':
+            if show_imdb_id:
+                season = the_info['org_seasonnum']
+                episode = the_info['org_epnum']
+                resp = traktratings.get_details(show_imdb_id, season=season, episode=episode)
+            else:
+                resp = traktratings.get_details(imdb_id)
+            trakt_rating = resp.get('ratings')
+            if trakt_rating:
+                ratings.update(trakt_rating)
+        
     logger.debug('returning ratings of\n{}'.format(pformat(ratings)))
     return ratings
 
@@ -279,7 +264,7 @@ def load_fanarttv_art(show_info):
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
         try:
-            artwork = _load_info(fanarttv_url)
+            artwork = api_utils.load_info(fanarttv_url)
         except HTTPError as exc:
             logger.error('fanart.tv returned an error: {}'.format(exc))
             return show_info

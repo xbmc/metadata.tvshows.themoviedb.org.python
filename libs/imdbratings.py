@@ -24,7 +24,7 @@ def _get_ratinginfo(imdb_id):
 def _assemble_imdb_result(votes, rating):
     result = {}
     if votes and rating:
-        result['ratings'] = {'IMDb': {'votes': votes, 'rating': rating}}
+        result['ratings'] = {'imdb': {'votes': votes, 'rating': rating}}
     return result
 
 def _parse_imdb_result(input_html):
