@@ -164,6 +164,8 @@ def get_artwork(show_id):
 
     :param show_id: default unique ID set by setUniqueIDs() method
     """
+    if not show_id:
+      return
     logger.debug('Getting artwork for show ID {}'.format(show_id))
     show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
@@ -195,7 +197,7 @@ def router(paramstring):
     elif params['action'] == 'getepisodedetails':
         get_episode_details(params['url'])
     elif params['action'] == 'getartwork':
-        get_artwork(params['id'])
+        get_artwork(params.get('id'))
     else:
         raise RuntimeError('Invalid addon call: {}'.format(sys.argv))
     xbmcplugin.endOfDirectory(HANDLE)
