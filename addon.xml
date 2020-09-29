@@ -19,7 +19,9 @@
       <icon>resources/icon.png</icon>
       <fanart>resources/background.jpg</fanart>
     </assets>
+	<forum>https://forum.kodi.tv/showthread.php?tid=357232</forum>
     <website>https://www.themoviedb.org</website>
     <source>https://github.com/pkscout/metadata.tvshows.themoviedb.org.python</source>
   </extension>
 </addon>
+
