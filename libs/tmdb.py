@@ -1,7 +1,6 @@
-# coding: utf-8
+# -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2019, Roman Miroshnychenko aka Roman V.M. <roman1972@gmail.com>
-# Copyright (C) 2020, Kyle Johnson <pkscout@kodi.tv>
+# Copyright (C) 2020, Team Kodi
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# pylint: disable=missing-docstring
 
 """Functions to interact with TMdB API"""
 
