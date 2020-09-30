@@ -147,7 +147,7 @@ def load_show_info(show_id, ep_grouping=None):
         show_url = SHOW_URL.format(show_id)
         params = {}
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
-        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         try:
             show_info = api_utils.load_info(show_url, params)
         except HTTPError as exc:
@@ -158,16 +158,18 @@ def load_show_info(show_id, ep_grouping=None):
             season_url = SEASON_URL.format(show_id, season['season_number'])
             params = {}
             params['append_to_response'] = 'credits,images'
-            params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+            params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
             try:
                 season_info = api_utils.load_info(season_url, params)
             except HTTPError as exc:
                 logger.error('themoviedb returned an error: {}'.format(exc))
                 season_info = {}
+            season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
         show_info['ratings'] = load_ratings(show_info)
         show_info = load_fanarttv_art(show_info)
+        show_info['images'] = _sort_image_types(show_info.get('images', {}))
         show_info = trim_artwork(show_info)
         cast_check = []
         cast = []
@@ -205,12 +207,13 @@ def load_episode_info(show_id, episode_id):
         ep_url = EPISODE_URL.format(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
         params = {}
         params['append_to_response'] = 'credits,external_ids,images'
-        params['include_image_language'] = '%s,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         try:
             ep_return = api_utils.load_info(ep_url, params)
         except HTTPError as exc:
             logger.error('themoviedb returned an error: {}'.format(exc))
             return None
+        ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
         ep_return['episode_number'] = episode_info['episode_number']
         ep_return['org_seasonnum'] = episode_info['org_seasonnum']
@@ -274,8 +277,10 @@ def load_fanarttv_art(show_info):
                     show_info['images'][tmdb_type] = []
                 for item in artwork.get(fanarttv_type, []):
                     lang = item.get('lang')
+                    if lang == '' or lang == '00':
+                        lang = None
                     filepath = ''
-                    if lang == '' or lang == '00' or lang == settings.LANG[0:2]:
+                    if lang is None or lang == settings.LANG[0:2] or lang == 'en':
                         filepath = item.get('url')
                     if filepath:
                         if tmdb_type.startswith('season'):
@@ -288,9 +293,9 @@ def load_fanarttv_art(show_info):
                                 if not show_info['seasons'][s]['images'].get(image_type):
                                     show_info['seasons'][s]['images'][image_type] = []                                
                                 if artseason == '' or artseason == str(season_num):
-                                    show_info['seasons'][s]['images'][image_type].append({'file_path':filepath, 'type':'fanarttv'})
+                                    show_info['seasons'][s]['images'][image_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
                         else:
-                            show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv'})
+                            show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
     return show_info
 
 
@@ -352,3 +357,27 @@ def trim_artwork(show_info):
                 if reduce != 0:
                     del show_info['seasons'][s]['images'][image_type][reduce:]
     return show_info
+
+
+def _sort_image_types(imagelist):
+    for image_type, images in six.iteritems(imagelist):
+        imagelist[image_type] = _image_sort(images)
+    return imagelist
+
+
+def _image_sort(images):
+    lang_pref = []
+    lang_null = []
+    lang_en = []
+    lang_other = []
+    for image in images:
+        image_lang = image.get('iso_639_1')
+        if image_lang == settings.LANG[0:2]:
+           lang_pref.append(image)
+        elif image_lang == None:
+            lang_null.append(image)
+        elif image_lang == 'en':
+            lang_en.append(image)
+        else:
+            lang_other.append(image)
+    return lang_pref + lang_null + lang_en + lang_other
