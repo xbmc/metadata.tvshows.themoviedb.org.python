@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # pylint: disable=missing-docstring
-#
-# This is based on the metadata.tvmaze scrapper by Roman Miroshnychenko aka Roman V.M.
 
 """Misc utils"""
 
