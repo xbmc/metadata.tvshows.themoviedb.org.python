@@ -369,15 +369,17 @@ def _image_sort(images):
     lang_pref = []
     lang_null = []
     lang_en = []
-    lang_other = []
+    firstimage = True
     for image in images:
         image_lang = image.get('iso_639_1')
         if image_lang == settings.LANG[0:2]:
            lang_pref.append(image)
-        elif image_lang == None:
-            lang_null.append(image)
         elif image_lang == 'en':
             lang_en.append(image)
         else:
-            lang_other.append(image)
-    return lang_pref + lang_null + lang_en + lang_other
+            if firstimage:
+                lang_pref.append(image)
+            else:
+                lang_null.append(image)
+        firstimage = False
+    return lang_pref + lang_null + lang_en
