@@ -36,20 +36,21 @@ HEADERS = (
     ('trakt-api-version', '2'),
     ('Content-Type', 'application/json'),
 )
-api_utils.set_headers(HEADERS)
+api_utils.set_headers(dict(HEADERS))
 
-BASE_URL = 'https://api.trakt.tv/shows/{}'
-SHOW_URL = BASE_URL + '?extended=full'
-EP_URL = BASE_URL + '/seasons/{}/episodes/{}/ratings'
+SHOW_URL = 'https://api.trakt.tv/shows/{}'
+EP_URL = SHOW_URL + '/seasons/{}/episodes/{}/ratings'
 
 
 def get_details(imdb_id, season=None, episode=None):
     result = {}
     if season and episode:
         url = EP_URL.format(imdb_id, season, episode)
+        params = None
     else:
         url = SHOW_URL.format(imdb_id)
-    resp = api_utils.load_info(url, default={})
+        params = {'extended': 'full'}
+    resp = api_utils.load_info(url, params=params, default={})
     rating =resp.get('rating')
     votes = resp.get('votes')
     if votes and rating:

@@ -34,19 +34,20 @@ HEADERS = (
     ('User-Agent', 'Kodi TV Show scraper by Team Kodi; contact pkscout@kodi.tv'),
     ('Accept', 'application/json'),
 )
-api_utils.set_headers(HEADERS)
+api_utils.set_headers(dict(HEADERS))
 
-BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=%s&language=%s' % (settings.TMDB_CLOWNCAR, settings.LANG)
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+BASE_URL = 'https://api.themoviedb.org/3/{}'
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
 FIND_URL = BASE_URL.format('find/{}')
 SHOW_URL = BASE_URL.format('tv/{}')
 SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
+FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}'
+FANARTTV_PARAMS = {'api_key': settings.FANARTTV_CLOWNCAR}
 if settings.FANARTTV_CLIENTKEY:
-    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s&client_key=%s' % (settings.FANARTTV_CLOWNCAR, settings.FANARTTV_CLIENTKEY)
-else:
-    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s' % settings.FANARTTV_CLOWNCAR
+    FANARTTV_PARAMS['client_key'] = settings.FANARTTV_CLIENTKEY
 
 
 def search_show(title, year=None):
@@ -58,23 +59,23 @@ def search_show(title, year=None):
     : param year: the year to search (optional)
     :return: a list with found TV shows
     """
+    params = TMDB_PARAMS
     results = []
     ext_media_id = data_utils.parse_media_id(title)
     if ext_media_id:
         logger.debug('using %s of %s to find show' % (ext_media_id['type'], ext_media_id['title']))
         if ext_media_id['type'] == 'tmdb_id':
             search_url = SHOW_URL.format(ext_media_id['title'])
-            params = {}
         else:
             search_url = FIND_URL.format(ext_media_id['title'])
-            params = {'external_source':ext_media_id['type']}
+            params['external_source'] = ext_media_id['type']
     else:
         logger.debug('using title of %s to find show' % title)
         search_url = SEARCH_URL
-        params = {'query': title}
+        params['query'] = title
         if year:
-            params.update({'first_air_date_year': str(year)})
-    resp = api_utils.load_info(search_url, params)
+            params['first_air_date_year'] = str(year)
+    resp = api_utils.load_info(search_url, params=params)
     if resp is not None:
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
@@ -96,7 +97,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     if ep_grouping is not None:
         logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
-        custom_order = api_utils.load_info(episode_group_url)
+        custom_order = api_utils.load_info(episode_group_url, params=TMDB_PARAMS)
         if custom_order is not None:
             show_info['seasons'] = []
             season_num = 1
@@ -143,19 +144,17 @@ def load_show_info(show_id, ep_grouping=None):
     if show_info is None:
         logger.debug('no cache file found, loading from scratch')
         show_url = SHOW_URL.format(show_id)
-        params = {}
+        params = TMDB_PARAMS
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        show_info = api_utils.load_info(show_url, params)
+        show_info = api_utils.load_info(show_url, params=params)
         if show_info is None:
             return None
         season_map = {}
+        params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
-            params = {}
-            params['append_to_response'] = 'credits,images'
-            params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-            season_info = api_utils.load_info(season_url, params, default={})
+            season_info = api_utils.load_info(season_url, params=params, default={})
             season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
@@ -197,10 +196,10 @@ def load_episode_info(show_id, episode_id):
             return None
         # this ensures we are using the season/ep from the episode grouping if provided
         ep_url = EPISODE_URL.format(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
-        params = {}
+        params = TMDB_PARAMS
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        ep_return = api_utils.load_info(ep_url, params)
+        ep_return = api_utils.load_info(ep_url, params=params)
         if ep_return is None:
             return None
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
@@ -256,7 +255,7 @@ def load_fanarttv_art(show_info):
             break
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
-        artwork = api_utils.load_info(fanarttv_url)
+        artwork = api_utils.load_info(fanarttv_url, params=FANARTTV_PARAMS)
         if artwork is None:
             return show_info
         for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():

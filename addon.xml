@@ -6,7 +6,6 @@
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="xbmc.metadata" version="2.1.0"/>
-    <import addon="script.module.requests" version="2.22.0+matrix.1" />
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
   <extension point="xbmc.addon.metadata">
