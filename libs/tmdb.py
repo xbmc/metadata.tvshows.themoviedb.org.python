@@ -30,6 +30,12 @@ try:
 except ImportError:
     pass
 
+HEADERS = (
+    ('User-Agent', 'Kodi TV Show scraper by Team Kodi; contact pkscout@kodi.tv'),
+    ('Accept', 'application/json'),
+)
+api_utils.set_headers(HEADERS)
+
 BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=%s&language=%s' % (settings.TMDB_CLOWNCAR, settings.LANG)
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')

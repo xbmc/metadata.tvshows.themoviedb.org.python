@@ -31,36 +31,36 @@ try:
 except ImportError:
     pass
 
-HEADERS = (
-    ('User-Agent', 'Kodi TV Show scraper by Team Kodi/; contact pkscout@kodi.tv'),
-    ('Accept', 'application/json'),
-)
 SESSION = requests.Session()
-SESSION.headers.update(dict(HEADERS))
 
 
 def set_headers(headers):
     SESSION.headers.update(headers)
 
 
-def load_info(url, params=None, default=None):
+def load_info(url, params=None, default=None, resp_type = 'json'):
     # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
     """
     Load info from external api
 
     :param url: API endpoint URL
     :param params: URL query params
+    :default: object to return if there is an error
+    :resp_type: what to return to the calling function
     :return: API response or default on error
     """
     logger.debug('Calling URL "{}" with params {}'.format(url, params))
     try:
         response = SESSION.get(url, params=params)
     except HTTPError as exc:
-        logger.error('themoviedb returned an error: {}'.format(exc))
+        logger.error('the site returned an error: {}'.format(exc))
         response = None
     if response is None:
-        return default
-    json_response = response.json()
+        resp = default
+    elif resp_type.lower() == 'json':
+        resp = response.json()
+    else:
+        resp = response.text
     if settings.VERBOSELOG:
-        logger.debug('the api response:\n{}'.format(pformat(json_response)))
-    return json_response
+        logger.debug('the api response:\n{}'.format(pformat(resp)))
+    return resp

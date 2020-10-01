@@ -28,15 +28,19 @@ try:
 except ImportError:
     pass
 
-BASE_URL = 'https://api.trakt.tv/shows/{}'
-SHOW_URL = BASE_URL + '?extended=full'
-EP_URL = BASE_URL + '/seasons/{}/episodes/{}/ratings'
+
 HEADERS = (
+    ('User-Agent', 'Kodi TV Show scraper by Team Kodi; contact pkscout@kodi.tv'),
+    ('Accept', 'application/json'),
     ('trakt-api-key', settings.TRAKT_CLOWNCAR),
     ('trakt-api-version', '2'),
     ('Content-Type', 'application/json'),
 )
-api_utils.set_headers(dict(HEADERS))
+api_utils.set_headers(HEADERS)
+
+BASE_URL = 'https://api.trakt.tv/shows/{}'
+SHOW_URL = BASE_URL + '?extended=full'
+EP_URL = BASE_URL + '/seasons/{}/episodes/{}/ratings'
 
 
 def get_details(imdb_id, season=None, episode=None):

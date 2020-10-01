@@ -20,15 +20,13 @@
 
 
 import re
-import requests
-from requests.exceptions import ConnectionError as RequestsConnectionError, Timeout, RequestException
+from . import api_utils
 
 IMDB_RATINGS_URL = 'https://www.imdb.com/title/{}/'
-
 IMDB_RATING_REGEX = re.compile(r'itemprop="ratingValue".*?>.*?([\d.]+).*?<')
 IMDB_VOTES_REGEX = re.compile(r'itemprop="ratingCount".*?>.*?([\d,]+).*?<')
 
-# get the tv show info via imdb
+
 def get_details(imdb_id):
     if not imdb_id:
         return {}
@@ -36,11 +34,8 @@ def get_details(imdb_id):
     return _assemble_imdb_result(votes, rating)
 
 def _get_ratinginfo(imdb_id):
-    try:
-        response = requests.get(IMDB_RATINGS_URL.format(imdb_id))
-    except (Timeout, RequestsConnectionError, RequestException) as ex:
-        return _format_error_message(ex)
-    return _parse_imdb_result(response.text if response and response.status_code == 200 else '')
+    response = api_utils.load_info(IMDB_RATINGS_URL.format(imdb_id), default = '', resp_type='text')
+    return _parse_imdb_result(response)
 
 def _assemble_imdb_result(votes, rating):
     result = {}
@@ -64,9 +59,3 @@ def _parse_imdb_votes(input_html):
     if (match):
         return int(match.group(1).replace(',', ''))
     return None
-
-def _format_error_message(ex):
-    message = type(ex).__name__
-    if hasattr(ex, 'message'):
-        message += ": {0}".format(ex.message)
-    return {'error': message}
