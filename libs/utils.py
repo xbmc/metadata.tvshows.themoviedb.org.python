@@ -21,7 +21,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import xbmc
-from six import PY2, text_type, binary_type
 from xbmcaddon import Addon
 
 try:
@@ -39,11 +38,9 @@ class logger:
     @staticmethod
     def log(message, level=xbmc.LOGDEBUG):
         # type: (Text, int) -> None
-        if isinstance(message, binary_type):
+        if isinstance(message, bytes):
             message = message.decode('utf-8')
         message = logger.log_message_prefix + message
-        if PY2 and isinstance(message, text_type):
-            message = message.encode('utf-8')
         xbmc.log(message, level)
 
     @staticmethod

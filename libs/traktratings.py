@@ -20,7 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import six
 from requests.exceptions import HTTPError
 from . import api_utils, settings
 from .utils import logger

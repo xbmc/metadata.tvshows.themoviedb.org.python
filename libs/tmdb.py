@@ -20,7 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import six
 from requests.exceptions import HTTPError
 from math import floor
 from pprint import pformat
@@ -122,7 +121,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     else:
         logger.debug('Getting episodes from standard season list')
         show_info['seasons'] = []
-        for key, value in six.iteritems(season_map):
+        for key, value in season_map.items():
             show_info['seasons'].append(value)
         for season in show_info.get('seasons', []):
             for episode in season.get('episodes', []):
@@ -271,7 +270,7 @@ def load_fanarttv_art(show_info):
         except HTTPError as exc:
             logger.error('fanart.tv returned an error: {}'.format(exc))
             return show_info
-        for fanarttv_type, tmdb_type in six.iteritems(settings.FANARTTV_MAPPING):
+        for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():
             if settings.FANARTTV_ART[tmdb_type]:
                 if not show_info['images'].get(tmdb_type) and not tmdb_type.startswith('season'):
                     show_info['images'][tmdb_type] = []
@@ -310,7 +309,7 @@ def trim_artwork(show_info):
     image_counts = {}
     image_total = 0
     backdrops_total = 0
-    for image_type, image_list in six.iteritems(show_info.get('images', {})):
+    for image_type, image_list in show_info.get('images', {}).items():
         total = len(image_list)
         if image_type == 'backdrops':
             backdrops_total = backdrops_total + total
@@ -318,7 +317,7 @@ def trim_artwork(show_info):
             image_counts[image_type] = {'total':total}
             image_total = image_total + total
     for season in show_info.get('seasons', []):
-        for image_type, image_list in six.iteritems(season.get('images', {})):
+        for image_type, image_list in season.get('images', {}).items():
             total = len(image_list)
             thetype = '%s_%s' % (str(season['season_number']), image_type)
             image_counts[thetype] = {'total':total}
@@ -334,7 +333,7 @@ def trim_artwork(show_info):
         reduction = (image_total - settings.MAXIMAGES)/image_total
         logger.error('there are %s non-fanart images' % str(image_total))
         logger.error('that is more than the max of %s, image results will be trimmed by %s' % (str(settings.MAXIMAGES), str(reduction)))
-        for key, value in six.iteritems(image_counts):
+        for key, value in image_counts.items():
             total = value['total']
             reduce = int(floor(total * reduction))
             target = total - reduce
@@ -344,14 +343,14 @@ def trim_artwork(show_info):
                 reduce = -1 * reduce
             image_counts[key]['reduce'] = reduce
             logger.debug('%s: %s' % (key, pformat(image_counts[key])))
-        for image_type, image_list in six.iteritems(show_info.get('images', {})):
+        for image_type, image_list in show_info.get('images', {}).items():
             if image_type == 'backdrops':
                 continue # already handled backdrops above
             reduce = image_counts[image_type]['reduce']
             if reduce != 0:
                 del show_info['images'][image_type][reduce:]
         for s in range(len(show_info.get('seasons', []))):
-            for image_type, image_list in six.iteritems(show_info['seasons'][s].get('images', {})):
+            for image_type, image_list in show_info['seasons'][s].get('images', {}).items():
                 thetype = '%s_%s' % (str(show_info['seasons'][s]['season_number']), image_type)
                 reduce = image_counts[thetype]['reduce']
                 if reduce != 0:
@@ -360,7 +359,7 @@ def trim_artwork(show_info):
 
 
 def _sort_image_types(imagelist):
-    for image_type, images in six.iteritems(imagelist):
+    for image_type, images in imagelist.items():
         imagelist[image_type] = _image_sort(images)
     return imagelist
 

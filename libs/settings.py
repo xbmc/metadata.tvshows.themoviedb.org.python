@@ -16,8 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # pylint: disable=missing-docstring
 
-import json, six, sys
-from six.moves import urllib_parse
+import json, sys, urllib.parse
 from .utils import logger
 from pprint import pformat
 
@@ -41,7 +40,7 @@ FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'seasonthumb': 'seasonlandscape'
                    }
 try:
-    source_params = dict(urllib_parse.parse_qsl(sys.argv[2]))
+    source_params = dict(urllib.parse.parse_qsl(sys.argv[2]))
 except IndexError:
     source_params = {}
 source_settings = json.loads(source_params.get('pathSettings', {}))
@@ -66,5 +65,5 @@ if source_settings.get('tmdbanyway', False) and primary_rating != 'tmdb':
     RATING_TYPES.append('tmdb')
 FANARTTV_CLIENTKEY = source_settings.get('fanarttv_clientkey', '')
 FANARTTV_ART = {}
-for fanarttv_type, tmdb_type in six.iteritems(FANARTTV_MAPPING):
+for fanarttv_type, tmdb_type in FANARTTV_MAPPING.items():
     FANARTTV_ART[tmdb_type] = source_settings.get('enable_fanarttv_%s' % tmdb_type, False)

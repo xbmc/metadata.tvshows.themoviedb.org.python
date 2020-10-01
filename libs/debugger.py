@@ -29,7 +29,6 @@ from contextlib import contextmanager
 from platform import uname
 from pprint import pformat
 
-import six
 import xbmc
 
 from .utils import logger
@@ -50,7 +49,7 @@ def _format_vars(variables):
     :return: formatted string with sorted ``var = val`` pairs
     :rtype: str
     """
-    var_list = [(var, val) for var, val in six.iteritems(variables)
+    var_list = [(var, val) for var, val in variables.items()
                 if not (var.startswith('__') or var.endswith('__'))]
     var_list.sort(key=lambda i: i[0])
     lines = []
