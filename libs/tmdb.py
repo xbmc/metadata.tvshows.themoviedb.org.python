@@ -20,7 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-from requests.exceptions import HTTPError
 from math import floor
 from pprint import pformat
 from . import cache, data_utils, api_utils, settings, imdbratings, traktratings
@@ -69,8 +68,8 @@ def search_show(title, year=None):
         params = {'query': title}
         if year:
             params.update({'first_air_date_year': str(year)})
-    try:
-        resp = api_utils.load_info(search_url, params)
+    resp = api_utils.load_info(search_url, params)
+    if resp is not None:
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
                 if resp.get('success') == 'false':
@@ -81,8 +80,6 @@ def search_show(title, year=None):
                 results = resp.get('tv_results', [])
         else:
             results = resp.get('results', [])
-    except HTTPError as exc:
-        logger.error('themoviedb returned an error: {}'.format(exc))
     return results
 
 
@@ -93,11 +90,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     if ep_grouping is not None:
         logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
-        try:
-            custom_order = api_utils.load_info(episode_group_url)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
-            custom_order = None
+        custom_order = api_utils.load_info(episode_group_url)
         if custom_order is not None:
             show_info['seasons'] = []
             season_num = 1
@@ -147,10 +140,8 @@ def load_show_info(show_id, ep_grouping=None):
         params = {}
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        try:
-            show_info = api_utils.load_info(show_url, params)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
+        show_info = api_utils.load_info(show_url, params)
+        if show_info is None:
             return None
         season_map = {}
         for season in show_info.get('seasons', []):
@@ -158,11 +149,7 @@ def load_show_info(show_id, ep_grouping=None):
             params = {}
             params['append_to_response'] = 'credits,images'
             params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-            try:
-                season_info = api_utils.load_info(season_url, params)
-            except HTTPError as exc:
-                logger.error('themoviedb returned an error: {}'.format(exc))
-                season_info = {}
+            season_info = api_utils.load_info(season_url, params, default={})
             season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
@@ -207,10 +194,8 @@ def load_episode_info(show_id, episode_id):
         params = {}
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        try:
-            ep_return = api_utils.load_info(ep_url, params)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
+        ep_return = api_utils.load_info(ep_url, params)
+        if ep_return is None:
             return None
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
@@ -265,10 +250,8 @@ def load_fanarttv_art(show_info):
             break
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
-        try:
-            artwork = api_utils.load_info(fanarttv_url)
-        except HTTPError as exc:
-            logger.error('fanart.tv returned an error: {}'.format(exc))
+        artwork = api_utils.load_info(fanarttv_url)
+        if artwork is None:
             return show_info
         for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():
             if settings.FANARTTV_ART[tmdb_type]:

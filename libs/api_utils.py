@@ -32,7 +32,7 @@ except ImportError:
     pass
 
 HEADERS = (
-    ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
+    ('User-Agent', 'Kodi TV Show scraper by Team Kodi/; contact pkscout@kodi.tv'),
     ('Accept', 'application/json'),
 )
 SESSION = requests.Session()
@@ -43,20 +43,23 @@ def set_headers(headers):
     SESSION.headers.update(headers)
 
 
-def load_info(url, params=None):
+def load_info(url, params=None, default=None):
     # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
     """
-    Load info from themoviedb
+    Load info from external api
 
     :param url: API endpoint URL
     :param params: URL query params
-    :return: API response
-    :raises requests.exceptions.HTTPError: if any error happens
+    :return: API response or default on error
     """
     logger.debug('Calling URL "{}" with params {}'.format(url, params))
-    response = SESSION.get(url, params=params)
-    if not response.ok:
-        response.raise_for_status()
+    try:
+        response = SESSION.get(url, params=params)
+    except HTTPError as exc:
+        logger.error('themoviedb returned an error: {}'.format(exc))
+        response = None
+    if response is None:
+        return default
     json_response = response.json()
     if settings.VERBOSELOG:
         logger.debug('the api response:\n{}'.format(pformat(json_response)))

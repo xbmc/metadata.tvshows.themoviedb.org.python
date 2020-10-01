@@ -20,7 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-from requests.exceptions import HTTPError
 from . import api_utils, settings
 from .utils import logger
 try:
@@ -46,11 +45,7 @@ def get_details(imdb_id, season=None, episode=None):
         url = EP_URL.format(imdb_id, season, episode)
     else:
         url = SHOW_URL.format(imdb_id)
-    try:
-        resp = api_utils.load_info(url)
-    except HTTPError as exc:
-        logger.error('trakt returned an error: {}'.format(exc))
-        resp = {}
+    resp = api_utils.load_info(url, default={})
     rating =resp.get('rating')
     votes = resp.get('votes')
     if votes and rating:
