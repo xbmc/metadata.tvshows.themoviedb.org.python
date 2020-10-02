@@ -22,11 +22,8 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import sys
-import six
-import xbmcgui
-import xbmcplugin
-from six.moves import urllib_parse
+import sys, urllib.parse
+import xbmcgui, xbmcplugin
 from . import tmdb, data_utils
 from .utils import logger, safe_get
 try:
@@ -40,7 +37,7 @@ HANDLE = int(sys.argv[1])  # type: int
 def find_show(title, year=None):
     # type: (Union[Text, bytes], Optional[Text]) -> None
     """Find a show by title"""
-    if not isinstance(title, six.text_type):
+    if not isinstance(title, str):
         title = title.decode('utf-8')
     logger.debug('Searching for TV show {} ({})'.format(title, year))
     search_results = tmdb.search_show(title, year)
@@ -126,13 +123,13 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
         for episode in show_info['episodes']:
             list_item = xbmcgui.ListItem(episode['name'], offscreen=True)
             list_item = data_utils.add_episode_info(list_item, episode, full_info=False)
-            encoded_ids = urllib_parse.urlencode(
+            encoded_ids = urllib.parse.urlencode(
                 {'show_id': str(show_info['id']), 'episode_id': str(theindex)}
             )
             theindex = theindex + 1
             # Below "url" is some unique ID string (may be an actual URL to an episode page)
             # that allows to retrieve information about a specific episode.
-            url = urllib_parse.quote(encoded_ids)
+            url = urllib.parse.quote(encoded_ids)
             xbmcplugin.addDirectoryItem(
                 HANDLE,
                 url=url,
@@ -143,8 +140,8 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
 
 def get_episode_details(encoded_ids):  # pylint: disable=missing-docstring
     # type: (Text) -> None
-    encoded_ids = urllib_parse.unquote(encoded_ids)
-    decoded_ids = dict(urllib_parse.parse_qsl(encoded_ids))
+    encoded_ids = urllib.parse.unquote(encoded_ids)
+    decoded_ids = dict(urllib.parse.parse_qsl(encoded_ids))
     logger.debug('Getting episode details for {}'.format(decoded_ids))
     episode_info = tmdb.load_episode_info(
         decoded_ids['show_id'], decoded_ids['episode_id']
@@ -184,7 +181,7 @@ def router(paramstring):
     :param paramstring: url-encoded query string
     :raises RuntimeError: on unknown call action
     """
-    params = dict(urllib_parse.parse_qsl(paramstring))
+    params = dict(urllib.parse.parse_qsl(paramstring))
     logger.debug('Called addon with params: {}'.format(sys.argv))
     if params['action'] == 'find':
         find_show(params['title'], params.get('year'))

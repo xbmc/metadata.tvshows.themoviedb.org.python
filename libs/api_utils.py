@@ -20,9 +20,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+from urllib.request import Request, urlopen
+from urllib.error import URLError
+from urllib.parse import urlencode
 from pprint import pformat
-import requests
-from requests.exceptions import HTTPError
 from . import settings
 from .utils import logger
 try:
@@ -31,33 +32,42 @@ try:
 except ImportError:
     pass
 
-HEADERS = (
-    ('User-Agent', 'Kodi scraper for themoviedb.org by pkscout; pkscout@kodi.tv'),
-    ('Accept', 'application/json'),
-)
-SESSION = requests.Session()
-SESSION.headers.update(dict(HEADERS))
+HEADERS = {}
 
 
 def set_headers(headers):
-    SESSION.headers.update(headers)
+    HEADERS.update(headers)
 
 
-def load_info(url, params=None):
+def load_info(url, params=None, default=None, resp_type = 'json'):
     # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
     """
-    Load info from themoviedb
+    Load info from external api
 
     :param url: API endpoint URL
     :param params: URL query params
-    :return: API response
-    :raises requests.exceptions.HTTPError: if any error happens
+    :default: object to return if there is an error
+    :resp_type: what to return to the calling function
+    :return: API response or default on error
     """
-    logger.debug('Calling URL "{}" with params {}'.format(url, params))
-    response = SESSION.get(url, params=params)
-    if not response.ok:
-        response.raise_for_status()
-    json_response = response.json()
+    if params:
+        url = url + '?' + urlencode(params)
+    logger.debug('Calling URL "{}"'.format(url))
+    req = Request(url, headers=HEADERS)
+    try:
+        response = urlopen(req)
+    except URLError as e:
+        if hasattr(e, 'reason'):
+            logger.debug('failed to reach the remote site\nReason: {}'.format(e.reason))
+        elif hasattr(e, 'code'):
+            logger.debug('remote site unable to fulfill the request\nError code: {}'.format(e.code))
+        response = None
+    if response is None:
+        resp = default
+    elif resp_type.lower() == 'json':
+        resp = json.loads(response.read().decode('utf-8'))
+    else:
+        resp = response.read().decode('utf-8')
     if settings.VERBOSELOG:
-        logger.debug('the api response:\n{}'.format(pformat(json_response)))
-    return json_response
+        logger.debug('the api response:\n{}'.format(pformat(resp)))
+    return resp

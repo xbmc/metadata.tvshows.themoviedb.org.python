@@ -20,8 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import six
-from requests.exceptions import HTTPError
 from math import floor
 from pprint import pformat
 from . import cache, data_utils, api_utils, settings, imdbratings, traktratings
@@ -32,17 +30,24 @@ try:
 except ImportError:
     pass
 
-BASE_URL = 'https://api.themoviedb.org/3/{}?api_key=%s&language=%s' % (settings.TMDB_CLOWNCAR, settings.LANG)
+HEADERS = (
+    ('User-Agent', 'Kodi TV Show scraper by Team Kodi; contact pkscout@kodi.tv'),
+    ('Accept', 'application/json'),
+)
+api_utils.set_headers(dict(HEADERS))
+
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+BASE_URL = 'https://api.themoviedb.org/3/{}'
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
 FIND_URL = BASE_URL.format('find/{}')
 SHOW_URL = BASE_URL.format('tv/{}')
 SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
+FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}'
+FANARTTV_PARAMS = {'api_key': settings.FANARTTV_CLOWNCAR}
 if settings.FANARTTV_CLIENTKEY:
-    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s&client_key=%s' % (settings.FANARTTV_CLOWNCAR, settings.FANARTTV_CLIENTKEY)
-else:
-    FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}?api_key=%s' % settings.FANARTTV_CLOWNCAR
+    FANARTTV_PARAMS['client_key'] = settings.FANARTTV_CLIENTKEY
 
 
 def search_show(title, year=None):
@@ -54,24 +59,24 @@ def search_show(title, year=None):
     : param year: the year to search (optional)
     :return: a list with found TV shows
     """
+    params = TMDB_PARAMS
     results = []
     ext_media_id = data_utils.parse_media_id(title)
     if ext_media_id:
         logger.debug('using %s of %s to find show' % (ext_media_id['type'], ext_media_id['title']))
         if ext_media_id['type'] == 'tmdb_id':
             search_url = SHOW_URL.format(ext_media_id['title'])
-            params = {}
         else:
             search_url = FIND_URL.format(ext_media_id['title'])
-            params = {'external_source':ext_media_id['type']}
+            params['external_source'] = ext_media_id['type']
     else:
         logger.debug('using title of %s to find show' % title)
         search_url = SEARCH_URL
-        params = {'query': title}
+        params['query'] = title
         if year:
-            params.update({'first_air_date_year': str(year)})
-    try:
-        resp = api_utils.load_info(search_url, params)
+            params['first_air_date_year'] = str(year)
+    resp = api_utils.load_info(search_url, params=params)
+    if resp is not None:
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
                 if resp.get('success') == 'false':
@@ -82,8 +87,6 @@ def search_show(title, year=None):
                 results = resp.get('tv_results', [])
         else:
             results = resp.get('results', [])
-    except HTTPError as exc:
-        logger.error('themoviedb returned an error: {}'.format(exc))
     return results
 
 
@@ -94,11 +97,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     if ep_grouping is not None:
         logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
-        try:
-            custom_order = api_utils.load_info(episode_group_url)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
-            custom_order = None
+        custom_order = api_utils.load_info(episode_group_url, params=TMDB_PARAMS)
         if custom_order is not None:
             show_info['seasons'] = []
             season_num = 1
@@ -122,7 +121,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     else:
         logger.debug('Getting episodes from standard season list')
         show_info['seasons'] = []
-        for key, value in six.iteritems(season_map):
+        for key, value in season_map.items():
             show_info['seasons'].append(value)
         for season in show_info.get('seasons', []):
             for episode in season.get('episodes', []):
@@ -145,25 +144,17 @@ def load_show_info(show_id, ep_grouping=None):
     if show_info is None:
         logger.debug('no cache file found, loading from scratch')
         show_url = SHOW_URL.format(show_id)
-        params = {}
+        params = TMDB_PARAMS
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        try:
-            show_info = api_utils.load_info(show_url, params)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
+        show_info = api_utils.load_info(show_url, params=params)
+        if show_info is None:
             return None
         season_map = {}
+        params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
-            params = {}
-            params['append_to_response'] = 'credits,images'
-            params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-            try:
-                season_info = api_utils.load_info(season_url, params)
-            except HTTPError as exc:
-                logger.error('themoviedb returned an error: {}'.format(exc))
-                season_info = {}
+            season_info = api_utils.load_info(season_url, params=params, default={})
             season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
@@ -205,13 +196,11 @@ def load_episode_info(show_id, episode_id):
             return None
         # this ensures we are using the season/ep from the episode grouping if provided
         ep_url = EPISODE_URL.format(show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
-        params = {}
+        params = TMDB_PARAMS
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        try:
-            ep_return = api_utils.load_info(ep_url, params)
-        except HTTPError as exc:
-            logger.error('themoviedb returned an error: {}'.format(exc))
+        ep_return = api_utils.load_info(ep_url, params=params)
+        if ep_return is None:
             return None
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
@@ -266,12 +255,10 @@ def load_fanarttv_art(show_info):
             break
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
-        try:
-            artwork = api_utils.load_info(fanarttv_url)
-        except HTTPError as exc:
-            logger.error('fanart.tv returned an error: {}'.format(exc))
+        artwork = api_utils.load_info(fanarttv_url, params=FANARTTV_PARAMS)
+        if artwork is None:
             return show_info
-        for fanarttv_type, tmdb_type in six.iteritems(settings.FANARTTV_MAPPING):
+        for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():
             if settings.FANARTTV_ART[tmdb_type]:
                 if not show_info['images'].get(tmdb_type) and not tmdb_type.startswith('season'):
                     show_info['images'][tmdb_type] = []
@@ -310,7 +297,7 @@ def trim_artwork(show_info):
     image_counts = {}
     image_total = 0
     backdrops_total = 0
-    for image_type, image_list in six.iteritems(show_info.get('images', {})):
+    for image_type, image_list in show_info.get('images', {}).items():
         total = len(image_list)
         if image_type == 'backdrops':
             backdrops_total = backdrops_total + total
@@ -318,7 +305,7 @@ def trim_artwork(show_info):
             image_counts[image_type] = {'total':total}
             image_total = image_total + total
     for season in show_info.get('seasons', []):
-        for image_type, image_list in six.iteritems(season.get('images', {})):
+        for image_type, image_list in season.get('images', {}).items():
             total = len(image_list)
             thetype = '%s_%s' % (str(season['season_number']), image_type)
             image_counts[thetype] = {'total':total}
@@ -334,7 +321,7 @@ def trim_artwork(show_info):
         reduction = (image_total - settings.MAXIMAGES)/image_total
         logger.error('there are %s non-fanart images' % str(image_total))
         logger.error('that is more than the max of %s, image results will be trimmed by %s' % (str(settings.MAXIMAGES), str(reduction)))
-        for key, value in six.iteritems(image_counts):
+        for key, value in image_counts.items():
             total = value['total']
             reduce = int(floor(total * reduction))
             target = total - reduce
@@ -344,14 +331,14 @@ def trim_artwork(show_info):
                 reduce = -1 * reduce
             image_counts[key]['reduce'] = reduce
             logger.debug('%s: %s' % (key, pformat(image_counts[key])))
-        for image_type, image_list in six.iteritems(show_info.get('images', {})):
+        for image_type, image_list in show_info.get('images', {}).items():
             if image_type == 'backdrops':
                 continue # already handled backdrops above
             reduce = image_counts[image_type]['reduce']
             if reduce != 0:
                 del show_info['images'][image_type][reduce:]
         for s in range(len(show_info.get('seasons', []))):
-            for image_type, image_list in six.iteritems(show_info['seasons'][s].get('images', {})):
+            for image_type, image_list in show_info['seasons'][s].get('images', {}).items():
                 thetype = '%s_%s' % (str(show_info['seasons'][s]['season_number']), image_type)
                 reduce = image_counts[thetype]['reduce']
                 if reduce != 0:
@@ -360,7 +347,7 @@ def trim_artwork(show_info):
 
 
 def _sort_image_types(imagelist):
-    for image_type, images in six.iteritems(imagelist):
+    for image_type, images in imagelist.items():
         imagelist[image_type] = _image_sort(images)
     return imagelist
 

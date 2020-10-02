@@ -20,8 +20,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import six
-from requests.exceptions import HTTPError
 from . import api_utils, settings
 from .utils import logger
 try:
@@ -30,28 +28,29 @@ try:
 except ImportError:
     pass
 
-BASE_URL = 'https://api.trakt.tv/shows/{}'
-SHOW_URL = BASE_URL + '?extended=full'
-EP_URL = BASE_URL + '/seasons/{}/episodes/{}/ratings'
+
 HEADERS = (
+    ('User-Agent', 'Kodi TV Show scraper by Team Kodi; contact pkscout@kodi.tv'),
+    ('Accept', 'application/json'),
     ('trakt-api-key', settings.TRAKT_CLOWNCAR),
     ('trakt-api-version', '2'),
     ('Content-Type', 'application/json'),
 )
 api_utils.set_headers(dict(HEADERS))
 
+SHOW_URL = 'https://api.trakt.tv/shows/{}'
+EP_URL = SHOW_URL + '/seasons/{}/episodes/{}/ratings'
+
 
 def get_details(imdb_id, season=None, episode=None):
     result = {}
     if season and episode:
         url = EP_URL.format(imdb_id, season, episode)
+        params = None
     else:
         url = SHOW_URL.format(imdb_id)
-    try:
-        resp = api_utils.load_info(url)
-    except HTTPError as exc:
-        logger.error('trakt returned an error: {}'.format(exc))
-        resp = {}
+        params = {'extended': 'full'}
+    resp = api_utils.load_info(url, params=params, default={})
     rating =resp.get('rating')
     votes = resp.get('votes')
     if votes and rating:
