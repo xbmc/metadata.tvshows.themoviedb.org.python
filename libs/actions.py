@@ -24,6 +24,7 @@ from __future__ import absolute_import, unicode_literals
 
 import sys, urlparse
 import xbmcgui, xbmcplugin
+from urllib import urlencode, quote, unquote
 from . import tmdb, data_utils
 from .utils import logger, safe_get
 try:
@@ -123,13 +124,13 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
         for episode in show_info['episodes']:
             list_item = xbmcgui.ListItem(episode['name'], offscreen=True)
             list_item = data_utils.add_episode_info(list_item, episode, full_info=False)
-            encoded_ids = urlparse.urlencode(
+            encoded_ids = urlencode(
                 {'show_id': str(show_info['id']), 'episode_id': str(theindex)}
             )
             theindex = theindex + 1
             # Below "url" is some unique ID string (may be an actual URL to an episode page)
             # that allows to retrieve information about a specific episode.
-            url = urlparse.quote(encoded_ids)
+            url = quote(encoded_ids)
             xbmcplugin.addDirectoryItem(
                 HANDLE,
                 url=url,
@@ -140,7 +141,7 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
 
 def get_episode_details(encoded_ids):  # pylint: disable=missing-docstring
     # type: (Text) -> None
-    encoded_ids = urlparse.unquote(encoded_ids)
+    encoded_ids = unquote(encoded_ids)
     decoded_ids = dict(urlparse.parse_qsl(encoded_ids))
     logger.debug('Getting episode details for {}'.format(decoded_ids))
     episode_info = tmdb.load_episode_info(
