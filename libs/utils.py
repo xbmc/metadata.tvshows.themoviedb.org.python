@@ -38,8 +38,10 @@ class logger:
     @staticmethod
     def log(message, level=xbmc.LOGDEBUG):
         # type: (Text, int) -> None
-        if isinstance(message, bytes):
+        if isinstance(message, str):
             message = message.decode('utf-8')
+        if isinstance(message, unicode):
+            message = message.encode('utf-8')
         message = logger.log_message_prefix + message
         xbmc.log(message, level)
 

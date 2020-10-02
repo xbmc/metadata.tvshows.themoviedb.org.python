@@ -22,7 +22,8 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import os, pickle
+import os
+import cPickle as pickle
 from datetime import datetime, timedelta
 import xbmc, xbmcvfs
 
@@ -40,6 +41,7 @@ CACHING_DURATION = timedelta(hours=3)  # type: timedelta
 def _get_cache_directory():  # pylint: disable=missing-docstring
     # type: () -> Text
     profile_dir = xbmc.translatePath(ADDON.getAddonInfo('profile'))
+    profile_dir = profile_dir.decode('utf-8')
     cache_dir = os.path.join(profile_dir, 'cache')
     if not xbmcvfs.exists(cache_dir):
         xbmcvfs.mkdir(cache_dir)
@@ -75,7 +77,6 @@ def load_show_info_from_cache(show_id):
     try:
         with open(os.path.join(CACHE_DIR, file_name), 'rb') as fo:
             load_kwargs = {}
-            load_kwargs['encoding'] = 'bytes'
             cache = pickle.load(fo, **load_kwargs)
         if datetime.now() - cache['timestamp'] > CACHING_DURATION:
             return None

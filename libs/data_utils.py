@@ -113,7 +113,7 @@ def _set_unique_ids(ext_ids, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Extract unique ID in various online databases"""
     unique_ids = {}
-    for key, value in ext_ids.items():
+    for key, value in ext_ids.iteritems():
         if key in VALIDEXTIDS and value:
             key = key[:-3]
             unique_ids[key] = str(value)
@@ -145,7 +145,7 @@ def _add_season_info(show_info, list_item):
         if image:
             url = settings.IMAGEROOTURL + image
             list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
-        for image_type, image_list in season.get('images', {}).items():
+        for image_type, image_list in season.get('images', {}).iteritems():
             if image_type == 'posters':
                 destination = 'poster'
             else:
@@ -162,7 +162,7 @@ def _add_season_info(show_info, list_item):
 def set_show_artwork(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set available images for a show"""
-    for image_type, image_list in show_info.get('images', {}).items():
+    for image_type, image_list in show_info.get('images', {}).iteritems():
         if image_type == 'backdrops':
             fanart_list = []
             for image in image_list:

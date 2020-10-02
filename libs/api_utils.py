@@ -20,9 +20,9 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-from urllib.request import Request, urlopen
-from urllib.error import URLError
-from urllib.parse import urlencode
+from urllib2 import Request, urlopen
+from urllib2 import URLError
+from urllib import urlencode
 from pprint import pformat
 from . import settings
 from .utils import logger

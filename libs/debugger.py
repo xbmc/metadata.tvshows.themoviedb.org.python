@@ -49,7 +49,7 @@ def _format_vars(variables):
     :return: formatted string with sorted ``var = val`` pairs
     :rtype: str
     """
-    var_list = [(var, val) for var, val in variables.items()
+    var_list = [(var, val) for var, val in variables.iteritems()
                 if not (var.startswith('__') or var.endswith('__'))]
     var_list.sort(key=lambda i: i[0])
     lines = []
