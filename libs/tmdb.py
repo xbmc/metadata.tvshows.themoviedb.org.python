@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # pylint: disable=missing-docstring
 
-"""Functions to interact with TMdB API"""
+"""Functions to interact with TMDb API"""
 
 from __future__ import absolute_import, unicode_literals
 
