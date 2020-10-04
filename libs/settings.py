@@ -30,7 +30,7 @@ def _get_date_numeric(datetime_):
 
 def _get_configuration():
     logger.debug('getting configuration details')
-    return api_utils.load_info('https://api.themoviedb.org/3/configuration', params={'api_key': TMDB_CLOWNCAR})
+    return api_utils.load_info('https://api.themoviedb.org/3/configuration', params={'api_key': TMDB_CLOWNCAR}, verboselog=VERBOSELOG)
 
 
 def _load_base_urls():
@@ -43,8 +43,8 @@ def _load_base_urls():
         if conf:
             image_root_url = conf['images']['secure_base_url'] + 'original'
             preview_root_url = conf['images']['secure_base_url'] + 'w780'
-            ADDON.setSetting('originalUrl', IMAGEROOTURL)
-            ADDON.setSetting('previewUrl', PREVIEWROOTURL)
+            ADDON.setSetting('originalUrl', image_root_url)
+            ADDON.setSetting('previewUrl', preview_root_url)
             ADDON.setSetting('lastUpdated', str(_get_date_numeric(datetime.now())))
     return image_root_url, preview_root_url
 
@@ -54,7 +54,6 @@ TMDB_CLOWNCAR = 'af3a53eb387d57fc935e9128468b1899'
 FANARTTV_CLOWNCAR = 'b018086af0e1478479adfc55634db97d'
 TRAKT_CLOWNCAR = '90901c6be3b2de5a4fa0edf9ab5c75e9a5a0fef2b4ee7373d8b63dcf61f95697'
 MAXIMAGES = 350
-IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
 FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'tvposter': 'posters',
                      'tvbanner': 'banner',
@@ -80,6 +79,7 @@ KEEPTITLE =source_settings.get('keeporiginaltitle', False)
 VERBOSELOG =  source_settings.get('verboselog', False)
 LANG = source_settings.get('language', 'en-US')
 CERT_COUNTRY = source_settings.get('tmdbcertcountry', 'us').lower()
+IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
 
 if source_settings.get('usecertprefix', True):
     CERT_PREFIX = source_settings.get('certprefix', 'Rated ')

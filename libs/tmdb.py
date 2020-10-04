@@ -75,7 +75,7 @@ def search_show(title, year=None):
         params['query'] = title
         if year:
             params['first_air_date_year'] = str(year)
-    resp = api_utils.load_info(search_url, params=params)
+    resp = api_utils.load_info(search_url, params=params, verboselog=settings.VERBOSELOG)
     if resp is not None:
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
@@ -97,7 +97,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
     if ep_grouping is not None:
         logger.debug('Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
-        custom_order = api_utils.load_info(episode_group_url, params=TMDB_PARAMS)
+        custom_order = api_utils.load_info(episode_group_url, params=TMDB_PARAMS, verboselog=settings.VERBOSELOG)
         if custom_order is not None:
             show_info['seasons'] = []
             season_num = 1
@@ -147,14 +147,14 @@ def load_show_info(show_id, ep_grouping=None):
         params = TMDB_PARAMS
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        show_info = api_utils.load_info(show_url, params=params)
+        show_info = api_utils.load_info(show_url, params=params, verboselog=settings.VERBOSELOG)
         if show_info is None:
             return None
         season_map = {}
         params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
-            season_info = api_utils.load_info(season_url, params=params, default={})
+            season_info = api_utils.load_info(season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
             season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
@@ -199,7 +199,7 @@ def load_episode_info(show_id, episode_id):
         params = TMDB_PARAMS
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        ep_return = api_utils.load_info(ep_url, params=params)
+        ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
         if ep_return is None:
             return None
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
@@ -255,7 +255,7 @@ def load_fanarttv_art(show_info):
             break
     if tvdb_id and artwork_enabled:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
-        artwork = api_utils.load_info(fanarttv_url, params=FANARTTV_PARAMS)
+        artwork = api_utils.load_info(fanarttv_url, params=FANARTTV_PARAMS, verboselog=settings.VERBOSELOG)
         if artwork is None:
             return show_info
         for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():

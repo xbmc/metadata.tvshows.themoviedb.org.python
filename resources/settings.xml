@@ -65,7 +65,7 @@
 						</options>
 					</constraints>
 					<control type="list" format="string">
-						<heading>30002</heading>
+						<heading>30000</heading>
 					</control>
 				</setting>
 				<setting id="tmdbcertcountry" type="string" label="30001" help="">
@@ -116,7 +116,7 @@
 						</options>
 					</constraints>
 					<control type="list" format="string">
-						<heading>30006</heading>
+						<heading>30001</heading>
 					</control>
 				</setting>
 				<setting id="usecertprefix" type="boolean" label="30002" help="">
@@ -143,7 +143,7 @@
 				</setting>
 			</group>
 		</category>
-		<category id="votes" label="30300" help="">
+		<category id="ratings" label="30300" help="">
 			<group id="1">
 				<setting id="ratings" type="string" label="30301" help="">
 					<level>0</level>
@@ -157,7 +157,7 @@
 					</constraints>
 					<control type="spinner" format="string"/>
 				</setting>
-				<setting id="imdbanyway" type="boolean" label="30302" parent="ratings" help="">
+				<setting id="imdbanyway" type="boolean" label="30302" help="">
 					<level>0</level>
 					<default>false</default>
 					<dependencies>
@@ -167,7 +167,7 @@
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
-				<setting id="traktanyway" type="boolean" label="30303" parent="ratings" help="">
+				<setting id="traktanyway" type="boolean" label="30303" help="">
 					<level>0</level>
 					<default>false</default>
 					<dependencies>
@@ -177,7 +177,7 @@
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
-				<setting id="tmdbanyway" type="boolean" label="30304" parent="ratings" help="">
+				<setting id="tmdbanyway" type="boolean" label="30304" help="">
 					<level>0</level>
 					<default>true</default>
 					<dependencies>
@@ -189,7 +189,7 @@
 				</setting>
 			</group>
 		</category>
-		<category id="fanarttv" label="30100" help="">
+		<category id="fanart.tv" label="30100" help="">
 			<group id="1">
 				<setting id="fanarttv_clientkey" type="string" label="30101" help="">
 					<level>0</level>
@@ -254,43 +254,52 @@
 			</group>
 		</category>
 		<category id="advanced" label="30200" help="">
-		    <group id="1">
+			<group id="1">
 				<setting id="verboselog" type="boolean" label="30201" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="originalUrl" type="string" label="originalUrl" help="">
+				<setting id="lastUpdated" type="string" help="">
 					<level>0</level>
-					<default/>
-					<constraints>
-						<allowempty>true</allowempty>
-					</constraints>
-					<visible>true</visible>
+					<default>0</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
 					<control type="edit" format="string">
-						<heading>originalUrl</heading>
+						<heading/>
 					</control>
 				</setting>
-				<setting id="previewUrl" type="string" label="previewUrl" help="">
+				<setting id="originalUrl" type="string" help="">
 					<level>0</level>
 					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
-					<visible>true</visible>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
 					<control type="edit" format="string">
-						<heading>previewUrl</heading>
+						<heading/>
 					</control>
 				</setting>
-				<setting id="lastUpdated" type="string" label="lastUpdated" help="">
+				<setting id="previewUrl" type="string" help="">
 					<level>0</level>
 					<default/>
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
-					<visible>true</visible>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
 					<control type="edit" format="string">
-						<heading>lastUpdated</heading>
+						<heading/>
 					</control>
 				</setting>
 			</group>

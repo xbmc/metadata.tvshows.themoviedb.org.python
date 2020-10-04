@@ -24,7 +24,6 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 from urllib.parse import urlencode
 from pprint import pformat
-from . import settings
 from .utils import logger
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
@@ -39,7 +38,7 @@ def set_headers(headers):
     HEADERS.update(headers)
 
 
-def load_info(url, params=None, default=None, resp_type = 'json'):
+def load_info(url, params=None, default=None, resp_type = 'json', verboselog=False):
     # type: (Text, Optional[Dict[Text, Union[Text, List[Text]]]]) -> Union[dict, list]
     """
     Load info from external api
@@ -68,6 +67,6 @@ def load_info(url, params=None, default=None, resp_type = 'json'):
         resp = json.loads(response.read().decode('utf-8'))
     else:
         resp = response.read().decode('utf-8')
-    if settings.VERBOSELOG:
+    if verboselog:
         logger.debug('the api response:\n{}'.format(pformat(resp)))
     return resp
