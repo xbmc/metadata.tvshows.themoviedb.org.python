@@ -39,7 +39,7 @@ CACHING_DURATION = timedelta(hours=3)  # type: timedelta
 
 def _get_cache_directory():  # pylint: disable=missing-docstring
     # type: () -> Text
-    profile_dir = xbmc.translatePath(ADDON.getAddonInfo('profile'))
+    profile_dir = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
     cache_dir = os.path.join(profile_dir, 'cache')
     if not xbmcvfs.exists(cache_dir):
         xbmcvfs.mkdir(cache_dir)
@@ -47,6 +47,18 @@ def _get_cache_directory():  # pylint: disable=missing-docstring
 
 
 CACHE_DIR = _get_cache_directory()  # type: Text
+
+
+def clean_cache():
+    """
+    delete cache items that have expired
+    """
+    dirs, files = xbmcvfs.listdir(CACHE_DIR)
+    for filename in files:
+        filepath = os.path.join(CACHE_DIR, filename)
+        lastmod = datetime.fromtimestamp(xbmcvfs.Stat(filepath).st_mtime())
+        if datetime.now() - lastmod > CACHING_DURATION:
+            xbmcvfs.delete(filepath)
 
 
 def cache_show_info(show_info):
