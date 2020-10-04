@@ -153,11 +153,9 @@ def _add_season_info(show_info, list_item):
             for image in image_list:
                 if image.get('type') == 'fanarttv':
                     theurl = image['file_path']
-                    previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                    previewurl = settings.PREVIEWROOTURL + image['file_path']
-                list_item.addAvailableArtwork(theurl, art_type=destination, preview=previewurl, season=season['season_number'])
+                list_item.addAvailableArtwork(theurl, art_type=destination, season=season['season_number'])
     return list_item
 
 
@@ -183,11 +181,9 @@ def set_show_artwork(show_info, list_item):
             for image in image_list:
                 if image.get('type') == 'fanarttv':
                     theurl = image['file_path']
-                    previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                    previewurl = settings.PREVIEWROOTURL + image['file_path']
-                list_item.addAvailableArtwork(theurl, art_type=destination, preview=previewurl)
+                list_item.addAvailableArtwork(theurl, art_type=destination)
     return list_item
 
 
@@ -250,8 +246,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         image = safe_get(show_info, 'poster_path', '')
         if image:
             theurl = settings.IMAGEROOTURL + image
-            previewurl = settings.PREVIEWROOTURL
-            list_item.addAvailableArtwork(theurl, art_type='poster', preview=previewurl)
+            list_item.addAvailableArtwork(theurl, art_type='poster')
     list_item.setInfo('video', video)
     # This is needed for getting artwork
     list_item = _set_unique_ids(show_info, list_item)
@@ -284,8 +279,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             img_path = image.get('file_path')
             if img_path:
                 theurl = settings.IMAGEROOTURL + img_path
-                previewurl = settings.PREVIEWROOTURL + img_path
-                list_item.addAvailableArtwork(theurl, art_type='thumb', preview=previewurl)
+                list_item.addAvailableArtwork(theurl, art_type='thumb')
         video['credits'] = video['writer'] = _get_credits(episode_info)
         video['director'] = _get_directors(episode_info)
     list_item.setInfo('video', video)
