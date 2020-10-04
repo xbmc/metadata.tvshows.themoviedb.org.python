@@ -260,6 +260,39 @@
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
+				<setting id="originalUrl" type="string" label="originalUrl" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<visible>true</visible>
+					<control type="edit" format="string">
+						<heading>originalUrl</heading>
+					</control>
+				</setting>
+				<setting id="previewUrl" type="string" label="previewUrl" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<visible>true</visible>
+					<control type="edit" format="string">
+						<heading>previewUrl</heading>
+					</control>
+				</setting>
+				<setting id="lastUpdated" type="string" label="lastUpdated" help="">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<visible>true</visible>
+					<control type="edit" format="string">
+						<heading>lastUpdated</heading>
+					</control>
+				</setting>
 			</group>
 		</category>
 	</section>

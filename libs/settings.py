@@ -18,14 +18,43 @@
 
 import json, sys, urllib.parse
 from .utils import logger
+from . import api_utils
 from pprint import pformat
+from xbmcaddon import Addon
+from datetime import datetime, timedelta
 
 
+def _get_date_numeric(datetime_):
+    return (datetime_ - datetime(1970, 1, 1)).total_seconds()
+
+
+def _get_configuration():
+    logger.debug('getting configuration details')
+    return api_utils.load_info('https://api.themoviedb.org/3/configuration', params={'api_key': TMDB_CLOWNCAR})
+
+
+def _load_base_urls():
+    image_root_url = ADDON.getSettingString('originalUrl')
+    preview_root_url = ADDON.getSettingString('previewUrl')
+    last_updated = ADDON.getSettingString('lastUpdated')
+    if not image_root_url or not preview_root_url or not last_updated or \
+            float(last_updated) < _get_date_numeric(datetime.now() - timedelta(days=30)):
+        conf = _get_configuration()
+        if conf:
+            image_root_url = conf['images']['secure_base_url'] + 'original'
+            preview_root_url = conf['images']['secure_base_url'] + 'w780'
+            ADDON.setSetting('originalUrl', IMAGEROOTURL)
+            ADDON.setSetting('previewUrl', PREVIEWROOTURL)
+            ADDON.setSetting('lastUpdated', str(_get_date_numeric(datetime.now())))
+    return image_root_url, preview_root_url
+
+
+ADDON = Addon()
 TMDB_CLOWNCAR = 'af3a53eb387d57fc935e9128468b1899'
 FANARTTV_CLOWNCAR = 'b018086af0e1478479adfc55634db97d'
 TRAKT_CLOWNCAR = '90901c6be3b2de5a4fa0edf9ab5c75e9a5a0fef2b4ee7373d8b63dcf61f95697'
 MAXIMAGES = 350
-IMAGEROOTURL = 'https://image.tmdb.org/t/p/original'
+IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
 FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'tvposter': 'posters',
                      'tvbanner': 'banner',
@@ -39,6 +68,7 @@ FANARTTV_MAPPING = { 'showbackground': 'backdrops',
                      'seasonbanner':'seasonbanner',
                      'seasonthumb': 'seasonlandscape'
                    }
+
 try:
     source_params = dict(urllib.parse.parse_qsl(sys.argv[2]))
 except IndexError:
