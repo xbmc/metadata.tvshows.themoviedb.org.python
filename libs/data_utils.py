@@ -141,11 +141,11 @@ def _add_season_info(show_info, list_item):
     """Add info for show seasons"""
     for season in show_info['seasons']:
         list_item.addSeason(season['season_number'], safe_get(season, 'name', ''))
-        image = season.get('poster_path', '')
-        if image:
-            url = settings.IMAGEROOTURL + image
-            list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
-        for image_type, image_list in season.get('images', {}).iteritems():
+#        image = season.get('poster_path', '')
+#        if image:
+#            url = settings.IMAGEROOTURL + image
+#            list_item.addAvailableArtwork(url, 'poster', season=season['season_number'])
+        for image_type, image_list in season.get('images', {}).items():
             if image_type == 'posters':
                 destination = 'poster'
             else:
@@ -153,9 +153,11 @@ def _add_season_info(show_info, list_item):
             for image in image_list:
                 if image.get('type') == 'fanarttv':
                     theurl = image['file_path']
+                    previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                list_item.addAvailableArtwork(theurl, destination, season=season['season_number'])
+                    previewurl = settings.PREVIEWROOTURL + image['file_path']
+                list_item.addAvailableArtwork(theurl, art_type=destination, preview=previewurl, season=season['season_number'])
     return list_item
 
 
@@ -181,9 +183,11 @@ def set_show_artwork(show_info, list_item):
             for image in image_list:
                 if image.get('type') == 'fanarttv':
                     theurl = image['file_path']
+                    previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                list_item.addAvailableArtwork(theurl, destination)
+                    previewurl = settings.PREVIEWROOTURL + image['file_path']
+                list_item.addAvailableArtwork(theurl, art_type=destination, preview=previewurl)
     return list_item
 
 
@@ -245,8 +249,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
-            image_url = settings.IMAGEROOTURL + image
-            list_item.addAvailableArtwork(image_url, 'poster')
+            theurl = settings.IMAGEROOTURL + image
+            previewurl = settings.PREVIEWROOTURL
+            list_item.addAvailableArtwork(theurl, art_type='poster', preview=previewurl)
     list_item.setInfo('video', video)
     # This is needed for getting artwork
     list_item = _set_unique_ids(show_info, list_item)
@@ -278,8 +283,9 @@ def add_episode_info(list_item, episode_info, full_info=True):
         for image in episode_info.get('images', {}).get('stills', []):
             img_path = image.get('file_path')
             if img_path:
-                image_url = settings.IMAGEROOTURL + img_path
-                list_item.addAvailableArtwork(image_url, 'thumb')
+                theurl = settings.IMAGEROOTURL + img_path
+                previewurl = settings.PREVIEWROOTURL + img_path
+                list_item.addAvailableArtwork(theurl, art_type='thumb', preview=previewurl)
         video['credits'] = video['writer'] = _get_credits(episode_info)
         video['director'] = _get_directors(episode_info)
     list_item.setInfo('video', video)
