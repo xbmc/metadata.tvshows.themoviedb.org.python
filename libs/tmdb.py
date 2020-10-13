@@ -148,6 +148,8 @@ def load_show_info(show_id, ep_grouping=None):
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         show_info = api_utils.load_info(show_url, params=params, verboselog=settings.VERBOSELOG)
+        # need to add something here to get the show_info again in English if lang is not English
+        # and then somehow merge them
         if show_info is None:
             return None
         season_map = {}
@@ -155,6 +157,7 @@ def load_show_info(show_id, ep_grouping=None):
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(show_id, season['season_number'])
             season_info = api_utils.load_info(season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
+            # need to double check, but I don't think I have to get the seasons again (no lang specific stuff)
             season_info['images'] = _sort_image_types(season_info.get('images', {}))
             season_map[str(season['season_number'])] = season_info
         show_info = load_episode_list(show_info, season_map, ep_grouping)
@@ -200,6 +203,8 @@ def load_episode_info(show_id, episode_id):
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
+        # need to add something here to get the episode_info again in English if lang is not English
+        # and then somehow merge them
         if ep_return is None:
             return None
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
