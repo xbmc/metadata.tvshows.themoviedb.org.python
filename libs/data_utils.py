@@ -255,7 +255,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         image = safe_get(show_info, 'poster_path', '')
         if image:
             theurl = settings.IMAGEROOTURL + image
-            previewurl = settings.PREVIEWROOTURL
+            previewurl = settings.PREVIEWROOTURL + image
             list_item.addAvailableArtwork(theurl, art_type='poster', preview=previewurl)
     list_item.setInfo('video', video)
     # This is needed for getting artwork
