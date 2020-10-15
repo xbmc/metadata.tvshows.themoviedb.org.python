@@ -270,41 +270,35 @@ def load_fanarttv_art(show_info):
     :return: show info
     """
     tvdb_id = show_info.get('external_ids', {}).get('tvdb_id')
-    artwork_enabled = False
-    for artcheck in settings.FANARTTV_ART:
-        artwork_enabled = artwork_enabled or artcheck
-        if artwork_enabled:
-            break
-    if tvdb_id and artwork_enabled:
+    if tvdb_id and settings.FANARTTV_ENABLE:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
         artwork = api_utils.load_info(fanarttv_url, params=FANARTTV_PARAMS, verboselog=settings.VERBOSELOG)
         if artwork is None:
             return show_info
         for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():
-            if settings.FANARTTV_ART[tmdb_type]:
-                if not show_info['images'].get(tmdb_type) and not tmdb_type.startswith('season'):
-                    show_info['images'][tmdb_type] = []
-                for item in artwork.get(fanarttv_type, []):
-                    lang = item.get('lang')
-                    if lang == '' or lang == '00':
-                        lang = None
-                    filepath = ''
-                    if lang is None or lang == settings.LANG[0:2] or lang == 'en':
-                        filepath = item.get('url')
-                    if filepath:
-                        if tmdb_type.startswith('season'):
-                            image_type = tmdb_type[6:]
-                            for s in range(len(show_info.get('seasons', []))):
-                                season_num = show_info['seasons'][s]['season_number']
-                                artseason = item.get('season', '')
-                                if not show_info['seasons'][s].get('images'):
-                                    show_info['seasons'][s]['images'] = {}
-                                if not show_info['seasons'][s]['images'].get(image_type):
-                                    show_info['seasons'][s]['images'][image_type] = []                                
-                                if artseason == '' or artseason == str(season_num):
-                                    show_info['seasons'][s]['images'][image_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
-                        else:
-                            show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
+            if not show_info['images'].get(tmdb_type) and not tmdb_type.startswith('season'):
+                show_info['images'][tmdb_type] = []
+            for item in artwork.get(fanarttv_type, []):
+                lang = item.get('lang')
+                if lang == '' or lang == '00':
+                    lang = None
+                filepath = ''
+                if lang is None or lang == settings.LANG[0:2] or lang == 'en':
+                    filepath = item.get('url')
+                if filepath:
+                    if tmdb_type.startswith('season'):
+                        image_type = tmdb_type[6:]
+                        for s in range(len(show_info.get('seasons', []))):
+                            season_num = show_info['seasons'][s]['season_number']
+                            artseason = item.get('season', '')
+                            if not show_info['seasons'][s].get('images'):
+                                show_info['seasons'][s]['images'] = {}
+                            if not show_info['seasons'][s]['images'].get(image_type):
+                                show_info['seasons'][s]['images'][image_type] = []                                
+                            if artseason == '' or artseason == str(season_num):
+                                show_info['seasons'][s]['images'][image_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
+                    else:
+                        show_info['images'][tmdb_type].append({'file_path':filepath, 'type':'fanarttv', 'iso_639_1': lang})
     return show_info
 
 
