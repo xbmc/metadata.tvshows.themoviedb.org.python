@@ -254,7 +254,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
             theurl = settings.IMAGEROOTURL + image
             previewurl = settings.PREVIEWROOTURL + image
             list_item.addAvailableArtwork(theurl, art_type='poster', preview=previewurl)
-    logger.debug('adding tv show information for %s to list item' % video['tvshow_title'])
+    logger.debug('adding tv show information for %s to list item' % video['tvshowtitle'])
     list_item.setInfo('video', video)
     # This is needed for getting artwork
     list_item = _set_unique_ids(show_info, list_item)
