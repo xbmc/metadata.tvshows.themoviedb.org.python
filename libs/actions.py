@@ -25,7 +25,6 @@ from __future__ import absolute_import, unicode_literals
 import sys, urllib.parse
 import xbmcgui, xbmcplugin
 from . import tmdb, data_utils
-from pprint import pformat
 from .utils import logger, safe_get
 try:
     from typing import Optional, Text, Union, ByteString  # pylint: disable=unused-import
@@ -123,7 +122,6 @@ def get_episode_list(show_id):  # pylint: disable=missing-docstring
         theindex = 0
         for episode in show_info['episodes']:
             epname = episode.get('name', 'Episode ' + str(episode['episode_number']))
-            logger.debug('the episode is :\n{}'.format(pformat(episode)))
             list_item = xbmcgui.ListItem(epname, offscreen=True)
             list_item = data_utils.add_episode_info(list_item, episode, full_info=False)
             encoded_ids = urllib.parse.urlencode(
