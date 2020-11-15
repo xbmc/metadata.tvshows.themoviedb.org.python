@@ -148,14 +148,15 @@ def load_show_info(show_id, ep_grouping=None):
         params['append_to_response'] = 'credits,content_ratings,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         show_info = api_utils.load_info(show_url, params=params, verboselog=settings.VERBOSELOG)
+        if show_info is None:
+            return None
         if show_info['overview'] == '' and settings.LANG != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             show_info_backup = api_utils.load_info(show_url, params=params, verboselog=settings.VERBOSELOG)
+            if show_info_backup is not None:
+                show_info['overview'] = show_info_backup.get('overview', '')            
             params['language'] = settings.LANG
-            show_info['overview'] = show_info_backup['overview']
-        if show_info is None:
-            return None
         season_map = {}
         params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
