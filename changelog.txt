@@ -1,5 +1,6 @@
 1.1.19
 fix for crash in certain circumstances when TMDb returns no results
+fix for crash if show title has extended characters in it
 
 1.1.18
 scraper returns primary poster as the first poster from TMDb if no posters for the chosen language are available

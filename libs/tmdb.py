@@ -23,7 +23,7 @@ from __future__ import absolute_import, unicode_literals
 from math import floor
 from pprint import pformat
 from . import cache, data_utils, api_utils, settings, imdbratings, traktratings
-from .utils import logger
+from .utils import logger, fix_unicode
 try:
     from typing import Text, Optional, Union, List, Dict, Any  # pylint: disable=unused-import
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
@@ -72,7 +72,7 @@ def search_show(title, year=None):
     else:
         logger.debug('using title of %s to find show' % title)
         search_url = SEARCH_URL
-        params['query'] = title
+        params['query'] = fix_unicode(title)
         if year:
             params['first_air_date_year'] = str(year)
     resp = api_utils.load_info(search_url, params=params, verboselog=settings.VERBOSELOG)
