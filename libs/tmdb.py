@@ -215,16 +215,17 @@ def load_episode_info(show_id, episode_id):
         params['append_to_response'] = 'credits,external_ids,images'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
+        if ep_return is None:
+            return None
         if (ep_return['overview'] == '' or ep_return['name'].lower().startswith('episode')) and settings.LANG != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             ep_return_backup = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
-            if ep_return['overview'] == '':
-                ep_return['overview'] = ep_return_backup['overview']
-            if ep_return['name'].lower().startswith('episode'):
-                ep_return['name'] = ep_return_backup['name']
-        if ep_return is None:
-            return None
+            if ep_return_backup is not None:
+                if ep_return['overview'] == '':
+                    ep_return['overview'] = ep_return_backup['overview']
+                if ep_return['name'].lower().startswith('episode'):
+                    ep_return['name'] = ep_return_backup['name']
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
         ep_return['episode_number'] = episode_info['episode_number']
