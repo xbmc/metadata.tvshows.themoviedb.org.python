@@ -20,6 +20,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import unicodedata
 from math import floor
 from pprint import pformat
 from . import cache, data_utils, api_utils, settings, imdbratings, traktratings
@@ -72,7 +73,7 @@ def search_show(title, year=None):
     else:
         logger.debug('using title of %s to find show' % title)
         search_url = SEARCH_URL
-        params['query'] = title
+        params['query'] = unicodedata.normalize('NFKC', title)
         if year:
             params['first_air_date_year'] = str(year)
     resp = api_utils.load_info(search_url, params=params, verboselog=settings.VERBOSELOG)
