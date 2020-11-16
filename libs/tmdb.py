@@ -224,6 +224,7 @@ def load_episode_info(show_id, episode_id):
         check_name = ep_return.get('name')
         if check_name == None:
             bad_return_name = True
+            ep_return['name'] = 'Episode ' + str(episode_info['episode_number'])
         elif check_name.lower().startswith('episode') or check_name == '':
             bad_return_name = True
         if ep_return.get('overview', '') == '':
@@ -236,7 +237,7 @@ def load_episode_info(show_id, episode_id):
                 if bad_return_overview:
                     ep_return['overview'] = ep_return_backup.get('overview', '')
                 if bad_return_name:
-                    ep_return['name'] = ep_return_backup.get('name', '')
+                    ep_return['name'] = ep_return_backup.get('name', 'Episode ' + str(episode_info['episode_number']))
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
         ep_return['episode_number'] = episode_info['episode_number']
