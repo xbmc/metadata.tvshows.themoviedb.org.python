@@ -218,17 +218,24 @@ def load_episode_info(show_id, episode_id):
         ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
         if ep_return is None:
             return None
-        if (ep_return['overview'] == '' or ep_return['name'].lower().startswith('episode')) and settings.LANG != 'en-US':
+        bad_return_name = False
+        bad_return_overview = False
+        check_name = ep_return.get('name')
+        if check_name == None:
+            bad_return_name = True
+        elif check_name.lower().startswith('episode') or check_name == '':
+            bad_return_name = True
+        if ep_return.get('overview', '') == '':
+            bad_return_overview = True
+        if (bad_return_overview or bad_return_name) and settings.LANG != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             ep_return_backup = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
             if ep_return_backup is not None:
-                if ep_return.get('overview', '') == '':
-                    ep_return['overview'] = ep_return_backup['overview']
-                if ep_return.get('name') is None:
+                if bad_return_overview:
+                    ep_return['overview'] = ep_return_backup.get('overview', '')
+                if bad_return_name:
                     ep_return['name'] = ep_return_backup.get('name', '')
-                elif ep_return['name'].lower().startswith('episode'):
-                    ep_return['name'] = ep_return_backup['name']
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
         ep_return['episode_number'] = episode_info['episode_number']
