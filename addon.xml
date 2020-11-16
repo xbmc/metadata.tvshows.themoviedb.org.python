@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.1.19"
+  version="1.1.20"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="2.26.0" />
@@ -9,7 +9,7 @@
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
   <extension point="xbmc.addon.metadata">
-    <news>1.1.19
+    <news>1.1.20
 fix for crash in certain circumstances when TMDb returns no results
 fix for failed searches if show title has extended characters in it
 	</news>
