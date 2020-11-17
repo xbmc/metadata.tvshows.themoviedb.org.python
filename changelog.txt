@@ -1,4 +1,4 @@
-1.1.23
+1.1.24
 fix for incorrect parsing of episode guide URL from XML scraper
 fix for crash in certain circumstances when TMDb returns no results
 fix for failed searches if show title has extended characters in it
