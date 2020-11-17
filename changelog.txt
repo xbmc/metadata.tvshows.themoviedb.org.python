@@ -1,4 +1,4 @@
-1.1.25
+1.1.26
 fix for episode groupings numbering seasons incorrectly
 fix for incorrect parsing of episode guide URL from XML scraper
 fix for crash in certain circumstances when TMDb returns no results
