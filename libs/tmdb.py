@@ -101,24 +101,22 @@ def load_episode_list(show_info, season_map, ep_grouping):
         custom_order = api_utils.load_info(episode_group_url, params=TMDB_PARAMS, verboselog=settings.VERBOSELOG)
         if custom_order is not None:
             show_info['seasons'] = []
-            season_num = 1
             for custom_season in custom_order.get('groups', []):
                 ep_num = 1
                 season_episodes = []
                 current_season = season_map.get(str(custom_season['episodes'][0]['season_number']), {}).copy()
                 current_season['name'] = custom_season['name']
-                current_season['season_number'] = season_num
+                current_season['season_number'] = custom_season['order']
                 for episode in custom_season['episodes']:
                     episode['org_seasonnum'] = episode['season_number']
                     episode['org_epnum'] = episode['episode_number']
-                    episode['season_number'] = season_num
+                    episode['season_number'] = custom_season['order']
                     episode['episode_number'] = ep_num
                     season_episodes.append(episode)
                     episode_list.append(episode)
                     ep_num = ep_num + 1
                 current_season['episodes'] = season_episodes
                 show_info['seasons'].append(current_season)
-                season_num = season_num + 1
     else:
         logger.debug('Getting episodes from standard season list')
         show_info['seasons'] = []

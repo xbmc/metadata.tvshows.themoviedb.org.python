@@ -1,4 +1,5 @@
-1.3.8
+1.3.9
+fix for issue with episode group seasons not being numbered correctly
 fix for incorrect parsing of episode guide URL from XML scraper
 fix for crash in certain circumstances if TMDb returns no results
 fix for failed searches if show has extended characters in title
