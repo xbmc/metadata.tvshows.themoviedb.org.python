@@ -40,11 +40,11 @@ CACHING_DURATION = timedelta(hours=3)  # type: timedelta
 
 def _get_cache_directory():  # pylint: disable=missing-docstring
     # type: () -> Text
-    profile_dir = xbmc.translatePath(ADDON.getAddonInfo('profile'))
-    profile_dir = profile_dir.decode('utf-8')
-    cache_dir = os.path.join(profile_dir, 'cache')
+    temp_dir = xbmcvfs.translatePath('special://temp')
+    cache_dir = os.path.join(temp_dir, 'scrapers', ADDON.getAddonInfo('id'), 'cache')
     if not xbmcvfs.exists(cache_dir):
         xbmcvfs.mkdir(cache_dir)
+    logger.debug('the cache dir is ' + cache_dir)
     return cache_dir
 
 
