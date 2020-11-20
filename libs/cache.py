@@ -23,7 +23,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os, pickle
-from datetime import datetime, timedelta
 import xbmc, xbmcvfs
 
 from .utils import ADDON, logger
@@ -55,8 +54,7 @@ def cache_show_info(show_info):
     """
     file_name = str(show_info['id']) + '.pickle'
     cache = {
-        'show_info': show_info,
-        'timestamp': datetime.now(),
+        'show_info': show_info
     }
     with open(os.path.join(CACHE_DIR, file_name), 'wb') as fo:
         pickle.dump(cache, fo, protocol=2)

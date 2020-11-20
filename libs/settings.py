@@ -18,7 +18,7 @@
 
 import json, sys, urllib.parse
 from .utils import logger
-from . import api_utils, cache
+from . import api_utils
 from xbmcaddon import Addon
 from datetime import datetime, timedelta
 
