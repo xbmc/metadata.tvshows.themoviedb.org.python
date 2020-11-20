@@ -1,4 +1,4 @@
-1.1.27
+1.1.28
 writer credits now include anyone with TMDb department of Writing
 changed location of cache files to special://temp/metadata.tvshows.themoviedb.org.python/cache
 
