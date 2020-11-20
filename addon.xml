@@ -10,6 +10,7 @@
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
   <extension point="xbmc.addon.metadata">
     <news>1.1.27
+writer credits now include anyone with TMDb department of Writing
 changed location of cache files to special://temp/metadata.tvshows.themoviedb.org.python/cache
 	</news>
     <summary lang="en_GB">Fetch TV Show metadata from themoviedb.org</summary>
