@@ -7,7 +7,7 @@
     <import addon="xbmc.python" version="2.26.0" />
     <import addon="xbmc.metadata" version="2.1.0" />
   </requires>
-  <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
+  <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
     <news>1.1.28
 writer credits now include anyone with TMDb department of Writing
