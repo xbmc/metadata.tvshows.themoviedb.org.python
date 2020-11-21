@@ -37,7 +37,7 @@ except ImportError:
 
 def _get_cache_directory():  # pylint: disable=missing-docstring
     # type: () -> Text
-    temp_dir = xbmcvfs.translatePath('special://temp')
+    temp_dir = xbmc.translatePath('special://temp')
     cache_dir = os.path.join(temp_dir, 'scrapers', ADDON.getAddonInfo('id'))
     if not xbmcvfs.exists(cache_dir):
         xbmcvfs.mkdir(cache_dir)
