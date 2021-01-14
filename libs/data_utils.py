@@ -204,6 +204,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         'plot': plot,
         'plotoutline': plot,
         'title': showname,
+        'originaltitle': original_name,
         'tvshowtitle': showname,
         'mediatype': 'tvshow',
         # This property is passed as "url" parameter to getepisodelist call
