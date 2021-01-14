@@ -170,7 +170,10 @@ def set_show_artwork(show_info, list_item):
                     theurl = image['file_path']
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                fanart_list.append({'image': theurl})
+                if image.get('iso_639_1') != None and CATLANDSCAPE:
+                    list_item.addAvailableArtwork(theurl, art_type="landscape")
+                else:
+                    fanart_list.append({'image': theurl})
             if fanart_list:
                 list_item.setAvailableFanart(fanart_list)
         else:

@@ -74,6 +74,7 @@ except IndexError:
 source_settings = json.loads(source_params.get('pathSettings', {}))
 
 KEEPTITLE =source_settings.get('keeporiginaltitle', False)
+CATLANDSCAPE = source_settings.get('cat_landscape', True)
 VERBOSELOG =  source_settings.get('verboselog', False)
 LANG = source_settings.get('language', 'en-US')
 CERT_COUNTRY = source_settings.get('tmdbcertcountry', 'us').lower()
