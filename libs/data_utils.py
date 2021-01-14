@@ -161,6 +161,16 @@ def _add_season_info(show_info, list_item):
     return list_item
 
 
+def get_image_urls( image ):
+    if image.get('type') == 'fanarttv':
+        theurl = image['file_path']
+        previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
+    else:
+        theurl = settings.IMAGEROOTURL + image['file_path']
+        previewurl = settings.PREVIEWROOTURL + image['file_path']
+    return theurl, previewurl
+
+
 def set_show_artwork(show_info, list_item):
     # type: (InfoType, ListItem) -> ListItem
     """Set available images for a show"""
@@ -172,7 +182,11 @@ def set_show_artwork(show_info, list_item):
                     theurl = image['file_path']
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
-                fanart_list.append({'image': theurl})
+                if image.get('iso_639_1') != None and settings.CATLANDSCAPE:
+                    theurl, previewurl = get_image_urls( image )
+                    list_item.addAvailableArtwork(theurl, art_type="landscape", preview=previewurl)
+                else:
+                    fanart_list.append({'image': theurl})
             if fanart_list:
                 list_item.setAvailableFanart(fanart_list)
         else:
@@ -181,12 +195,7 @@ def set_show_artwork(show_info, list_item):
             else:
                 destination = image_type
             for image in image_list:
-                if image.get('type') == 'fanarttv':
-                    theurl = image['file_path']
-                    previewurl = theurl.replace('.fanart.tv/fanart/', '.fanart.tv/preview/')
-                else:
-                    theurl = settings.IMAGEROOTURL + image['file_path']
-                    previewurl = settings.PREVIEWROOTURL + image['file_path']
+                theurl, previewurl = get_image_urls( image )
                 list_item.addAvailableArtwork(theurl, art_type=destination, preview=previewurl)
     return list_item
 
