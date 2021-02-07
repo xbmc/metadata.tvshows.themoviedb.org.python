@@ -27,6 +27,13 @@ from collections import OrderedDict, namedtuple
 from .utils import safe_get, logger
 from . import settings
 
+try: #PY2 / PY3
+    from urllib2 import Request, urlopen
+    from urllib2 import URLError    
+except ImportError:
+    from urllib.request import Request, urlopen
+    from urllib.error import URLError
+
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
     from xbmcgui import ListItem  # pylint: disable=unused-import
@@ -253,7 +260,10 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 mpaa = mpaa_backup
             if mpaa:
                 video['Mpaa'] = settings.CERT_PREFIX + mpaa
-        video['credits'] = video['writer'] = _get_credits(show_info)
+        video['credits'] = video['writer'] = _get_credits(show_info)        
+        trailer = _parse_trailer(show_info.get('videos', {}).get('results', {}))
+        if trailer:
+            video['trailer'] = trailer
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
@@ -347,3 +357,26 @@ def parse_media_id(title):
     elif title.startswith('tvdb/') and title[5:].isdigit(): # TVDB ID
         return {'type': 'tvdb_id', 'title': title[5:]}
     return None
+
+
+def _parse_trailer(results):
+    if results:        
+        keyBackup = None
+        for result in results:
+            if result.get('site') == 'YouTube':
+                erro = None
+                key = result.get('key')
+                chk_link = "https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v="+key            
+                try:
+                    check = urlopen(chk_link)
+                except URLError as e:
+                    erro = e.code
+                if erro == 404:                        # video NOT available 
+                    pass
+                elif result.get('type') == 'Trailer':  # video is available and is defined as "Trailer" by TMDB. Perfect link!           
+                    return 'plugin://plugin.video.youtube/?action=play_video&videoid='+key
+                else:                     
+                     keyBackup = key                   # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link. 
+    if keyBackup != None:
+        return 'plugin://plugin.video.youtube/?action=play_video&videoid='+keyBackup        
+    return None  
