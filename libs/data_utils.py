@@ -356,7 +356,11 @@ def parse_media_id(title):
 
 
 def _parse_trailer(results):
-    if results:        
+    if results:
+        if settings.PLAYERSOPT == 'tubed':
+            addon_player = 'plugin://plugin.video.tubed/?mode=play&video_id='
+        elif settings.PLAYERSOPT == 'youtube':
+            addon_player = 'plugin://plugin.video.youtube/?action=play_video&videoid='
         keyBackup = None
         for result in results:
             if result.get('site') == 'YouTube':
@@ -370,9 +374,9 @@ def _parse_trailer(results):
                 if erro == 404:                        # video NOT available 
                     pass
                 elif result.get('type') == 'Trailer':  # video is available and is defined as "Trailer" by TMDB. Perfect link!           
-                    return 'plugin://plugin.video.youtube/?action=play_video&videoid='+key
+                    return  addon_player + key
                 else:                     
                      keyBackup = key                   # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link. 
     if keyBackup != None:
-        return 'plugin://plugin.video.youtube/?action=play_video&videoid='+keyBackup        
+        return  addon_player + keyBackup        
     return None  
