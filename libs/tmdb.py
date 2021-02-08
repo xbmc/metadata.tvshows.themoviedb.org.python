@@ -406,3 +406,16 @@ def _image_sort(images, image_type):
         return lang_pref + lang_en + lang_null
     else:
         return lang_pref + lang_null + lang_en
+
+
+def _convert_ext_id(ext_provider, ext_id):
+    providers_dict = {'imdb' : 'imdb_id',
+                     'thetvdb' : 'tvdb_id',
+                     'tvdb' : 'tvdb_id'}
+    show_url = FIND_URL.format(ext_id)
+    params = TMDB_PARAMS.copy()
+    params['external_source'] = providers_dict[ext_provider]
+    show_info = api_utils.load_info(show_url, params=params)
+    if show_info:
+        return show_info.get('tv_results')[0].get('id')
+    return None

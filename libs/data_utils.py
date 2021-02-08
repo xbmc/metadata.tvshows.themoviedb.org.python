@@ -28,6 +28,7 @@ from .utils import safe_get, logger
 from . import settings
 from urllib.request import Request, urlopen
 from urllib.error import URLError
+from . import settings, tmdb 
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
@@ -37,16 +38,21 @@ except ImportError:
     pass
 
 TAG_RE = re.compile(r'<[^>]+>')
+
+# Regular expressions are listed in order of priority.
+# "TMDB" provider is preferred than other providers (IMDB and TheTVDB),
+# because external providers IDs need to be converted to TMDB_ID.
 SHOW_ID_REGEXPS = (
-    r'(tvmaze)\.com/shows/(\d+)/[\w\-]',
-    r'(thetvdb)\.com/.*?series/(\d+)',
-    r'(thetvdb)\.com[\w=&\?/]+id=(\d+)',
-    r'(imdb)\.com/[\w/\-]+/(tt\d+)',
-    r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',
-    r'(themoviedb)\.org/tv/(\d+)',
-    r'(themoviedb)\.org/./tv/(\d+)',
-    r'(tmdb)\.org/./tv/(\d+)'
-)
+    r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',   # TMDB_http_link
+    r'(themoviedb)\.org/tv/(\d+)',                        # TMDB_http_link
+    r'(themoviedb)\.org/./tv/(\d+)',                      # TMDB_http_link
+    r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link    
+    r'(imdb)\.com/.+/(tt\d+)',                            # IMDB_http_link
+    r'(thetvdb)\.com.+&id=(\d+)',                         # TheTVDB_http_link 
+    r'(thetvdb)\.com/.*?series/(\d+)',                    # TheTVDB_http_link
+    )
+
+
 SUPPORTED_ARTWORK_TYPES = {'poster', 'banner'}
 IMAGE_SIZES = ('large', 'original', 'medium')
 CLEAN_PLOT_REPLACEMENTS = (
@@ -322,6 +328,7 @@ def parse_nfo_url(nfo):
     ns_regex = r'<namedseason number="(.*)">(.*)</namedseason>'
     ns_match = re.findall(ns_regex, nfo, re.I)
     sid_match = None
+    ep_grouping = None 
     for regexp in SHOW_ID_REGEXPS:
         logger.debug('trying regex to match service from parsing nfo:')
         logger.debug(regexp)
@@ -329,16 +336,18 @@ def parse_nfo_url(nfo):
         if show_id_match:
             logger.debug('match group 1: ' + show_id_match.group(1))
             logger.debug('match group 2: ' + show_id_match.group(2))
-            try:
-                ep_grouping = show_id_match.group(3)
-            except IndexError:
-                ep_grouping = None
-            if ep_grouping is not None:
-                logger.debug('match group 3: ' + ep_grouping)
+            if show_id_match.group(1) == "themoviedb" or show_id_match.group(1) == "tmdb":   
+                try:
+                    ep_grouping = show_id_match.group(3)
+                except IndexError:
+                    pass
+                tmdb_id = show_id_match.group(2)
             else:
-                logger.debug('match group 3: None')
-            sid_match = UrlParseResult(show_id_match.group(1), show_id_match.group(2), ep_grouping)
-            break
+                tmdb_id = tmdb._convert_ext_id(show_id_match.group(1), show_id_match.group(2))
+            if tmdb_id:                
+                logger.debug('match group 3: ' + str(ep_grouping))
+                sid_match = UrlParseResult('themoviedb', tmdb_id, ep_grouping)
+                break
     return sid_match, ns_match
 
 
@@ -379,4 +388,5 @@ def _parse_trailer(results):
                      keyBackup = key                   # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link. 
     if keyBackup != None:
         return  addon_player + keyBackup        
-    return None  
+    return None
+  
