@@ -255,10 +255,11 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 mpaa = mpaa_backup
             if mpaa:
                 video['Mpaa'] = settings.CERT_PREFIX + mpaa
-        video['credits'] = video['writer'] = _get_credits(show_info)        
-        trailer = _parse_trailer(show_info.get('videos', {}).get('results', {}))
-        if trailer:
-            video['trailer'] = trailer
+        video['credits'] = video['writer'] = _get_credits(show_info)
+        if settings.ENABTRAILER:
+            trailer = _parse_trailer(show_info.get('videos', {}).get('results', {}))
+            if trailer:
+                video['trailer'] = trailer
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
