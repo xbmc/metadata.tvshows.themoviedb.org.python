@@ -156,8 +156,8 @@
           <default>Tubed</default>
           <constraints>
             <options>
-              <option label="YouTube">YouTube</option>
-              <option label="Tubed">Tubed</option>              
+              <option label="30307">YouTube</option>
+              <option label="30308">Tubed</option>              
             </options>
           </constraints>
           <dependencies>

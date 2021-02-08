@@ -136,3 +136,11 @@ msgctxt "#30306"
 msgid "Addon Player"
 msgstr ""
 
+msgctxt "#30307"
+msgid "YouTube"
+msgstr ""
+
+msgctxt "#30308"
+msgid "Tubed"
+msgstr ""
+
