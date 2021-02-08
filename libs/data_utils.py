@@ -26,13 +26,8 @@ import re, json
 from collections import OrderedDict, namedtuple
 from .utils import safe_get, logger
 from . import settings
-
-try: #PY2 / PY3
-    from urllib2 import Request, urlopen
-    from urllib2 import URLError    
-except ImportError:
-    from urllib.request import Request, urlopen
-    from urllib.error import URLError
+from urllib.request import Request, urlopen
+from urllib.error import URLError
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
