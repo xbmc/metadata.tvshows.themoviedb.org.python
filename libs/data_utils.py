@@ -37,21 +37,13 @@ except ImportError:
 TAG_RE = re.compile(r'<[^>]+>')
 
 # Regular expressions are listed in order of priority.
-# XML format are preferred than "http links".
 # "TMDB" provider is preferred than other providers (IMDB and TheTVDB),
 # because external providers IDs need to be converted to TMDB_ID.
 SHOW_ID_REGEXPS = (
-    r'<uniqueid.+(themoviedb).+>\s*(\d+)\s*</uniqueid>',  # TMDB_XML
-    r'<uniqueid.+(tmdb).+>\s*(\d+)\s*</uniqueid>',        # TMDB_XML
     r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',   # TMDB_http_link
     r'(themoviedb)\.org/tv/(\d+)',                        # TMDB_http_link
     r'(themoviedb)\.org/./tv/(\d+)',                      # TMDB_http_link
-    r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link
-
-    r'<uniqueid.+(imdb).+>\s*(tt\d+)\s*</uniqueid>',      # IMDB_XML
-    r'<uniqueid.+(thetvdb).+>\s*(\d+)\s*</uniqueid>',     # TheTVDB_XML
-    r'<uniqueid.+(tvdb).+>\s*(\d+)\s*</uniqueid>',        # TheTVDB_XML   
-    
+    r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link    
     r'(imdb)\.com/.+/(tt\d+)',                            # IMDB_http_link
     r'(thetvdb)\.com.+&id=(\d+)',                         # TheTVDB_http_link 
     r'(thetvdb)\.com/.*?series/(\d+)',                    # TheTVDB_http_link
