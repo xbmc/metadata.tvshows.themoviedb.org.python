@@ -25,10 +25,7 @@ from __future__ import absolute_import, unicode_literals
 import re, json
 from collections import OrderedDict, namedtuple
 from .utils import safe_get, logger
-from . import settings
-from urllib.request import Request, urlopen
-from urllib.error import URLError
-from . import settings, tmdb 
+from . import settings, api_utils
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
@@ -343,12 +340,29 @@ def parse_nfo_url(nfo):
                     pass
                 tmdb_id = show_id_match.group(2)
             else:
-                tmdb_id = tmdb._convert_ext_id(show_id_match.group(1), show_id_match.group(2))
+                tmdb_id = _convert_ext_id(show_id_match.group(1), show_id_match.group(2))
             if tmdb_id:                
                 logger.debug('match group 3: ' + str(ep_grouping))
                 sid_match = UrlParseResult('themoviedb', tmdb_id, ep_grouping)
                 break
     return sid_match, ns_match
+
+
+def _convert_ext_id(ext_provider, ext_id):
+    TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+    BASE_URL = 'https://api.themoviedb.org/3/{}'
+    FIND_URL = BASE_URL.format('find/{}')
+
+    providers_dict = {'imdb' : 'imdb_id',
+                     'thetvdb' : 'tvdb_id',
+                     'tvdb' : 'tvdb_id'}
+    show_url = FIND_URL.format(ext_id)
+    params = TMDB_PARAMS.copy()
+    params['external_source'] = providers_dict[ext_provider]
+    show_info = api_utils.load_info(show_url, params=params)
+    if show_info:
+        return show_info.get('tv_results')[0].get('id')
+    return None
 
 
 def parse_media_id(title):
@@ -369,24 +383,26 @@ def _parse_trailer(results):
         if settings.PLAYERSOPT == 'tubed':
             addon_player = 'plugin://plugin.video.tubed/?mode=play&video_id='
         elif settings.PLAYERSOPT == 'youtube':
-            addon_player = 'plugin://plugin.video.youtube/?action=play_video&videoid='
-        keyBackup = None
+            addon_player = 'plugin://plugin.video.youtube/?action=play_video&videoid='        
+        backup_keys = []       
         for result in results:
             if result.get('site') == 'YouTube':
-                erro = None
                 key = result.get('key')
-                chk_link = "https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v="+key            
-                try:
-                    check = urlopen(chk_link)
-                except URLError as e:
-                    erro = e.code
-                if erro == 404:                        # video NOT available 
-                    pass
-                elif result.get('type') == 'Trailer':  # video is available and is defined as "Trailer" by TMDB. Perfect link!           
-                    return  addon_player + key
-                else:                     
-                     keyBackup = key                   # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link. 
-    if keyBackup != None:
-        return  addon_player + keyBackup        
-    return None
+                if result.get('type') == 'Trailer':                   
+                    if _check_youtube (key):                        
+                        return addon_player+key  # video is available and is defined as "Trailer" by TMDB. Perfect link!                    
+                else:
+                    backup_keys.append(key)      # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link.                                 
+        for keybackup in backup_keys:            
+            if _check_youtube (keybackup):                
+                return addon_player+keybackup                    
+    return None             
+
+
+def _check_youtube (key):
+    chk_link = "https://www.youtube.com/watch?v="+key            
+    check = api_utils.load_info(chk_link, resp_type = 'not_json')
+    if not check or "Video unavailable" in check:       # video not available   
+        return False                            
+    return True
   
