@@ -250,6 +250,10 @@ def add_main_show_info(list_item, show_info, full_info=True):
             if mpaa:
                 video['Mpaa'] = settings.CERT_PREFIX + mpaa
         video['credits'] = video['writer'] = _get_credits(show_info)
+        if settings.ENABTRAILER:
+            trailer = _parse_trailer(show_info.get('videos', {}).get('results', {}))
+            if trailer:
+                video['trailer'] = trailer
         list_item = set_show_artwork(show_info, list_item)
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
@@ -361,3 +365,30 @@ def parse_media_id(title):
     elif title.startswith('tvdb/') and title[5:].isdigit(): # TVDB ID
         return {'type': 'tvdb_id', 'title': title[5:]}
     return None
+
+
+def _parse_trailer(results):
+    if results:        
+        backup_keys = []       
+        for result in results:
+            if result.get('site') == 'YouTube':
+                key = result.get('key')
+                if result.get('type') == 'Trailer':                   
+                    if _check_youtube (key):                        
+                        return 'plugin://plugin.video.youtube/?action=play_video&videoid='+key  # video is available and is defined as "Trailer" by TMDB. Perfect link!                    
+                else:
+                    backup_keys.append(key)      # video is available, but NOT defined as "Trailer" by TMDB. Saving it as backup in case it doesn't find any perfect link.                                 
+        for keybackup in backup_keys:            
+            if _check_youtube (keybackup):                
+                return 'plugin://plugin.video.youtube/?action=play_video&videoid='+keybackup                    
+    return None             
+
+
+def _check_youtube (key):
+    chk_link = "https://www.youtube.com/watch?v="+key            
+    check = api_utils.load_info(chk_link, resp_type = 'not_json')
+    if not check or "Video unavailable" in check:       # video not available   
+        return False                            
+    return True
+                              
+
