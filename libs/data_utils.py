@@ -25,7 +25,8 @@ from __future__ import absolute_import, unicode_literals
 import re, json
 from collections import OrderedDict, namedtuple
 from .utils import safe_get, logger
-from . import settings
+from . import settings, api_utils
+
 
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
@@ -35,16 +36,21 @@ except ImportError:
     pass
 
 TAG_RE = re.compile(r'<[^>]+>')
+
+# Regular expressions are listed in order of priority.
+# "TMDB" provider is preferred than other providers (IMDB and TheTVDB),
+# because external providers IDs need to be converted to TMDB_ID.
 SHOW_ID_REGEXPS = (
-    r'(tvmaze)\.com/shows/(\d+)/[\w\-]',
-    r'(thetvdb)\.com/.*?series/(\d+)',
-    r'(thetvdb)\.com[\w=&\?/]+id=(\d+)',
-    r'(imdb)\.com/[\w/\-]+/(tt\d+)',
-    r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',
-    r'(themoviedb)\.org/tv/(\d+)',
-    r'(themoviedb)\.org/./tv/(\d+)',
-    r'(tmdb)\.org/./tv/(\d+)'
-)
+    r'(themoviedb)\.org/tv/(\d+).*/episode_group/(.*)',   # TMDB_http_link
+    r'(themoviedb)\.org/tv/(\d+)',                        # TMDB_http_link
+    r'(themoviedb)\.org/./tv/(\d+)',                      # TMDB_http_link
+    r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link 
+    
+    r'(imdb)\.com/.+/(tt\d+)',                            # IMDB_http_link
+    r'(thetvdb)\.com.+&id=(\d+)',                         # TheTVDB_http_link 
+    r'(thetvdb)\.com/.*?series/(\d+)',                    # TheTVDB_http_link
+    )
+
 SUPPORTED_ARTWORK_TYPES = {'poster', 'banner'}
 IMAGE_SIZES = ('large', 'original', 'medium')
 CLEAN_PLOT_REPLACEMENTS = (
@@ -304,6 +310,7 @@ def parse_nfo_url(nfo):
     ns_regex = r'<namedseason number="(.*)">(.*)</namedseason>'
     ns_match = re.findall(ns_regex, nfo, re.I)
     sid_match = None
+    ep_grouping = None 
     for regexp in SHOW_ID_REGEXPS:
         logger.debug('trying regex to match service from parsing nfo:')
         logger.debug(regexp)
@@ -311,17 +318,36 @@ def parse_nfo_url(nfo):
         if show_id_match:
             logger.debug('match group 1: ' + show_id_match.group(1))
             logger.debug('match group 2: ' + show_id_match.group(2))
-            try:
-                ep_grouping = show_id_match.group(3)
-            except IndexError:
-                ep_grouping = None
-            if ep_grouping is not None:
-                logger.debug('match group 3: ' + ep_grouping)
+            if show_id_match.group(1) == "themoviedb" or show_id_match.group(1) == "tmdb":   
+                try:
+                    ep_grouping = show_id_match.group(3)
+                except IndexError:
+                    pass
+                tmdb_id = show_id_match.group(2)
             else:
-                logger.debug('match group 3: None')
-            sid_match = UrlParseResult(show_id_match.group(1), show_id_match.group(2), ep_grouping)
-            break
+                tmdb_id = _convert_ext_id(show_id_match.group(1), show_id_match.group(2))
+            if tmdb_id:                
+                logger.debug('match group 3: ' + str(ep_grouping))
+                sid_match = UrlParseResult('themoviedb', tmdb_id, ep_grouping)
+                break
     return sid_match, ns_match
+
+
+def _convert_ext_id(ext_provider, ext_id):
+    TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+    BASE_URL = 'https://api.themoviedb.org/3/{}'
+    FIND_URL = BASE_URL.format('find/{}')
+
+    providers_dict = {'imdb' : 'imdb_id',
+                     'thetvdb' : 'tvdb_id',
+                     'tvdb' : 'tvdb_id'}
+    show_url = FIND_URL.format(ext_id)
+    params = TMDB_PARAMS.copy()
+    params['external_source'] = providers_dict[ext_provider]
+    show_info = api_utils.load_info(show_url, params=params)
+    if show_info:
+        return show_info.get('tv_results')[0].get('id')
+    return None
 
 
 def parse_media_id(title):
