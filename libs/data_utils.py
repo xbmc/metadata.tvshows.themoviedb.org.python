@@ -352,7 +352,6 @@ def _convert_ext_id(ext_provider, ext_id):
     TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
     BASE_URL = 'https://api.themoviedb.org/3/{}'
     FIND_URL = BASE_URL.format('find/{}')
-
     providers_dict = {'imdb' : 'imdb_id',
                      'thetvdb' : 'tvdb_id',
                      'tvdb' : 'tvdb_id'}
@@ -361,7 +360,9 @@ def _convert_ext_id(ext_provider, ext_id):
     params['external_source'] = providers_dict[ext_provider]
     show_info = api_utils.load_info(show_url, params=params)
     if show_info:
-        return show_info.get('tv_results')[0].get('id')
+        tv_results = show_info.get('tv_results')
+        if tv_results:
+            return tv_results[0].get('id')
     return None
 
 

@@ -1,3 +1,6 @@
+1.4.1
+fix for crash if TMDb returns no TV show results when using external ID in parsing nfo file
+
 1.4.0
 TV show trailers from YouTube now included in metadata (with option to turn it off)
 option to select which YouTube addon is used to play trailers
