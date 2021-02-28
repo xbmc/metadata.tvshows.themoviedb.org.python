@@ -34,6 +34,9 @@ try:
 except ImportError:
     pass
 
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+BASE_URL = 'https://api.themoviedb.org/3/{}'
+FIND_URL = BASE_URL.format('find/{}')
 TAG_RE = re.compile(r'<[^>]+>')
 
 # Regular expressions are listed in order of priority.
@@ -349,9 +352,6 @@ def parse_nfo_url(nfo):
 
 
 def _convert_ext_id(ext_provider, ext_id):
-    TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
-    BASE_URL = 'https://api.themoviedb.org/3/{}'
-    FIND_URL = BASE_URL.format('find/{}')
     providers_dict = {'imdb' : 'imdb_id',
                      'thetvdb' : 'tvdb_id',
                      'tvdb' : 'tvdb_id'}
