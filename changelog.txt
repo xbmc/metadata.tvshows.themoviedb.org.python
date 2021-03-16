@@ -1,5 +1,5 @@
 1.1.33
-fix for crash if TMDb returns no TV show results when using extern id in parsing nfo file
+fix for crash if TMDb returns no TV show results when using external id in parsing nfo file
 
 1.1.32
 TV show trailers from YouTube now included in metadata (with option to turn it off)
