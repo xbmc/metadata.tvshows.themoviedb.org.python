@@ -146,6 +146,11 @@
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
+				<setting id="studio_country" type="boolean" label="30006" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
 				<setting id="enab_trailer" type="boolean" label="30305" help="">
 					<level>0</level>
 					<default>true</default>
