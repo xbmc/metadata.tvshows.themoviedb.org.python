@@ -244,9 +244,12 @@ def add_main_show_info(list_item, show_info, full_info=True):
         else:
             network = None
             country = None
-        if network and country:
+        if network and country and settings.STUDIOCOUNTRY:
             video['studio'] = '{0} ({1})'.format(network['name'], country)
             video['country'] = country
+        elif network and country:
+            video['studio'] = network['name']
+            video['country'] = country           
         content_ratings = show_info.get('content_ratings', {}).get('results', {})
         if content_ratings:
             mpaa = ''
