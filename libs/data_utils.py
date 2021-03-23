@@ -49,10 +49,10 @@ SHOW_ID_REGEXPS = (
     r'(themoviedb)\.org/tv/(\d+)',                        # TMDB_http_link
     r'(themoviedb)\.org/./tv/(\d+)',                      # TMDB_http_link
     r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link 
-    
     r'(imdb)\.com/.+/(tt\d+)',                            # IMDB_http_link
     r'(thetvdb)\.com.+&id=(\d+)',                         # TheTVDB_http_link 
     r'(thetvdb)\.com/.*?series/(\d+)',                    # TheTVDB_http_link
+    r'(thetvdb)\.com/.*?"id":(\d+)',                      # TheTVDB_http_link
     )
 
 SUPPORTED_ARTWORK_TYPES = {'poster', 'banner'}
