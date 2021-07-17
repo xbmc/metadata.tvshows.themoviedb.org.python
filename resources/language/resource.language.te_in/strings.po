@@ -5,142 +5,141 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: XBMC Addons\n"
-"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-07-17 07:29+0000\n"
-"Last-Translator: Klojum <klojum@kodi.tv>\n"
-"Language-Team: Dutch <https://kodi.weblate.cloud/projects/kodi-add-ons-information-providers/metadata-tvshows-themoviedb-org-python/nl_nl/>\n"
-"Language: nl_nl\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: te_in\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.7.1\n"
 
 msgctxt "#30000"
 msgid "Preferred language"
-msgstr "Taalvoorkeur"
+msgstr ""
 
 msgctxt "#30001"
 msgid "Preferred certification country"
-msgstr "Voorkeur certificatieland"
+msgstr ""
 
 msgctxt "#30002"
 msgid "Include certification prefix"
-msgstr "Gebruik certificatieprefix"
+msgstr ""
 
 msgctxt "#30003"
 msgid "Prefix"
-msgstr "Prefix"
+msgstr ""
 
 msgctxt "#30004"
 msgid "Keep original title"
-msgstr "Behoud originele titel"
+msgstr ""
 
 msgctxt "#30005"
 msgid "Categorize fanart with text as landscape art"
-msgstr "Categoriseer fanart met tekst als achtergrond art"
+msgstr ""
 
 msgctxt "#30006"
 msgid "Include country code with studio"
-msgstr "Gebruik landcode met studio"
+msgstr ""
 
-# empty strings from 30007 to 30099
+# empty strings from 30006 to 30099
 msgctxt "#30100"
 msgid "Fanart.tv"
-msgstr "Fanart.tv"
+msgstr ""
 
 msgctxt "#30101"
 msgid "Client key (optional)"
-msgstr "Klantsleutel (optioneel)"
+msgstr ""
 
 msgctxt "#30102"
 msgid "Enable fanart"
-msgstr "Fanart inschakelen"
+msgstr ""
 
 msgctxt "#30103"
 msgid "Enable poster"
-msgstr "Poster inschakelen"
+msgstr ""
 
 msgctxt "#30104"
 msgid "Enable banner"
-msgstr "Banner inschakelen"
+msgstr ""
 
 msgctxt "#30105"
 msgid "Enable clearlogo"
-msgstr "Clearlogo inschakelen"
+msgstr ""
 
 msgctxt "#30106"
 msgid "Enable clearart"
-msgstr "Clearart inschakelen"
+msgstr ""
 
 msgctxt "#30107"
 msgid "Enable landscape"
-msgstr "Achtergrond inschakelen"
+msgstr ""
 
 msgctxt "#30108"
 msgid "Enable character art"
-msgstr "Karakterart inschakelen"
+msgstr ""
 
 msgctxt "#30109"
 msgid "Include art from fanart.tv"
-msgstr "Gebruik afbeeldingen van Fanart.tv"
+msgstr ""
 
 # empty strings from 30110 to 30149
 msgctxt "#30150"
 msgid "Enable season poster"
-msgstr "Seizoensposter inschakelen"
+msgstr ""
 
 msgctxt "#30151"
 msgid "Enable season banner"
-msgstr "Seizoensbanner inschakelen"
+msgstr ""
 
 msgctxt "#30152"
 msgid "Enable season landscape"
-msgstr "Achtergrond inschakelen"
+msgstr ""
 
 # empty strings from 30153 to 30200
 msgctxt "#30200"
 msgid "Advanced"
-msgstr "Geavanceerd"
+msgstr ""
 
 msgctxt "#30201"
 msgid "Verbose debug logging"
-msgstr "Toon debug logging"
+msgstr ""
 
 # emptry strings from 30202 to 30299
 msgctxt "#30300"
 msgid "Ratings"
-msgstr "Waardering"
+msgstr ""
 
 msgctxt "#30301"
 msgid "Default rating from"
-msgstr "Standaardwaardering van"
+msgstr ""
 
 msgctxt "#30302"
 msgid "Also add IMDb ratings"
-msgstr "Voeg ook IMDb-waardering toe"
+msgstr ""
 
 msgctxt "#30303"
 msgid "Also add Trakt.tv ratings"
-msgstr "Voeg ook Trakt.tv-waardering toe"
+msgstr ""
 
 msgctxt "#30304"
 msgid "Also add TMDb ratings"
-msgstr "Voeg ook TMDb-waardering toe"
+msgstr ""
 
 msgctxt "#30305"
 msgid "Enable Trailer"
-msgstr "Trailer inschakelen"
+msgstr ""
 
 msgctxt "#30306"
 msgid "Addon Player"
-msgstr "Add-on speler"
+msgstr ""
 
 msgctxt "#30307"
 msgid "YouTube"
-msgstr "Youtube"
+msgstr ""
 
 msgctxt "#30308"
 msgid "Tubed"
-msgstr "Tubed"
+msgstr ""
