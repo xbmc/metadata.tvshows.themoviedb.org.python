@@ -11,6 +11,7 @@
   <extension point="xbmc.addon.metadata">
     <news>1.4.8
 udpated IMDB parsing to be more tolerant of HTML changes at IMDB
+updated language files
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
