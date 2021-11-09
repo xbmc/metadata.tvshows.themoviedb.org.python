@@ -1,5 +1,5 @@
 1.4.9
-Trailer now falls back to English trailer if trailer not available in chosen language
+fix to fallback to English trailer if no trailer found in selected language
 
 1.4.8
 changed IMDB parsing to use JSON from application/ld+json section instead of HTML
