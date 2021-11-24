@@ -268,17 +268,19 @@ def add_main_show_info(list_item, show_info, full_info=True):
             'content_ratings', {}).get('results', {})
         if content_ratings:
             mpaa = ''
-            mpaa_backup = ''
+            mpaa_us = ''
             for content_rating in content_ratings:
-                iso = content_rating.get('iso_3166_1', '').lower()
-                if iso == 'us':
-                    mpaa_backup = content_rating.get('rating')
-                if iso == settings.CERT_COUNTRY.lower():
-                    mpaa = content_rating.get('rating', '')
-            if not mpaa:
-                mpaa = mpaa_backup
+                iso = content_rating.get('iso_3166_1', '')
+                if iso.lower() == 'us':
+                    mpaa_us = 'Rated %s' % content_rating.get('rating')
+                elif iso.lower() == settings.CERT_COUNTRY.lower():
+                    c_rating = content_rating.get('rating', '')
+                    if c_rating:
+                        mpaa = '%s:%s' % (iso, c_rating)
             if mpaa:
-                video['Mpaa'] = settings.CERT_PREFIX + mpaa
+                video['Mpaa'] = mpaa
+            else:
+                video['Mpaa'] = mpaa_us
         video['credits'] = video['writer'] = _get_credits(show_info)
         if settings.ENABTRAILER:
             trailer = _parse_trailer(show_info.get(

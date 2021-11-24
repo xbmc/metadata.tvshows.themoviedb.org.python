@@ -91,11 +91,6 @@ CERT_COUNTRY = source_settings.get(
     'tmdbcertcountry', ADDON.getSettingString('tmdbcertcountry')).lower()
 IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
 
-if source_settings.get('usecertprefix', ADDON.getSettingBool('usecertprefix')):
-    CERT_PREFIX = source_settings.get(
-        'certprefix', ADDON.getSettingString('certprefix'))
-else:
-    CERT_PREFIX = ''
 primary_rating = source_settings.get(
     'ratings', ADDON.getSettingString('ratings')).lower()
 RATING_TYPES = [primary_rating]
