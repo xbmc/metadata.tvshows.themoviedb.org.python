@@ -277,7 +277,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
                     c_rating = content_rating.get('rating', '')
                     if c_rating:
                         mpaa = '%s:%s' % (
-                            settings.ISOALPHAMAP.get(iso, ''), c_rating)
+                            settings.ISOALPHAMAP.get(iso.upper(), ''), c_rating)
             if mpaa:
                 video['Mpaa'] = mpaa
             else:
