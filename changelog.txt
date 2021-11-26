@@ -1,5 +1,5 @@
 1.4.10
-change to MPAA rating logic so 'Rated ' is appended only to US ratings, other ratings in format country:rating
+change to MPAA rating logic so 'Rated ' is appended only to US ratings, other ratings in format country-rating
 
 1.4.9
 fix to fallback to English trailer if no trailer found in selected language
