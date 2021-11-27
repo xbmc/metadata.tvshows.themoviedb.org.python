@@ -9,8 +9,8 @@
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
-    <news>1.5.0
-change to MPAA rating so that all ratings are in [country] [rating] format
+    <news>1.4.9
+fix to fallback to English trailer if no trailer found in selected language
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
