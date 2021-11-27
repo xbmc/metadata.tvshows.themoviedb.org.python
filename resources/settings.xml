@@ -119,23 +119,6 @@
 						<heading>30001</heading>
 					</control>
 				</setting>
-				<setting id="usecertprefix" type="boolean" label="30002" help="">
-					<level>0</level>
-					<default>true</default>
-					<control type="toggle"/>
-				</setting>
-				<setting id="certprefix" type="string" label="30003" help="">
-					<level>0</level>
-					<default>Rated </default>
-					<dependencies>
-						<dependency type="enable">
-							<condition operator="is" setting="usecertprefix">true</condition>
-						</dependency>
-					</dependencies>
-					<control type="edit" format="string">
-						<heading>30003</heading>
-					</control>
-				</setting>
 				<setting id="keeporiginaltitle" type="boolean" label="30004" help="">
 					<level>0</level>
 					<default>false</default>
