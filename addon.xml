@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.4.10~beta3"
+  version="1.5.0~beta1"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -9,8 +9,8 @@
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
-    <news>1.4.10
-change to MPAA rating logic so 'Rated ' is appended only to US ratings, other ratings in format country-rating
+    <news>1.5.0
+change to MPAA rating so that all ratings are in [country] [rating] format
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
