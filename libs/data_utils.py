@@ -273,7 +273,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 iso = content_rating.get('iso_3166_1', '')
                 c_rating = content_rating.get('rating', '')
                 if c_rating and iso:
-                    mpaa_raw = '%s %s' % (
+                    mpaa_raw = '%s - %s' % (
                         settings.ISOALPHAMAP.get(iso.upper(), ''), c_rating)
                     if iso.lower() == settings.CERT_COUNTRY.lower():
                         video['Mpaa'] = mpaa_raw
