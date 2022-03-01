@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: XBMC Addons\n"
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2022-02-22 08:50+0000\n"
+"PO-Revision-Date: 2022-02-27 09:13+0000\n"
 "Last-Translator: Alfonso Cachero <alfonso.cachero@gmail.com>\n"
 "Language-Team: Spanish (Spain) <https://kodi.weblate.cloud/projects/kodi-add-ons-information-providers/metadata-tvshows-themoviedb-org-python/es_es/>\n"
 "Language: es_es\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.10.1\n"
+"X-Generator: Weblate 4.11\n"
 
 msgctxt "Addon Summary"
 msgid "Fetch TV Show metadata from themoviedb.org"
@@ -68,87 +68,87 @@ msgstr "Activar fanart"
 
 msgctxt "#30103"
 msgid "Enable poster"
-msgstr ""
+msgstr "Activar cartel"
 
 msgctxt "#30104"
 msgid "Enable banner"
-msgstr ""
+msgstr "Activar pancarta"
 
 msgctxt "#30105"
 msgid "Enable clearlogo"
-msgstr ""
+msgstr "Activar ClearLogo"
 
 msgctxt "#30106"
 msgid "Enable clearart"
-msgstr ""
+msgstr "Activar ClearArt"
 
 msgctxt "#30107"
 msgid "Enable landscape"
-msgstr ""
+msgstr "Activar apaisado"
 
 msgctxt "#30108"
 msgid "Enable character art"
-msgstr ""
+msgstr "Activar CharacterArt"
 
 msgctxt "#30109"
 msgid "Include art from fanart.tv"
-msgstr ""
+msgstr "Incluir arte de fanart.tv"
 
 # empty strings from 30110 to 30149
 msgctxt "#30150"
 msgid "Enable season poster"
-msgstr ""
+msgstr "Activar cartel de temporada"
 
 msgctxt "#30151"
 msgid "Enable season banner"
-msgstr ""
+msgstr "Activar pancarta de temporada"
 
 msgctxt "#30152"
 msgid "Enable season landscape"
-msgstr ""
+msgstr "Activar arte apaisado de temporada"
 
 # empty strings from 30153 to 30200
 msgctxt "#30200"
 msgid "Advanced"
-msgstr ""
+msgstr "Avanzado"
 
 msgctxt "#30201"
 msgid "Verbose debug logging"
-msgstr ""
+msgstr "Registro de depuración detallado"
 
 # emptry strings from 30202 to 30299
 msgctxt "#30300"
 msgid "Ratings"
-msgstr ""
+msgstr "Valoraciones"
 
 msgctxt "#30301"
 msgid "Default rating from"
-msgstr ""
+msgstr "Valoración por defecto de"
 
 msgctxt "#30302"
 msgid "Also add IMDb ratings"
-msgstr ""
+msgstr "Añadir también valoraciones de IMDb"
 
 msgctxt "#30303"
 msgid "Also add Trakt.tv ratings"
-msgstr ""
+msgstr "Añadir también valoraciones de Trakt.tv"
 
 msgctxt "#30304"
 msgid "Also add TMDb ratings"
-msgstr ""
+msgstr "Añadir también valoraciones de TMDb"
 
 msgctxt "#30305"
 msgid "Enable Trailer"
-msgstr ""
+msgstr "Activar Tráiler"
 
 msgctxt "#30306"
 msgid "Addon Player"
-msgstr ""
+msgstr "Addon Reproductor"
 
 msgctxt "#30307"
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 msgctxt "#30308"
 msgid "Tubed"
-msgstr ""
+msgstr "Tubed"
