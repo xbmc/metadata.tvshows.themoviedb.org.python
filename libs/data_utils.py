@@ -187,22 +187,25 @@ def get_image_urls(image):
     return theurl, previewurl
 
 
-def set_show_artwork(show_info, vtag):
+def set_show_artwork(show_info, list_item):
     """Set available images for a show"""
+    vtag = list_item.getVideoInfoTag()
     for image_type, image_list in show_info.get('images', {}).items():
         if image_type == 'backdrops':
+            fanart_list = []
             for image in image_list:
                 if image.get('type') == 'fanarttv':
                     theurl = image['file_path']
                 else:
                     theurl = settings.IMAGEROOTURL + image['file_path']
                 if image.get('iso_639_1') != None and settings.CATLANDSCAPE:
-                    destination = "landscape"
+                    theurl, previewurl = get_image_urls(image)
+                    vtag.addAvailableArtwork(
+                        theurl, art_type="landscape", preview=previewurl)
                 else:
-                    destination = "fanart"
-                theurl, previewurl = get_image_urls(image)
-                vtag.addAvailableArtwork(
-                    theurl, art_type=destination, preview=previewurl)
+                    fanart_list.append({'image': theurl})
+            if fanart_list:
+                list_item.setAvailableFanart(fanart_list)
         else:
             if image_type == 'posters':
                 destination = 'poster'
@@ -212,7 +215,7 @@ def set_show_artwork(show_info, vtag):
                 theurl, previewurl = get_image_urls(image)
                 vtag.addAvailableArtwork(
                     theurl, art_type=destination, preview=previewurl)
-    return vtag
+    return list_item
 
 
 def add_main_show_info(list_item, show_info, full_info=True):
@@ -276,13 +279,10 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 'videos', {}).get('results', {}))
             if trailer:
                 vtag.setTrailer(trailer)
-        vtag = set_show_artwork(show_info, vtag)
+        list_item = set_show_artwork(show_info, list_item)
         vtag = _add_season_info(show_info, vtag)
         vtag = _set_cast(show_info['credits']['cast'], vtag)
         vtag = _set_rating(show_info, vtag)
-        ext_ids = {'tmdb_id': show_info['id']}
-        ext_ids.update(show_info.get('external_ids', {}))
-        vtag = _set_unique_ids(ext_ids, vtag)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
@@ -292,7 +292,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 theurl, art_type='poster', preview=previewurl)
     logger.debug('adding tv show information for %s to list item' % showname)
     # This is needed for getting artwork
-    # list_item = _set_unique_ids(show_info, list_item)
+    ext_ids = {'tmdb_id': show_info['id']}
+    ext_ids.update(show_info.get('external_ids', {}))
+    vtag = _set_unique_ids(ext_ids, vtag)
     return list_item
 
 

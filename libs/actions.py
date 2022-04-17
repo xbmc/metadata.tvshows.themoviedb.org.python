@@ -178,8 +178,7 @@ def get_artwork(show_id):
     show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
         list_item = xbmcgui.ListItem(show_info['name'], offscreen=True)
-        vtag = list_item.getVideoInfoTag()
-        vtag = data_utils.set_show_artwork(show_info, vtag)
+        list_item = data_utils.set_show_artwork(show_info, list_item)
         xbmcplugin.setResolvedUrl(HANDLE, True, list_item)
     else:
         xbmcplugin.setResolvedUrl(
