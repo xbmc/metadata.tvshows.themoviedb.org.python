@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.4.10"
+  version="1.5.0~beta1"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -9,8 +9,8 @@
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
-    <news>1.4.10
-updates to image reduction algorithm to better deal with shows with lots of seasons
+    <news>1.5.0~beta1
+- Nexus changes to use InfoVideoTag instead of ListItem to set data
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
