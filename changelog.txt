@@ -1,3 +1,8 @@
+1.5.0
+Nexus only updates to use new VideoInfoTag setters
+general code cleanup
+updated language files
+
 1.4.10
 updates to image reduction algorithm to better deal with shows with lots of seasons
 
