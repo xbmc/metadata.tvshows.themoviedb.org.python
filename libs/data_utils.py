@@ -94,7 +94,6 @@ def _set_cast(cast_info, vtag):
             thumb = settings.IMAGEROOTURL + item['profile_path']
         cast.append(Actor(actor['name'], actor['role'], actor['order'], thumb))
     vtag.setCast(cast)
-    return vtag
 
 
 def _get_credits(show_info):
@@ -125,12 +124,11 @@ def _set_unique_ids(ext_ids, vtag):
     """Extract unique ID in various online databases"""
     for key, value in ext_ids.items():
         if key in VALIDEXTIDS and value:
-            if key == 'tmdb':
+            if key == 'tmdb_id':
                 isTMDB = True
             else:
                 isTMDB = False
-            vtag.setUniqueID(str(value), type=key, isDefault=isTMDB)
-    return vtag
+            vtag.setUniqueID(str(value), type=key[:4], isDefault=isTMDB)
 
 
 def _set_rating(the_info, vtag, episode=False):
@@ -148,7 +146,6 @@ def _set_rating(the_info, vtag, episode=False):
             vtag.setRating(rating, votes=votes,
                            type=rating_type, isDefault=first)
             first = False
-    return vtag
 
 
 def _add_season_info(show_info, vtag):
@@ -173,7 +170,6 @@ def _add_season_info(show_info, vtag):
                     previewurl = settings.PREVIEWROOTURL + image['file_path']
                 vtag.addAvailableArtwork(
                     theurl, art_type=destination, preview=previewurl, season=season['season_number'])
-    return vtag
 
 
 def get_image_urls(image):
@@ -239,6 +235,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
         vtag.setYear(int(show_info['first_air_date'][:4]))
         vtag.setPremiered(show_info['first_air_date'])
     if full_info:
+        ext_ids = {'tmdb_id': show_info['id']}
+        ext_ids.update(show_info.get('external_ids', {}))
+        _set_unique_ids(ext_ids, vtag)
         vtag.setTvShowStatus(safe_get(show_info, 'status', ''))
         genre_list = safe_get(show_info, 'genres', {})
         genres = []
@@ -280,9 +279,9 @@ def add_main_show_info(list_item, show_info, full_info=True):
             if trailer:
                 vtag.setTrailer(trailer)
         list_item = set_show_artwork(show_info, list_item)
-        vtag = _add_season_info(show_info, vtag)
-        vtag = _set_cast(show_info['credits']['cast'], vtag)
-        vtag = _set_rating(show_info, vtag)
+        _add_season_info(show_info, vtag)
+        _set_cast(show_info['credits']['cast'], vtag)
+        _set_rating(show_info, vtag)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
@@ -291,10 +290,6 @@ def add_main_show_info(list_item, show_info, full_info=True):
             vtag.addAvailableArtwork(
                 theurl, art_type='poster', preview=previewurl)
     logger.debug('adding tv show information for %s to list item' % showname)
-    # This is needed for getting artwork
-    ext_ids = {'tmdb_id': show_info['id']}
-    ext_ids.update(show_info.get('external_ids', {}))
-    vtag = _set_unique_ids(ext_ids, vtag)
     return list_item
 
 
@@ -318,12 +313,12 @@ def add_episode_info(list_item, episode_info, full_info=True):
             vtag.setPlotOutline(plot)
         if safe_get(episode_info, 'air_date') is not None:
             vtag.setPremiered(episode_info['air_date'])
-        vtag = _set_cast(
+        _set_cast(
             episode_info['credits']['guest_stars'], vtag)
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
-        vtag = _set_unique_ids(ext_ids, vtag)
-        vtag = _set_rating(episode_info, vtag, episode=True)
+        _set_unique_ids(ext_ids, vtag)
+        _set_rating(episode_info, vtag, episode=True)
         for image in episode_info.get('images', {}).get('stills', []):
             img_path = image.get('file_path')
             if img_path:
