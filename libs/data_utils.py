@@ -321,7 +321,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             vtag.setPremiered(episode_info['air_date'])
         duration = episode_info.get('runtime')
         if duration:
-            videostream = VideoStreamDetail(duration=int(duration))
+            videostream = VideoStreamDetail(duration=int(duration)*60)
             vtag.addVideoStream(videostream)
         _set_cast(
             episode_info['credits']['guest_stars'], vtag)
