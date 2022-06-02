@@ -326,7 +326,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             video['premiered'] = episode_info['air_date']
         duration = episode_info.get('runtime')
         if duration:
-            video['duration'] = int(duration)
+            video['duration'] = int(duration) * 60
         list_item = _set_cast(
             episode_info['credits']['guest_stars'], list_item)
         ext_ids = {'tmdb_id': episode_info['id']}
