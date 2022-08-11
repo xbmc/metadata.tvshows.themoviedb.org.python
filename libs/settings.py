@@ -103,8 +103,8 @@ if source_settings.get('imdbanyway', ADDON.getSettingBool('imdbanyway')) and pri
     RATING_TYPES.append('imdb')
 if source_settings.get('traktanyway', ADDON.getSettingBool('traktanyway')) and primary_rating != 'trakt':
     RATING_TYPES.append('trakt')
-if source_settings.get('tmdbanyway', ADDON.getSettingBool('tmdbanyway')) and primary_rating != 'tmdb':
-    RATING_TYPES.append('tmdb')
+if source_settings.get('tmdbanyway', ADDON.getSettingBool('tmdbanyway')) and primary_rating != 'themoviedb':
+    RATING_TYPES.append('themoviedb')
 FANARTTV_ENABLE = source_settings.get(
     'enable_fanarttv', ADDON.getSettingBool('enable_fanarttv'))
 FANARTTV_CLIENTKEY = source_settings.get(
