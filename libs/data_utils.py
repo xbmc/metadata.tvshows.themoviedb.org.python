@@ -214,6 +214,8 @@ def set_show_artwork(show_info, list_item):
         else:
             if image_type == 'posters':
                 destination = 'poster'
+            elif image_type == 'logos':
+                destination = 'clearlogo'
             else:
                 destination = image_type
             for image in image_list:
