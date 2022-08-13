@@ -165,15 +165,10 @@ def _add_season_info(show_info, vtag):
             else:
                 destination = image_type
             for image in image_list:
-                if image.get('type') == 'fanarttv':
-                    theurl = image['file_path']
-                    previewurl = theurl.replace(
-                        '.fanart.tv/fanart/', '.fanart.tv/preview/')
-                else:
-                    theurl = settings.IMAGEROOTURL + image['file_path']
-                    previewurl = settings.PREVIEWROOTURL + image['file_path']
-                vtag.addAvailableArtwork(
-                    theurl, art_type=destination, preview=previewurl, season=season['season_number'])
+                theurl, previewurl = get_image_urls(image)
+                if theurl:
+                    vtag.addAvailableArtwork(
+                        theurl, art_type=destination, preview=previewurl, season=season['season_number'])
 
 
 def get_image_urls(image):
@@ -216,8 +211,9 @@ def set_show_artwork(show_info, list_item):
                 destination = image_type
             for image in image_list:
                 theurl, previewurl = get_image_urls(image)
-                vtag.addAvailableArtwork(
-                    theurl, art_type=destination, preview=previewurl)
+                if theurl:
+                    vtag.addAvailableArtwork(
+                        theurl, art_type=destination, preview=previewurl)
     return list_item
 
 
@@ -290,8 +286,8 @@ def add_main_show_info(list_item, show_info, full_info=True):
         _set_cast(show_info['credits']['cast'], vtag)
         _set_rating(show_info, vtag)
     else:
-        image = safe_get(show_info, 'poster_path', '')
-        if image:
+        image = show_info.get('poster_path', '')
+        if image and not image.endswith('.svg'):
             theurl = settings.IMAGEROOTURL + image
             previewurl = settings.PREVIEWROOTURL + image
             vtag.addAvailableArtwork(
@@ -331,10 +327,8 @@ def add_episode_info(list_item, episode_info, full_info=True):
         _set_unique_ids(ext_ids, vtag)
         _set_rating(episode_info, vtag)
         for image in episode_info.get('images', {}).get('stills', []):
-            img_path = image.get('file_path')
-            if img_path:
-                theurl = settings.IMAGEROOTURL + img_path
-                previewurl = settings.PREVIEWROOTURL + img_path
+            theurl, previewurl = get_image_urls(image)
+            if theurl:
                 vtag.addAvailableArtwork(
                     theurl, art_type='thumb', preview=previewurl)
         vtag.setWriters(_get_credits(episode_info))
