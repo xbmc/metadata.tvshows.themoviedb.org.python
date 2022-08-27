@@ -321,7 +321,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             videostream = VideoStreamDetail(duration=int(duration)*60)
             vtag.addVideoStream(videostream)
         _set_cast(
-            episode_info['credits']['guest_stars'], vtag)
+            episode_info['season_cast'] + episode_info['credits']['guest_stars'], vtag)
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
         _set_unique_ids(ext_ids, vtag)
