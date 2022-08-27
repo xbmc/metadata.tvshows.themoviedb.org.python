@@ -332,7 +332,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
         if duration:
             video['duration'] = int(duration) * 60
         list_item = _set_cast(
-            episode_info['credits']['guest_stars'], list_item)
+            episode_info['season_cast'] + episode_info['credits']['guest_stars'], list_item)
         ext_ids = {'tmdb_id': episode_info['id']}
         ext_ids.update(episode_info.get('external_ids', {}))
         list_item = _set_unique_ids(ext_ids, list_item)
