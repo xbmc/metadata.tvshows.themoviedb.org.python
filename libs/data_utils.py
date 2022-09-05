@@ -50,7 +50,8 @@ SHOW_ID_REGEXPS = (
     r'(tmdb)\.org/./tv/(\d+)',                            # TMDB_http_link
     r'(imdb)\.com/.+/(tt\d+)',                            # IMDB_http_link
     r'(thetvdb)\.com.+&id=(\d+)',                         # TheTVDB_http_link
-    r'(thetvdb)\.com/.*?series/(\d+)',                    # TheTVDB_http_link
+    r'(thetvdb)\.com/series/(\d+)',                       # TheTVDB_http_link
+    r'(thetvdb)\.com/api/.*series/(\d+)',                 # TheTVDB_http_link
     r'(thetvdb)\.com/.*?"id":(\d+)',                      # TheTVDB_http_link
     r'<uniqueid.+?type="(tvdb|imdb)".*?>([t\d]+?)</uniqueid>'
 )
