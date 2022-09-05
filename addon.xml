@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.4.15"
+  version="1.4.16"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -9,10 +9,11 @@
   </requires>
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
-    <news>1.4.15
+    <news>1.4.16
 fix for cast list in episodes
 properly classify TMDb logos as clearlogos
 filter out SVG files
+fix for scraper ignoring NFO files with TVDB artwork URL
 updated language files
 	</news>
     <platform>all</platform>
