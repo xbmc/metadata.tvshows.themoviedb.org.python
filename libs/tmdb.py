@@ -156,7 +156,6 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
             show_url, params=params, verboselog=settings.VERBOSELOG)
         if show_info is None:
             return None
-        # TODO: move fallback_lang to settings
         fallback_lang = "en-US"
         show_info['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', show_info)
         season_map = {}
@@ -166,12 +165,7 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
                 show_id, season.get('season_number', 0))
             season_info = api_utils.load_info(
                 season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-            # TODO: make fallback on season name as optional setting (don't use as default)
-            if False:
-                season_info['name'] = _find_translation([settings.LANG, fallback_lang], 'name', season_info)
-            else:
-                season_info['name'] = season_info.get('name')
-
+            season_info['name'] = _find_translation([settings.LANG, fallback_lang], 'name', season_info)
             season_info['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', season_info)
             # this is part of a work around for xbmcgui.ListItem.addSeasons() not respecting NFO file information
             for named_season in named_seasons:
@@ -230,7 +224,6 @@ def load_episode_info(show_id, episode_id):
         ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
         if ep_return is None:
             return None
-        # TODO: move fallback_lang to settings
         fallback_lang = "en-US"
         ep_return['name'] = _find_translation([settings.LANG, fallback_lang], 'name', ep_return)
         ep_return['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', ep_return)
