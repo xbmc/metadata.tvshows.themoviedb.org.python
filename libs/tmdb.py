@@ -165,7 +165,10 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
                 show_id, season.get('season_number', 0))
             season_info = api_utils.load_info(
                 season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-            season_info['name'] = _find_translation([settings.LANG, fallback_lang], 'name', season_info)
+            if settings.SEASON_TRANSL_FALLBACK:
+                season_info['name'] = _find_translation([settings.LANG, fallback_lang], 'name', season_info)
+            else:
+                season_info['name'] = season_info.get('name')
             season_info['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', season_info)
             # this is part of a work around for xbmcgui.ListItem.addSeasons() not respecting NFO file information
             for named_season in named_seasons:
