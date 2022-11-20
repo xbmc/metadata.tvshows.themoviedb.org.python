@@ -23,6 +23,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import re
+import json
 from xbmc import Actor, VideoStreamDetail
 from collections import namedtuple
 from .utils import safe_get, logger
@@ -125,13 +126,18 @@ def _get_directors(episode_info):
 def _set_unique_ids(ext_ids, vtag):
     # type: (Dict, ListItem) -> ListItem
     """Extract unique ID in various online databases"""
+    return_ids = {}
     for key, value in ext_ids.items():
         if key in VALIDEXTIDS and value:
             if key == 'tmdb_id':
                 isTMDB = True
             else:
                 isTMDB = False
-            vtag.setUniqueID(str(value), type=key[:4], isDefault=isTMDB)
+            shortkey = key[:-3]
+            str_value = str(value)
+            vtag.setUniqueID(str_value, type=shortkey, isDefault=isTMDB)
+            return_ids[shortkey] = str_value
+    return return_ids
 
 
 def _set_rating(the_info, vtag):
@@ -234,14 +240,14 @@ def add_main_show_info(list_item, show_info, full_info=True):
     vtag.setPlot(plot)
     vtag.setPlotOutline(plot)
     vtag.setMediaType('tvshow')
-    vtag.setEpisodeGuide(str(show_info['id']))
+    ext_ids = {'tmdb_id': show_info['id']}
+    ext_ids.update(show_info.get('external_ids', {}))
+    epguide_ids = _set_unique_ids(ext_ids, vtag)
+    vtag.setEpisodeGuide(json.dumps(epguide_ids))
     if show_info.get('first_air_date'):
         vtag.setYear(int(show_info['first_air_date'][:4]))
         vtag.setPremiered(show_info['first_air_date'])
     if full_info:
-        ext_ids = {'tmdb_id': show_info['id']}
-        ext_ids.update(show_info.get('external_ids', {}))
-        _set_unique_ids(ext_ids, vtag)
         vtag.setTvShowStatus(safe_get(show_info, 'status', ''))
         genre_list = safe_get(show_info, 'genres', {})
         genres = []
@@ -365,7 +371,7 @@ def parse_nfo_url(nfo):
                     show_id_match.group(1), show_id_match.group(2))
             if tmdb_id:
                 logger.debug('match group 3: ' + str(ep_grouping))
-                sid_match = UrlParseResult('themoviedb', tmdb_id, ep_grouping)
+                sid_match = UrlParseResult('tmdb', tmdb_id, ep_grouping)
                 break
     return sid_match, ns_match
 
