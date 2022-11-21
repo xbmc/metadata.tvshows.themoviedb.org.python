@@ -111,6 +111,10 @@ def get_details(show_id):
 
 def get_episode_list(show_ids):  # pylint: disable=missing-docstring
     # type: (Text) -> None
+    # Kodi has a bug: when a show directory contains an XML NFO file with
+    # episodeguide URL, that URL is always passed here regardless of
+    # the actual parsing result in get_show_from_nfo()
+    # so much of this weird logic is to deal with that
     try:
         all_ids = json.loads(show_ids)
         show_id = all_ids.get('tmdb')
@@ -129,9 +133,6 @@ def get_episode_list(show_ids):  # pylint: disable=missing-docstring
     if not show_id:
         raise ValueError('No TMDb TV show id found in episode guide')
     elif not show_id.isdigit():
-        # Kodi has a bug: when a show directory contains an XML NFO file with
-        # episodeguide URL, that URL is always passed here regardless of
-        # the actual parsing result in get_show_from_nfo()
         parse_result, named_seasons = data_utils.parse_nfo_url(show_id)
         if parse_result:
             show_id = parse_result.show_id
