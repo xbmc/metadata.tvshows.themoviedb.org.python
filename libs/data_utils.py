@@ -384,8 +384,12 @@ def _convert_ext_id(ext_provider, ext_id):
                       'tvdb': 'tvdb_id'}
     show_url = FIND_URL.format(ext_id)
     params = TMDB_PARAMS.copy()
-    params['external_source'] = providers_dict[ext_provider]
-    show_info = api_utils.load_info(show_url, params=params)
+    provider = providers_dict.get(ext_provider)
+    if provider:
+        params['external_source'] = provider
+        show_info = api_utils.load_info(show_url, params=params)
+    else:
+        show_info = None
     if show_info:
         tv_results = show_info.get('tv_results')
         if tv_results:

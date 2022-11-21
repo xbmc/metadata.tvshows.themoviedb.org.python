@@ -116,12 +116,19 @@ def get_episode_list(show_ids):  # pylint: disable=missing-docstring
         show_id = all_ids.get('tmdb')
         if not show_id:
             for key, value in all_ids.items():
-                show_id = data_utils._convert_ext_id(key, value)
+                show_id = str(data_utils._convert_ext_id(key, value))
                 if show_id:
                     break
+            if not show_id:
+                show_id = str(show_ids)
     except (ValueError, AttributeError):
         show_id = str(show_ids)
-    if not show_id.isdigit():
+        if show_id.isdigit():
+            logger.error(
+                'using depreciated episodeguide format, this show should be refrehsed or rescraped')
+    if not show_id:
+        raise ValueError('No TMDb TV show id found in episode guide')
+    elif not show_id.isdigit():
         # Kodi has a bug: when a show directory contains an XML NFO file with
         # episodeguide URL, that URL is always passed here regardless of
         # the actual parsing result in get_show_from_nfo()
@@ -129,10 +136,9 @@ def get_episode_list(show_ids):  # pylint: disable=missing-docstring
         if parse_result:
             show_id = parse_result.show_id
         else:
-            return
-    logger.info('Getting episode list for show id {}'.format(show_id))
-    logger.info(
-        'If you do not get the expected results, you may need to refresh the show')
+            raise ValueError(
+                'No TMDb TV show id found in episode guide, this show should be refrehsed or rescraped')
+    logger.debug('Getting episode list for show id {}'.format(show_id))
     show_info = tmdb.load_show_info(show_id)
     if show_info is not None:
         theindex = 0
