@@ -131,13 +131,14 @@ def get_episode_list(show_ids):  # pylint: disable=missing-docstring
             logger.error(
                 'using depreciated episodeguide format, this show should be refrehsed or rescraped')
     if not show_id:
-        raise ValueError('No TMDb TV show id found in episode guide')
+        raise RuntimeError(
+            'No TMDb TV show id found in episode guide, this show should be refreshed or rescraped')
     elif not show_id.isdigit():
         parse_result, named_seasons = data_utils.parse_nfo_url(show_id)
         if parse_result:
             show_id = parse_result.show_id
         else:
-            raise ValueError(
+            raise RuntimeError(
                 'No TMDb TV show id found in episode guide, this show should be refrehsed or rescraped')
     logger.debug('Getting episode list for show id {}'.format(show_id))
     show_info = tmdb.load_show_info(show_id)
