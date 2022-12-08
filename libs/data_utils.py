@@ -135,7 +135,7 @@ def _set_unique_ids(ext_ids, vtag):
                 isTMDB = False
             shortkey = key[:-3]
             str_value = str(value)
-            vtag.setUniqueID(str_value, type=shortkey, isDefault=isTMDB)
+            vtag.setUniqueID(str_value, type=shortkey, isdefault=isTMDB)
             return_ids[shortkey] = str_value
     return return_ids
 
@@ -154,7 +154,7 @@ def _set_rating(the_info, vtag):
                      (str(rating), str(votes)))
         if rating > 0:
             vtag.setRating(rating, votes=votes,
-                           type=rating_type, isDefault=first)
+                           type=rating_type, isdefault=first)
             first = False
 
 
@@ -175,7 +175,7 @@ def _add_season_info(show_info, vtag):
                 theurl, previewurl = get_image_urls(image)
                 if theurl:
                     vtag.addAvailableArtwork(
-                        theurl, art_type=destination, preview=previewurl, season=season['season_number'])
+                        theurl, arttype=destination, preview=previewurl, season=season['season_number'])
 
 
 def get_image_urls(image):
@@ -204,7 +204,7 @@ def set_show_artwork(show_info, list_item):
                 theurl, previewurl = get_image_urls(image)
                 if image.get('iso_639_1') != None and settings.CATLANDSCAPE and theurl:
                     vtag.addAvailableArtwork(
-                        theurl, art_type="landscape", preview=previewurl)
+                        theurl, arttype="landscape", preview=previewurl)
                 elif theurl:
                     fanart_list.append({'image': theurl})
             if fanart_list:
@@ -220,7 +220,7 @@ def set_show_artwork(show_info, list_item):
                 theurl, previewurl = get_image_urls(image)
                 if theurl:
                     vtag.addAvailableArtwork(
-                        theurl, art_type=destination, preview=previewurl)
+                        theurl, arttype=destination, preview=previewurl)
     return list_item
 
 
@@ -298,7 +298,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
             theurl = settings.IMAGEROOTURL + image
             previewurl = settings.PREVIEWROOTURL + image
             vtag.addAvailableArtwork(
-                theurl, art_type='poster', preview=previewurl)
+                theurl, arttype='poster', preview=previewurl)
     logger.debug('adding tv show information for %s to list item' % showname)
     return list_item
 
@@ -337,7 +337,7 @@ def add_episode_info(list_item, episode_info, full_info=True):
             theurl, previewurl = get_image_urls(image)
             if theurl:
                 vtag.addAvailableArtwork(
-                    theurl, art_type='thumb', preview=previewurl)
+                    theurl, arttype='thumb', preview=previewurl)
         vtag.setWriters(_get_credits(episode_info))
         vtag.setDirectors(_get_directors(episode_info))
     logger.debug('adding episode information for S%sE%s - %s to list item' %
