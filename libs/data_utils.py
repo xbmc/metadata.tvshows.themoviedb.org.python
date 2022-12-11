@@ -125,16 +125,15 @@ def _get_directors(episode_info):
     return directors_
 
 
-def _set_unique_ids(ext_ids, list_item):
-    # type: (InfoType, ListItem) -> ListItem
+def _set_unique_ids(ext_ids):
+    # type: (InfoType) -> ListItem
     """Extract unique ID in various online databases"""
     unique_ids = {}
     for key, value in ext_ids.items():
         if key in VALIDEXTIDS and value:
             key = key[:-3]
             unique_ids[key] = str(value)
-    list_item.setUniqueIDs(unique_ids, 'tmdb')
-    return list_item
+    return unique_ids
 
 
 def _set_rating(the_info, list_item, episode=False):
@@ -242,10 +241,13 @@ def add_main_show_info(list_item, show_info, full_info=True):
         'title': showname,
         'originaltitle': original_name,
         'tvshowtitle': showname,
-        'mediatype': 'tvshow',
-        # This property is passed as "url" parameter to getepisodelist call
-        'episodeguide': str(show_info['id']),
+        'mediatype': 'tvshow'
     }
+    ext_ids = {'tmdb_id': show_info['id']}
+    ext_ids.update(show_info.get('external_ids', {}))
+    unique_ids = _set_unique_ids(ext_ids)
+    list_item.setUniqueIDs(unique_ids, 'tmdb')
+    video['episodeguide'] = json.dumps(unique_ids)
     if show_info.get('first_air_date'):
         video['year'] = int(show_info['first_air_date'][:4])
         video['premiered'] = show_info['first_air_date']
@@ -294,9 +296,6 @@ def add_main_show_info(list_item, show_info, full_info=True):
         list_item = _add_season_info(show_info, list_item)
         list_item = _set_cast(show_info['credits']['cast'], list_item)
         list_item = _set_rating(show_info, list_item)
-        ext_ids = {'tmdb_id': show_info['id']}
-        ext_ids.update(show_info.get('external_ids', {}))
-        list_item = _set_unique_ids(ext_ids, list_item)
     else:
         image = safe_get(show_info, 'poster_path', '')
         if image:
