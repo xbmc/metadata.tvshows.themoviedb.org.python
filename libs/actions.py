@@ -120,8 +120,9 @@ def get_episode_list(show_ids):  # pylint: disable=missing-docstring
         show_id = all_ids.get('tmdb')
         if not show_id:
             for key, value in all_ids.items():
-                show_id = str(data_utils._convert_ext_id(key, value))
+                show_id = data_utils._convert_ext_id(key, value)
                 if show_id:
+                    show_id = str(show_id)
                     break
             if not show_id:
                 show_id = str(show_ids)
