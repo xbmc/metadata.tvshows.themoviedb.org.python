@@ -12,6 +12,7 @@
     <reuselanguageinvoker>true</reuselanguageinvoker>
     <news>1.6.4
 added TMDb keywords as tag with option to disable function
+updated translatios
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
