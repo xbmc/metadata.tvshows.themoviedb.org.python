@@ -12,6 +12,7 @@
     <reuselanguageinvoker>true</reuselanguageinvoker>
     <news>1.4.19
 made search of NFO file for a UniqueID less agressive
+updated language files
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
