@@ -159,3 +159,7 @@ msgstr ""
 msgctxt "#30308"
 msgid "Tubed"
 msgstr ""
+
+msgctxt "#30309"
+msgid "Try season translation fallback search"
+msgstr ""

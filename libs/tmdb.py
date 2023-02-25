@@ -149,38 +149,27 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
         logger.debug('no cache file found, loading from scratch')
         show_url = SHOW_URL.format(show_id)
         params = TMDB_PARAMS.copy()
-        params['append_to_response'] = 'credits,content_ratings,external_ids,images,videos'
+        params['append_to_response'] = 'credits,content_ratings,external_ids,images,videos,translations'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
         params['include_video_language'] = '%s,en,null' % settings.LANG[0:2]
         show_info = api_utils.load_info(
             show_url, params=params, verboselog=settings.VERBOSELOG)
         if show_info is None:
             return None
-        if show_info['overview'] == '' and settings.LANG != 'en-US':
-            params['language'] = 'en-US'
-            del params['append_to_response']
-            show_info_backup = api_utils.load_info(
-                show_url, params=params, verboselog=settings.VERBOSELOG)
-            if show_info_backup is not None:
-                show_info['overview'] = show_info_backup.get('overview', '')
-            params['language'] = settings.LANG
+        fallback_lang = "en-US"
+        show_info['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', show_info)
         season_map = {}
-        params['append_to_response'] = 'credits,images'
+        params['append_to_response'] = 'credits,images,translations'
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(
                 show_id, season.get('season_number', 0))
             season_info = api_utils.load_info(
                 season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-            if (season_info.get('overview', '') == '' or season_info.get('name', '').lower().startswith('season')) and settings.LANG != 'en-US':
-                params['language'] = 'en-US'
-                season_info_backup = api_utils.load_info(
-                    season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-                params['language'] = settings.LANG
-                if season_info.get('overview', '') == '':
-                    season_info['overview'] = season_info_backup.get(
-                        'overview', '')
-                if season_info.get('name', '').lower().startswith('season'):
-                    season_info['name'] = season_info_backup.get('name', '')
+            if settings.SEASON_TRANSL_FALLBACK:
+                season_info['name'] = _find_translation([settings.LANG, fallback_lang], 'name', season_info)
+            else:
+                season_info['name'] = season_info.get('name')
+            season_info['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', season_info)
             # this is part of a work around for xbmcgui.ListItem.addSeasons() not respecting NFO file information
             for named_season in named_seasons:
                 if str(named_season[0]) == str(season.get('season_number')):
@@ -233,35 +222,14 @@ def load_episode_info(show_id, episode_id):
         ep_url = EPISODE_URL.format(
             show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
         params = TMDB_PARAMS.copy()
-        params['append_to_response'] = 'credits,external_ids,images'
+        params['append_to_response'] = 'credits,external_ids,images,translations'
         params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        ep_return = api_utils.load_info(
-            ep_url, params=params, verboselog=settings.VERBOSELOG)
+        ep_return = api_utils.load_info(ep_url, params=params, verboselog=settings.VERBOSELOG)
         if ep_return is None:
             return None
-        bad_return_name = False
-        bad_return_overview = False
-        check_name = ep_return.get('name')
-        if check_name == None:
-            bad_return_name = True
-            ep_return['name'] = 'Episode ' + \
-                str(episode_info['episode_number'])
-        elif check_name.lower().startswith('episode') or check_name == '':
-            bad_return_name = True
-        if ep_return.get('overview', '') == '':
-            bad_return_overview = True
-        if (bad_return_overview or bad_return_name) and settings.LANG != 'en-US':
-            params['language'] = 'en-US'
-            del params['append_to_response']
-            ep_return_backup = api_utils.load_info(
-                ep_url, params=params, verboselog=settings.VERBOSELOG)
-            if ep_return_backup is not None:
-                if bad_return_overview:
-                    ep_return['overview'] = ep_return_backup.get(
-                        'overview', '')
-                if bad_return_name:
-                    ep_return['name'] = ep_return_backup.get(
-                        'name', 'Episode ' + str(episode_info['episode_number']))
+        fallback_lang = "en-US"
+        ep_return['name'] = _find_translation([settings.LANG, fallback_lang], 'name', ep_return)
+        ep_return['overview'] = _find_translation([settings.LANG, fallback_lang], 'overview', ep_return)
         ep_return['images'] = _sort_image_types(ep_return.get('images', {}))
         ep_return['season_number'] = episode_info['season_number']
         ep_return['episode_number'] = episode_info['episode_number']
@@ -435,3 +403,24 @@ def _image_sort(images, image_type):
         return lang_pref + lang_en + lang_null
     else:
         return lang_pref + lang_null + lang_en
+
+def _find_translation(languages = ['en-US'], item = '', payload = {}):
+
+    default = payload.get(item)
+    translations = payload.get('translations')
+
+    if translations is None: return default
+    if 'translations' not in translations: return default
+    for language in languages:
+        logger.debug("Searching %s in %s" % (item, language))
+        for translation in translations.get('translations'):
+            if translation.get('iso_639_1') == language[0:2] and translation.get('iso_3166_1') == language[3:5]:
+                logger.debug("Found translation language: %s" % translation)
+                translation_data = translation.get('data')
+                if translation_data is None: break
+                item_value = translation_data.get(item)
+                if item_value is None or item_value == "": break
+                logger.debug("Found %s in %s value %s" % (item, language, item_value))
+                return item_value
+
+    return default

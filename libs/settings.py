@@ -78,6 +78,8 @@ source_settings = json.loads(source_params.get('pathSettings', '{}'))
 
 KEEPTITLE = source_settings.get(
     'keeporiginaltitle', ADDON.getSettingBool('keeporiginaltitle'))
+SEASON_TRANSL_FALLBACK = source_settings.get(
+    'season_transl_fallback', ADDON.getSettingBool('season_transl_fallback'))
 CATLANDSCAPE = source_settings.get('cat_landscape', True)
 STUDIOCOUNTRY = source_settings.get('studio_country', False)
 ENABTRAILER = source_settings.get(
