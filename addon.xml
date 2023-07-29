@@ -36,7 +36,7 @@ updated language files
     <summary lang="hr_HR">Preuzmite metapodatke TV serija s themoviedb.org</summary>
     <summary lang="id_ID">Ambil metadata Acara TV dari themoviedb.org</summary>
     <summary lang="is_IS">Sækja lýsigögn sjónvarpsþátta frá themoviedb.org</summary>
-    <summary lang="it_IT">Recupera i metadati dei programmi TV da themovedb.org</summary>
+    <summary lang="it_IT">Recupera i metadati delle serie TV da themovedb.org</summary>
     <summary lang="ko_KR">themoviedb.org에서 TV쇼 메타데이터를 가져옵니다</summary>
     <summary lang="lv_LV">Iegūst TV pārraides datus no themoviedb.org vietnes</summary>
     <summary lang="my_MM">themoviedb.org မှ TV Show မက်တာဒေတာကို ရယူပါ</summary>
@@ -44,6 +44,7 @@ updated language files
     <summary lang="pl_PL">Pobieraj metadane programów telewizyjnch z themoviedb.org</summary>
     <summary lang="pt_BR">Obter metadados de Séries em themoviedb.org</summary>
     <summary lang="ru_RU">Получение метаданных о сериалах с сайта themoviedb.org</summary>
+    <summary lang="sk_SK">Získať metadáta pre seriály z themoviedb.org</summary>
     <summary lang="sv_SE">Hämta metadata för TV-serier från themoviedb.org</summary>
     <summary lang="tr_TR">TV Programları meta verilerini themoviedb.org sitesinden al</summary>
     <summary lang="zh_CN">从 themoviedb.org 获取剧集信息</summary>
