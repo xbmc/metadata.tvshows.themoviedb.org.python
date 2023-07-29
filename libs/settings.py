@@ -86,7 +86,8 @@ PLAYERSOPT = source_settings.get(
     'players_opt', ADDON.getSettingString('players_opt')).lower()
 VERBOSELOG = source_settings.get(
     'verboselog', ADDON.getSettingBool('verboselog'))
-LANG = source_settings.get('language', ADDON.getSettingString('language'))
+LANG_DETAILS = source_settings.get('languageDetails', ADDON.getSettingString('languageDetails'))
+LANG_IMAGES = source_settings.get('languageImages', ADDON.getSettingString('languageImages'))
 CERT_COUNTRY = source_settings.get(
     'tmdbcertcountry', ADDON.getSettingString('tmdbcertcountry')).lower()
 SAVETAGS = source_settings.get(
