@@ -25,7 +25,7 @@ msgid "The Movie Database (TMDb) is a community built movie and TV database. Eve
 msgstr ""
 
 msgctxt "#30000"
-msgid "Preferred language (Details)"
+msgid "Preferred language"
 msgstr ""
 
 msgctxt "#30001"
@@ -58,6 +58,10 @@ msgstr ""
 
 msgctxt "#30008"
 msgid "Preferred language (Images)"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Use different language for images"
 msgstr ""
 
 # empty strings from 30009 to 30099
