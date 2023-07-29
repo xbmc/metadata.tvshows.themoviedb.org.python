@@ -70,9 +70,19 @@
 						<heading>30000</heading>
 					</control>
 				</setting>
+				<setting id="usedifferentlangforimages" type="boolean" label="30009" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
 				<setting id="languageImages" type="string" label="30008" help="">
 					<level>0</level>
 					<default>en-US</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="usedifferentlangforimages">true</condition>
+						</dependency>
+					</dependencies>
 					<constraints>
 						<options>
 							<option>ar-AE</option>
