@@ -37,7 +37,7 @@ HEADERS = (
 )
 api_utils.set_headers(dict(HEADERS))
 
-TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG_DETAILS}
 BASE_URL = 'https://api.themoviedb.org/3/{}'
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
@@ -156,20 +156,20 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
         show_url = SHOW_URL.format(show_id)
         params = TMDB_PARAMS.copy()
         params['append_to_response'] = 'credits,content_ratings,external_ids,images,videos,keywords'
-        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
-        params['include_video_language'] = '%s,en,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,en,null' % settings.LANG_IMAGES[0:2]
+        params['include_video_language'] = '%s,en,null' % settings.LANG_DETAILS[0:2]
         show_info = api_utils.load_info(
             show_url, params=params, verboselog=settings.VERBOSELOG)
         if show_info is None:
             return None
-        if show_info['overview'] == '' and settings.LANG != 'en-US':
+        if show_info['overview'] == '' and settings.LANG_DETAILS != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             show_info_backup = api_utils.load_info(
                 show_url, params=params, verboselog=settings.VERBOSELOG)
             if show_info_backup is not None:
                 show_info['overview'] = show_info_backup.get('overview', '')
-            params['language'] = settings.LANG
+            params['language'] = settings.LANG_DETAILS
         season_map = {}
         params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
@@ -177,11 +177,11 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
                 show_id, season.get('season_number', 0))
             season_info = api_utils.load_info(
                 season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-            if (season_info.get('overview', '') == '' or season_info.get('name', '').lower().startswith('season')) and settings.LANG != 'en-US':
+            if (season_info.get('overview', '') == '' or season_info.get('name', '').lower().startswith('season')) and settings.LANG_DETAILS != 'en-US':
                 params['language'] = 'en-US'
                 season_info_backup = api_utils.load_info(
                     season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-                params['language'] = settings.LANG
+                params['language'] = settings.LANG_DETAILS
                 if season_info.get('overview', '') == '':
                     season_info['overview'] = season_info_backup.get(
                         'overview', '')
@@ -240,7 +240,7 @@ def load_episode_info(show_id, episode_id):
             show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
         params = TMDB_PARAMS.copy()
         params['append_to_response'] = 'credits,external_ids,images'
-        params['include_image_language'] = '%s,en,null' % settings.LANG[0:2]
+        params['include_image_language'] = '%s,en,null' % settings.LANG_IMAGES[0:2]
         ep_return = api_utils.load_info(
             ep_url, params=params, verboselog=settings.VERBOSELOG)
         if ep_return is None:
@@ -256,7 +256,7 @@ def load_episode_info(show_id, episode_id):
             bad_return_name = True
         if ep_return.get('overview', '') == '':
             bad_return_overview = True
-        if (bad_return_overview or bad_return_name) and settings.LANG != 'en-US':
+        if (bad_return_overview or bad_return_name) and settings.LANG_DETAILS != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             ep_return_backup = api_utils.load_info(
@@ -344,7 +344,7 @@ def load_fanarttv_art(show_info):
                 if lang == '' or lang == '00':
                     lang = None
                 filepath = ''
-                if lang is None or lang == settings.LANG[0:2] or lang == 'en':
+                if lang is None or lang == settings.LANG_DETAILS[0:2] or lang == 'en':
                     filepath = item.get('url')
                 if filepath:
                     if tmdb_type.startswith('season'):
@@ -450,7 +450,7 @@ def _image_sort(images, image_type):
     firstimage = True
     for image in images:
         image_lang = image.get('iso_639_1')
-        if image_lang == settings.LANG[0:2]:
+        if image_lang == settings.LANG_DETAILS[0:2]:
             lang_pref.append(image)
         elif image_lang == 'en':
             lang_en.append(image)
