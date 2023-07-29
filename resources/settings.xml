@@ -75,7 +75,7 @@
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="languageImages" type="string" label="30008" help="">
+				<setting id="languageImages" type="string" parent="usedifferentlangforimages" label="30008" help="">
 					<level>0</level>
 					<default>en-US</default>
 					<dependencies>

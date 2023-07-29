@@ -1,3 +1,6 @@
+1.6.6
+option to get images in different language than descriptions
+
 1.6.5
 made search of NFO file for a UniqueID less agressive
 updated language files
