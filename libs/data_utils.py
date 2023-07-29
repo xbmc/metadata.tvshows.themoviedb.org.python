@@ -36,7 +36,7 @@ try:
 except ImportError:
     pass
 
-TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG}
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG_DETAILS}
 BASE_URL = 'https://api.themoviedb.org/3/{}'
 FIND_URL = BASE_URL.format('find/{}')
 TAG_RE = re.compile(r'<[^>]+>')
@@ -431,7 +431,7 @@ def _parse_trailer(results):
         elif settings.PLAYERSOPT == 'youtube':
             addon_player = 'plugin://plugin.video.youtube/?action=play_video&videoid='
         backup_keys = []
-        for video_lang in [settings.LANG[0:2], 'en']:
+        for video_lang in [settings.LANG_DETAILS[0:2], 'en']:
             for result in results:
                 if result.get('site') == 'YouTube' and result.get('iso_639_1') == video_lang:
                     key = result.get('key')
