@@ -5,17 +5,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: XBMC Addons\n"
-"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2023-02-19 14:01+0000\n"
-"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"PO-Revision-Date: 2023-07-29 15:15+0000\n"
+"Last-Translator: Andreas Bolin <bolin.andreas@gmail.com>\n"
 "Language-Team: Swedish <https://kodi.weblate.cloud/projects/kodi-add-ons-information-providers/metadata-tvshows-themoviedb-org-python/sv_se/>\n"
 "Language: sv_se\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.15.2\n"
+"X-Generator: Weblate 4.18.2\n"
 
 msgctxt "Addon Summary"
 msgid "Fetch TV Show metadata from themoviedb.org"
@@ -57,6 +57,14 @@ msgctxt "#30007"
 msgid "Add keywords as tags"
 msgstr "Lägg till nyckelord som taggar"
 
+msgctxt "#30008"
+msgid "Preferred language (Images)"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Use different language for images"
+msgstr ""
+
 # empty strings from 30007 to 30099
 msgctxt "#30100"
 msgid "Fanart.tv"
@@ -96,7 +104,7 @@ msgstr "Aktivera character art"
 
 msgctxt "#30109"
 msgid "Include art from fanart.tv"
-msgstr "Inkludera artwork från Fanart.tv"
+msgstr "Inkludera bakgrunder från Fanart.tv"
 
 # empty strings from 30110 to 30149
 msgctxt "#30150"
