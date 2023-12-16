@@ -94,6 +94,24 @@ def get_show_id_from_nfo(nfo):
             )
 
 
+def get_show_id(unique_ids):
+    """
+    Get show ID by unique IDs
+
+    In case there is a tmdb identifier in the unique IDs, use that.
+    Else use the find_by_id method to get the show ID by an external ID.
+
+    :param unique_ids: dictionary of unique IDs
+    """
+    if unique_ids.get('tmdb'):
+        return unique_ids['tmdb']
+    else:
+        res = tmdb.find_by_id(unique_ids)
+        if len(res) > 0:
+            return res[0].get('id')
+    return None
+
+
 def get_details(show_id):
     # type: (Text) -> None
     """Get details about a specific show"""
@@ -226,7 +244,9 @@ def router(paramstring):
         get_show_id_from_nfo(params['nfo'])
     elif params['action'] == 'getdetails':
         logger.debug('performing getdetails action')
-        get_details(params['url'])
+        show_id = params.get('url') or get_show_id(json.loads(params.get('uniqueIDs')))
+        if show_id:
+            get_details(show_id)
     elif params['action'] == 'getepisodelist':
         logger.debug('performing getepisodelist action')
         get_episode_list(params['url'])
