@@ -429,7 +429,7 @@ def _parse_trailer(results):
         if settings.PLAYERSOPT == 'tubed':
             addon_player = 'plugin://plugin.video.tubed/?mode=play&video_id='
         elif settings.PLAYERSOPT == 'youtube':
-            addon_player = 'plugin://plugin.video.youtube/?action=play_video&videoid='
+            addon_player = 'plugin://plugin.video.youtube/play/?video_id='
         backup_keys = []
         for video_lang in [settings.LANG_DETAILS[0:2], 'en']:
             for result in results:
