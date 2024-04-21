@@ -93,6 +93,24 @@ def search_show(title, year=None):
     return results
 
 
+def find_by_id(unique_ids):
+    """
+    Find a show by external IDs
+    :param unique_ids: dict of external IDs
+    :return: a list with found TV shows
+    """
+    supported_ids = ['imdb', 'facebook', 'instagram', 'tvdb', 'tiktok', 'twitter', 'wikidata', 'youtube']
+    params = TMDB_PARAMS.copy()
+    for key, value in unique_ids.items():
+        if key in supported_ids:
+            params['external_source'] = key + '_id'
+            search_url = FIND_URL.format(value)
+            resp = api_utils.load_info(search_url, params=params, verboselog=settings.VERBOSELOG)
+            if resp is not None:
+                return resp.get('tv_results', [])
+    return []
+
+
 def load_episode_list(show_info, season_map, ep_grouping):
     # type: (InfoType, Dict, Text) -> Optional[InfoType]
     """get the IMDB ratings details"""
