@@ -1,5 +1,7 @@
 1.6.6
 option to get images in different language than descriptions
+support for tv show IDs in TV show folder name
+updated YouTube addon URL
 
 1.6.5
 made search of NFO file for a UniqueID less agressive
