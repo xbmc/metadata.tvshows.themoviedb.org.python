@@ -1,4 +1,4 @@
-1.6.7
+1.7.0
 change method for getting source settings to account for different sources
   in one run having different settings
 
