@@ -36,8 +36,10 @@ try:
 except ImportError:
     pass
 
+
+SOURCE_SETTINGS = settings.getSourceSettings()
 TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR,
-               'language': settings.LANG_DETAILS}
+               'language': SOURCE_SETTINGS["LANG_DETAILS"]}
 BASE_URL = 'https://api.themoviedb.org/3/{}'
 FIND_URL = BASE_URL.format('find/{}')
 TAG_RE = re.compile(r'<[^>]+>')
@@ -144,7 +146,7 @@ def _set_rating(the_info, vtag):
     # type: (InfoType, ListItem) -> None
     """Set show/episode rating"""
     first = True
-    for rating_type in settings.RATING_TYPES:
+    for rating_type in SOURCE_SETTINGS["RATING_TYPES"]:
         logger.debug('adding rating type of %s' % rating_type)
         rating = float(the_info.get('ratings', {}).get(
             rating_type, {}).get('rating', '0'))
@@ -211,7 +213,7 @@ def set_show_artwork(show_info, list_item):
             fanart_list = []
             for image in image_list:
                 theurl, previewurl = get_image_urls(image)
-                if image.get('iso_639_1') != None and settings.CATLANDSCAPE and theurl:
+                if image.get('iso_639_1') != None and SOURCE_SETTINGS["CATLANDSCAPE"] and theurl:
                     vtag.addAvailableArtwork(
                         theurl, arttype="landscape", preview=previewurl)
                 elif theurl:
@@ -238,7 +240,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
     """Add main show info to a list item"""
     vtag = list_item.getVideoInfoTag()
     original_name = show_info.get('original_name')
-    if settings.KEEPTITLE and original_name:
+    if SOURCE_SETTINGS["KEEPTITLE"] and original_name:
         showname = original_name
     else:
         showname = show_info['name']
@@ -259,7 +261,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
     if full_info:
         vtag.setTvShowStatus(safe_get(show_info, 'status', ''))
         vtag.setGenres(_get_names(show_info.get('genres', [])))
-        if settings.SAVETAGS:
+        if SOURCE_SETTINGS["SAVETAGS"]:
             vtag.setTags(_get_names(show_info.get(
                 'keywords', {}).get('results', [])))
         networks = show_info.get('networks', [])
@@ -269,7 +271,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
         else:
             network = None
             country = None
-        if network and country and settings.STUDIOCOUNTRY:
+        if network and country and SOURCE_SETTINGS["STUDIOCOUNTRY"]:
             vtag.setStudios(['{0} ({1})'.format(network['name'], country)])
         elif network:
             vtag.setStudios([network['name']])
@@ -284,14 +286,14 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 iso = content_rating.get('iso_3166_1', '').lower()
                 if iso == 'us':
                     mpaa_backup = content_rating.get('rating')
-                if iso == settings.CERT_COUNTRY.lower():
+                if iso == SOURCE_SETTINGS["CERT_COUNTRY"].lower():
                     mpaa = content_rating.get('rating', '')
             if not mpaa:
                 mpaa = mpaa_backup
             if mpaa:
-                vtag.setMpaa(settings.CERT_PREFIX + mpaa)
+                vtag.setMpaa(SOURCE_SETTINGS["CERT_PREFIX"] + mpaa)
         vtag.setWriters(_get_credits(show_info))
-        if settings.ENABTRAILER:
+        if SOURCE_SETTINGS["ENABTRAILER"]:
             trailer = _parse_trailer(show_info.get(
                 'videos', {}).get('results', {}))
             if trailer:
@@ -427,12 +429,12 @@ def _parse_trailer(results):
     # type: (Text) -> Text
     """create a valid Tubed or YouTube plugin trailer URL"""
     if results:
-        if settings.PLAYERSOPT == 'tubed':
+        if SOURCE_SETTINGS["PLAYERSOPT"] == 'tubed':
             addon_player = 'plugin://plugin.video.tubed/?mode=play&video_id='
-        elif settings.PLAYERSOPT == 'youtube':
+        elif SOURCE_SETTINGS["PLAYERSOPT"] == 'youtube':
             addon_player = 'plugin://plugin.video.youtube/play/?video_id='
         backup_keys = []
-        for video_lang in [settings.LANG_DETAILS[0:2], 'en']:
+        for video_lang in [SOURCE_SETTINGS["LANG_DETAILS"][0:2], 'en']:
             for result in results:
                 if result.get('site') == 'YouTube' and result.get('iso_639_1') == video_lang:
                     key = result.get('key')

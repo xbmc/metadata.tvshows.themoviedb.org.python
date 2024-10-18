@@ -51,7 +51,58 @@ def _load_base_urls():
     return image_root_url, preview_root_url
 
 
+def getSourceSettings():
+    settings = {}
+    try:
+        source_params = dict(urllib.parse.parse_qsl(sys.argv[2]))
+    except IndexError:
+        source_params = {}
+    source_settings = json.loads(source_params.get('pathSettings', '{}'))
+    settings["KEEPTITLE"] = source_settings.get(
+        'keeporiginaltitle', ADDON.getSettingBool('keeporiginaltitle'))
+    settings["CATLANDSCAPE"] = source_settings.get('cat_landscape', True)
+    settings["STUDIOCOUNTRY"] = source_settings.get('studio_country', False)
+    settings["ENABTRAILER"] = source_settings.get(
+        'enab_trailer', ADDON.getSettingBool('enab_trailer'))
+    settings["PLAYERSOPT"] = source_settings.get(
+        'players_opt', ADDON.getSettingString('players_opt')).lower()
+    settings["VERBOSELOG"] = source_settings.get(
+        'verboselog', ADDON.getSettingBool('verboselog'))
+    settings["CERT_COUNTRY"] = source_settings.get(
+        'tmdbcertcountry', ADDON.getSettingString('tmdbcertcountry')).lower()
+    settings["SAVETAGS"] = source_settings.get(
+        'keywordsastags', ADDON.getSettingBool('keywordsastags'))
+    settings["LANG_DETAILS"] = source_settings.get(
+        'languageDetails', ADDON.getSettingString('languageDetails'))
+    if source_settings.get('usedifferentlangforimages', ADDON.getSettingBool('usedifferentlangforimages')):
+        settings["LANG_IMAGES"] = source_settings.get(
+            'languageImages', ADDON.getSettingString('languageImages'))
+    else:
+        settings["LANG_IMAGES"] = settings["LANG_DETAILS"]
+    if source_settings.get('usecertprefix', ADDON.getSettingBool('usecertprefix')):
+        settings["CERT_PREFIX"] = source_settings.get(
+            'certprefix', ADDON.getSettingString('certprefix'))
+    else:
+        settings["CERT_PREFIX"] = ''
+    primary_rating = source_settings.get(
+        'ratings', ADDON.getSettingString('ratings')).lower()
+    RATING_TYPES = [primary_rating]
+    if source_settings.get('imdbanyway', ADDON.getSettingBool('imdbanyway')) and primary_rating != 'imdb':
+        RATING_TYPES.append('imdb')
+    if source_settings.get('traktanyway', ADDON.getSettingBool('traktanyway')) and primary_rating != 'trakt':
+        RATING_TYPES.append('trakt')
+    if source_settings.get('tmdbanyway', ADDON.getSettingBool('tmdbanyway')) and primary_rating != 'tmdb':
+        RATING_TYPES.append('tmdb')
+    settings["RATING_TYPES"] = RATING_TYPES
+    settings["FANARTTV_ENABLE"] = source_settings.get(
+        'enable_fanarttv', ADDON.getSettingBool('enable_fanarttv'))
+    settings["FANARTTV_CLIENTKEY"] = source_settings.get(
+        'fanarttv_clientkey', ADDON.getSettingString('fanarttv_clientkey'))
+    return settings
+
+
 ADDON = Addon()
+IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
 TMDB_CLOWNCAR = 'af3a53eb387d57fc935e9128468b1899'
 FANARTTV_CLOWNCAR = 'b018086af0e1478479adfc55634db97d'
 TRAKT_CLOWNCAR = '90901c6be3b2de5a4fa0edf9ab5c75e9a5a0fef2b4ee7373d8b63dcf61f95697'
@@ -69,50 +120,3 @@ FANARTTV_MAPPING = {'showbackground': 'backdrops',
                     'seasonbanner': 'seasonbanner',
                     'seasonthumb': 'seasonlandscape'
                     }
-
-try:
-    source_params = dict(urllib.parse.parse_qsl(sys.argv[2]))
-except IndexError:
-    source_params = {}
-source_settings = json.loads(source_params.get('pathSettings', '{}'))
-
-KEEPTITLE = source_settings.get(
-    'keeporiginaltitle', ADDON.getSettingBool('keeporiginaltitle'))
-CATLANDSCAPE = source_settings.get('cat_landscape', True)
-STUDIOCOUNTRY = source_settings.get('studio_country', False)
-ENABTRAILER = source_settings.get(
-    'enab_trailer', ADDON.getSettingBool('enab_trailer'))
-PLAYERSOPT = source_settings.get(
-    'players_opt', ADDON.getSettingString('players_opt')).lower()
-VERBOSELOG = source_settings.get(
-    'verboselog', ADDON.getSettingBool('verboselog'))
-CERT_COUNTRY = source_settings.get(
-    'tmdbcertcountry', ADDON.getSettingString('tmdbcertcountry')).lower()
-SAVETAGS = source_settings.get(
-    'keywordsastags', ADDON.getSettingBool('keywordsastags'))
-IMAGEROOTURL, PREVIEWROOTURL = _load_base_urls()
-
-LANG_DETAILS = source_settings.get('languageDetails', ADDON.getSettingString('languageDetails'))
-if source_settings.get('usedifferentlangforimages', ADDON.getSettingBool('usedifferentlangforimages')):
-    LANG_IMAGES = source_settings.get('languageImages', ADDON.getSettingString('languageImages'))
-else:
-    LANG_IMAGES = LANG_DETAILS
-
-if source_settings.get('usecertprefix', ADDON.getSettingBool('usecertprefix')):
-    CERT_PREFIX = source_settings.get(
-        'certprefix', ADDON.getSettingString('certprefix'))
-else:
-    CERT_PREFIX = ''
-primary_rating = source_settings.get(
-    'ratings', ADDON.getSettingString('ratings')).lower()
-RATING_TYPES = [primary_rating]
-if source_settings.get('imdbanyway', ADDON.getSettingBool('imdbanyway')) and primary_rating != 'imdb':
-    RATING_TYPES.append('imdb')
-if source_settings.get('traktanyway', ADDON.getSettingBool('traktanyway')) and primary_rating != 'trakt':
-    RATING_TYPES.append('trakt')
-if source_settings.get('tmdbanyway', ADDON.getSettingBool('tmdbanyway')) and primary_rating != 'tmdb':
-    RATING_TYPES.append('tmdb')
-FANARTTV_ENABLE = source_settings.get(
-    'enable_fanarttv', ADDON.getSettingBool('enable_fanarttv'))
-FANARTTV_CLIENTKEY = source_settings.get(
-    'fanarttv_clientkey', ADDON.getSettingString('fanarttv_clientkey'))

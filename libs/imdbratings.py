@@ -28,6 +28,7 @@ try:
 except ImportError:
     pass
 
+SOURCE_SETTINGS = settings.getSourceSettings()
 IMDB_RATINGS_URL = 'https://www.imdb.com/title/{}/'
 IMDB_JSON_REGEX = re.compile(
     r'<script type="application\/ld\+json">(.*?)<\/script>')
@@ -46,7 +47,7 @@ def _get_ratinginfo(imdb_id):
     # type: (Text) -> Tuple[Text, Text]
     """get the IMDB ratings details"""
     response = api_utils.load_info(IMDB_RATINGS_URL.format(
-        imdb_id), default='', resp_type='text', verboselog=settings.VERBOSELOG)
+        imdb_id), default='', resp_type='text', verboselog=SOURCE_SETTINGS["VERBOSELOG"])
     return _parse_imdb_result(response)
 
 

@@ -37,7 +37,9 @@ HEADERS = (
 )
 api_utils.set_headers(dict(HEADERS))
 
-TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR, 'language': settings.LANG_DETAILS}
+SOURCE_SETTINGS = settings.getSourceSettings()
+TMDB_PARAMS = {'api_key': settings.TMDB_CLOWNCAR,
+               'language': SOURCE_SETTINGS["LANG_DETAILS"]}
 BASE_URL = 'https://api.themoviedb.org/3/{}'
 EPISODE_GROUP_URL = BASE_URL.format('tv/episode_group/{}')
 SEARCH_URL = BASE_URL.format('search/tv')
@@ -47,8 +49,8 @@ SEASON_URL = BASE_URL.format('tv/{}/season/{}')
 EPISODE_URL = BASE_URL.format('tv/{}/season/{}/episode/{}')
 FANARTTV_URL = 'https://webservice.fanart.tv/v3/tv/{}'
 FANARTTV_PARAMS = {'api_key': settings.FANARTTV_CLOWNCAR}
-if settings.FANARTTV_CLIENTKEY:
-    FANARTTV_PARAMS['client_key'] = settings.FANARTTV_CLIENTKEY
+if SOURCE_SETTINGS["FANARTTV_CLIENTKEY"]:
+    FANARTTV_PARAMS['client_key'] = SOURCE_SETTINGS["FANARTTV_CLIENTKEY"]
 
 
 def search_show(title, year=None):
@@ -78,7 +80,7 @@ def search_show(title, year=None):
         if year:
             params['first_air_date_year'] = str(year)
     resp = api_utils.load_info(
-        search_url, params=params, verboselog=settings.VERBOSELOG)
+        search_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
     if resp is not None:
         if ext_media_id:
             if ext_media_id['type'] == 'tmdb_id':
@@ -99,13 +101,15 @@ def find_by_id(unique_ids):
     :param unique_ids: dict of external IDs
     :return: a list with found TV shows
     """
-    supported_ids = ['imdb', 'facebook', 'instagram', 'tvdb', 'tiktok', 'twitter', 'wikidata', 'youtube']
+    supported_ids = ['imdb', 'facebook', 'instagram',
+                     'tvdb', 'tiktok', 'twitter', 'wikidata', 'youtube']
     params = TMDB_PARAMS.copy()
     for key, value in unique_ids.items():
         if key in supported_ids:
             params['external_source'] = key + '_id'
             search_url = FIND_URL.format(value)
-            resp = api_utils.load_info(search_url, params=params, verboselog=settings.VERBOSELOG)
+            resp = api_utils.load_info(
+                search_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
             if resp is not None:
                 return resp.get('tv_results', [])
     return []
@@ -121,7 +125,7 @@ def load_episode_list(show_info, season_map, ep_grouping):
             'Getting episodes with episode grouping of ' + ep_grouping)
         episode_group_url = EPISODE_GROUP_URL.format(ep_grouping)
         custom_order = api_utils.load_info(
-            episode_group_url, params=TMDB_PARAMS, verboselog=settings.VERBOSELOG)
+            episode_group_url, params=TMDB_PARAMS, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
         if custom_order is not None:
             show_info['seasons'] = []
             for custom_season in custom_order.get('groups', []):
@@ -174,32 +178,31 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
         show_url = SHOW_URL.format(show_id)
         params = TMDB_PARAMS.copy()
         params['append_to_response'] = 'credits,content_ratings,external_ids,images,videos,keywords'
-        params['include_image_language'] = '%s,en,null' % settings.LANG_IMAGES[0:2]
-        params['include_video_language'] = '%s,en,null' % settings.LANG_DETAILS[0:2]
+        params['include_image_language'] = '%s,en,null' % SOURCE_SETTINGS["LANG_IMAGES"][0:2]
         show_info = api_utils.load_info(
-            show_url, params=params, verboselog=settings.VERBOSELOG)
+            show_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
         if show_info is None:
             return None
-        if show_info['overview'] == '' and settings.LANG_DETAILS != 'en-US':
+        if show_info['overview'] == '' and SOURCE_SETTINGS["LANG_DETAILS"] != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             show_info_backup = api_utils.load_info(
-                show_url, params=params, verboselog=settings.VERBOSELOG)
+                show_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
             if show_info_backup is not None:
                 show_info['overview'] = show_info_backup.get('overview', '')
-            params['language'] = settings.LANG_DETAILS
+            params['language'] = SOURCE_SETTINGS["LANG_DETAILS"]
         season_map = {}
         params['append_to_response'] = 'credits,images'
         for season in show_info.get('seasons', []):
             season_url = SEASON_URL.format(
                 show_id, season.get('season_number', 0))
             season_info = api_utils.load_info(
-                season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-            if (season_info.get('overview', '') == '' or season_info.get('name', '').lower().startswith('season')) and settings.LANG_DETAILS != 'en-US':
+                season_url, params=params, default={}, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
+            if (season_info.get('overview', '') == '' or season_info.get('name', '').lower().startswith('season')) and SOURCE_SETTINGS["LANG_DETAILS"] != 'en-US':
                 params['language'] = 'en-US'
                 season_info_backup = api_utils.load_info(
-                    season_url, params=params, default={}, verboselog=settings.VERBOSELOG)
-                params['language'] = settings.LANG_DETAILS
+                    season_url, params=params, default={}, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
+                params['language'] = SOURCE_SETTINGS["LANG_DETAILS"]
                 if season_info.get('overview', '') == '':
                     season_info['overview'] = season_info_backup.get(
                         'overview', '')
@@ -230,7 +233,7 @@ def load_show_info(show_id, ep_grouping=None, named_seasons=None):
                     cast_check.append(cast_member.get('name', ''))
         show_info['credits']['cast'] = cast
         logger.debug('saving show info to the cache')
-        if settings.VERBOSELOG:
+        if SOURCE_SETTINGS["VERBOSELOG"]:
             logger.debug(format(pformat(show_info)))
         cache.cache_show_info(show_info)
     else:
@@ -258,9 +261,9 @@ def load_episode_info(show_id, episode_id):
             show_info['id'], episode_info['org_seasonnum'], episode_info['org_epnum'])
         params = TMDB_PARAMS.copy()
         params['append_to_response'] = 'credits,external_ids,images'
-        params['include_image_language'] = '%s,en,null' % settings.LANG_IMAGES[0:2]
+        params['include_image_language'] = '%s,en,null' % SOURCE_SETTINGS["LANG_IMAGES"][0:2]
         ep_return = api_utils.load_info(
-            ep_url, params=params, verboselog=settings.VERBOSELOG)
+            ep_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
         if ep_return is None:
             return None
         bad_return_name = False
@@ -274,11 +277,11 @@ def load_episode_info(show_id, episode_id):
             bad_return_name = True
         if ep_return.get('overview', '') == '':
             bad_return_overview = True
-        if (bad_return_overview or bad_return_name) and settings.LANG_DETAILS != 'en-US':
+        if (bad_return_overview or bad_return_name) and SOURCE_SETTINGS["LANG_DETAILS"] != 'en-US':
             params['language'] = 'en-US'
             del params['append_to_response']
             ep_return_backup = api_utils.load_info(
-                ep_url, params=params, verboselog=settings.VERBOSELOG)
+                ep_url, params=params, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
             if ep_return_backup is not None:
                 if bad_return_overview:
                     ep_return['overview'] = ep_return_backup.get(
@@ -315,7 +318,7 @@ def load_ratings(the_info, show_imdb_id=''):
     """
     ratings = {}
     imdb_id = the_info.get('external_ids', {}).get('imdb_id')
-    for rating_type in settings.RATING_TYPES:
+    for rating_type in SOURCE_SETTINGS["RATING_TYPES"]:
         logger.debug('setting rating using %s' % rating_type)
         if rating_type == 'tmdb':
             ratings['tmdb'] = {'votes': the_info['vote_count'],
@@ -348,10 +351,10 @@ def load_fanarttv_art(show_info):
     :return: show info
     """
     tvdb_id = show_info.get('external_ids', {}).get('tvdb_id')
-    if tvdb_id and settings.FANARTTV_ENABLE:
+    if tvdb_id and SOURCE_SETTINGS["FANARTTV_ENABLE"]:
         fanarttv_url = FANARTTV_URL.format(tvdb_id)
         artwork = api_utils.load_info(
-            fanarttv_url, params=FANARTTV_PARAMS, verboselog=settings.VERBOSELOG)
+            fanarttv_url, params=FANARTTV_PARAMS, verboselog=SOURCE_SETTINGS["VERBOSELOG"])
         if artwork is None:
             return show_info
         for fanarttv_type, tmdb_type in settings.FANARTTV_MAPPING.items():
@@ -362,7 +365,7 @@ def load_fanarttv_art(show_info):
                 if lang == '' or lang == '00':
                     lang = None
                 filepath = ''
-                if lang is None or lang == settings.LANG_DETAILS[0:2] or lang == 'en':
+                if lang is None or lang == SOURCE_SETTINGS["LANG_DETAILS"][0:2] or lang == 'en':
                     filepath = item.get('url')
                 if filepath:
                     if tmdb_type.startswith('season'):
@@ -468,7 +471,7 @@ def _image_sort(images, image_type):
     firstimage = True
     for image in images:
         image_lang = image.get('iso_639_1')
-        if image_lang == settings.LANG_DETAILS[0:2]:
+        if image_lang == SOURCE_SETTINGS["LANG_DETAILS"][0:2]:
             lang_pref.append(image)
         elif image_lang == 'en':
             lang_en.append(image)
