@@ -53,6 +53,7 @@ def _load_base_urls():
 
 def getSourceSettings():
     settings = {}
+    logger.debug('Got settings of: {}'.format(sys.argv[2]))
     try:
         source_params = dict(urllib.parse.parse_qsl(sys.argv[2]))
     except IndexError:
@@ -98,6 +99,7 @@ def getSourceSettings():
         'enable_fanarttv', ADDON.getSettingBool('enable_fanarttv'))
     settings["FANARTTV_CLIENTKEY"] = source_settings.get(
         'fanarttv_clientkey', ADDON.getSettingString('fanarttv_clientkey'))
+    logger.debug('Sending back settings of: {}'.format(settings))
     return settings
 
 
