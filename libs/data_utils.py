@@ -252,6 +252,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
     vtag.setTvShowTitle(showname)
     vtag.setPlot(plot)
     vtag.setPlotOutline(plot)
+    vtag.setTagLine(show_info.get('tagline', ''))
     vtag.setMediaType('tvshow')
     ext_ids = {'tmdb_id': show_info['id']}
     ext_ids.update(show_info.get('external_ids', {}))
