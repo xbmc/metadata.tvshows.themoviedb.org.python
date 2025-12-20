@@ -166,7 +166,8 @@ def _add_season_info(show_info, vtag):
         logger.debug('adding information for season %s to list item' %
                      season['season_number'])
         vtag.addSeason(season['season_number'],
-                       safe_get(season, 'name', ''))
+                       safe_get(season, 'name', ''),
+                       _clean_plot(safe_get(show_info, 'overview', '')))
         for image_type, image_list in season.get('images', {}).items():
             if image_type == 'posters':
                 destination = 'poster'
