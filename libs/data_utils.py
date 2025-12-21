@@ -246,10 +246,15 @@ def add_main_show_info(list_item, show_info, full_info=True):
         showname = original_name
     else:
         showname = show_info['name']
+    logger.debug('trying to get original language')
     try:
         original_language = show_info['spoken_languages'][0]['iso_639_1']
+        logger.debug(
+            'using %s from spoken language field' % original_language)
     except KeyError:
         original_language = show_info.get('original_language', '')
+        logger.debug(
+            'using %s as from fallback original language field' % original_language)
     plot = _clean_plot(safe_get(show_info, 'overview', ''))
     vtag.setTitle(showname)
     vtag.setOriginalTitle(original_name)
