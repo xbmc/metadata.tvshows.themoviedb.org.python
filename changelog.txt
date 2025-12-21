@@ -3,6 +3,7 @@ first version for Kodi 22 (Piers)
 use new VideoInfoTag call to add fanart
 added season plot
 added tagline
+added original language
 
 1.7.4
 fix for breaking change to TMDB API for fanart

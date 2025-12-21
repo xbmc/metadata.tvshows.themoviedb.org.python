@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.8.0~beta2"
+  version="1.8.0~beta3"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -12,6 +12,10 @@
     <reuselanguageinvoker>true</reuselanguageinvoker>
     <news>1.8.0
 first version for Kodi 22 (Piers)
+added season plot
+added tagline
+added original language
+use new VideoInfoTag call to add fanart
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
