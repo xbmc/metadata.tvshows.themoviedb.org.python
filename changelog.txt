@@ -1,3 +1,6 @@
+1.8.1
+refactored duration storage to use VideoInfoTag instead of stream details
+
 1.8.0
 first version for Kodi 22 (Piers)
 use new VideoInfoTag call to add fanart
