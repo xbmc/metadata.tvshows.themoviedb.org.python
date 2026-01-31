@@ -17,6 +17,7 @@ added tagline
 added original language
 use new VideoInfoTag call to add fanart
 refactored duration to be stored in VideoInfoTag rather than stream details
+updated language files
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
