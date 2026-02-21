@@ -1,3 +1,6 @@
+1.7.5
+added option to split keyart from posters
+
 1.7.4
 fix for breaking change to TMDB API for fanart
 
