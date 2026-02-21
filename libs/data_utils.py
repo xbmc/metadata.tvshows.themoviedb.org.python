@@ -219,7 +219,7 @@ def set_show_artwork(show_info, list_item):
                 elif theurl:
                     fanart_list.append({'image': theurl})
             if fanart_list:
-                vtag.setAvailableFanart(fanart_list)
+                list_item.setAvailableFanart(fanart_list)
         elif image_type == 'posters':
             for image in image_list:
                 theurl, previewurl = get_image_urls(image)
