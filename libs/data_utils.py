@@ -213,27 +213,12 @@ def set_show_artwork(show_info, list_item):
             fanart_list = []
             for image in image_list:
                 theurl, previewurl = get_image_urls(image)
-                if (image.get('iso_639_1') != None and image.get('iso_639_1').lower() != 'xx') and SOURCE_SETTINGS["CATLANDSCAPE"] and theurl:
-                    vtag.addAvailableArtwork(
-                        theurl, arttype="landscape", preview=previewurl)
-                elif theurl:
-                    fanart_list.append({'image': theurl})
+                fanart_list.append({'image': theurl})
             if fanart_list:
                 list_item.setAvailableFanart(fanart_list)
-        elif image_type == 'posters':
-            for image in image_list:
-                theurl, previewurl = get_image_urls(image)
-                logger.debug('checking poster with language detail of %s' %
-                             image.get('iso_639_1'))
-                if (image.get('iso_639_1') == None or image.get('iso_639_1').lower() == 'xx') and SOURCE_SETTINGS["CATKEYART"]:
-                    destination = 'keyart'
-                    logger.debug('this is keyart')
-                else:
-                    destination = 'poster'
-                    logger.debug('this is a poster')
-                vtag.addAvailableArtwork(
-                    theurl, arttype=destination, preview=previewurl)
         else:
+            if image_type == 'posters':
+                destination = 'poster'
             if image_type == 'logos':
                 destination = 'clearlogo'
             else:
