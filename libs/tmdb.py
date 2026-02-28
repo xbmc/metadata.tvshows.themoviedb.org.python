@@ -485,7 +485,7 @@ def _sort_image_types(imagelist):
             backdrops = []
             landscape = []
             for image in images:
-                if (image.get('iso_639_1') != None and image.get('iso_639_1').lower() != 'xx') and source_settings["CATLANDSCAPE"]:
+                if (image.get('iso_639_1') is not None and image.get('iso_639_1').lower() != 'xx') and source_settings["CATLANDSCAPE"]:
                     landscape.append(image)
                 else:
                     backdrops.append(image)
@@ -495,7 +495,7 @@ def _sort_image_types(imagelist):
             posters = []
             keyart = []
             for image in images:
-                if (image.get('iso_639_1') == None or image.get('iso_639_1').lower() == 'xx') and source_settings["CATKEYART"]:
+                if (image.get('iso_639_1') is None or image.get('iso_639_1').lower() == 'xx') and source_settings["CATKEYART"]:
                     keyart.append(image)
                 else:
                     posters.append(image)
