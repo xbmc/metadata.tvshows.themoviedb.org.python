@@ -522,7 +522,7 @@ def _image_sort(images, image_type):
     firstimage = True
     for image in images:
         image_lang = image.get('iso_639_1')
-        if image_lang == source_settings["LANG_DETAILS"][0:2]:
+        if image_lang == source_settings["LANG_IMAGES"][0:2]:
             lang_pref.append(image)
         elif image_lang == 'en':
             lang_en.append(image)
