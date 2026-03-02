@@ -391,7 +391,7 @@ def load_fanarttv_art(show_info):
                 if lang == '' or lang == '00':
                     lang = None
                 filepath = ''
-                if lang is None or lang == source_settings["LANG_DETAILS"][0:2] or lang == 'en':
+                if lang is None or lang == source_settings["LANG_IMAGES"][0:2] or lang == 'en':
                     filepath = item.get('url')
                 if filepath:
                     if tmdb_type.startswith('season'):

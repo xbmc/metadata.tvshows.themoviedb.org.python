@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="1.7.6~beta1"
+  version="1.7.6~beta2"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -12,6 +12,7 @@
     <reuselanguageinvoker>true</reuselanguageinvoker>
     <news>1.7.6
 fix for image sort not using separate image language setting
+fix for fanarttv landscape art overwriting TMDb landscape art
 	</news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
