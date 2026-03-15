@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="2.0.0~beta3"
+  version="2.0.0~beta4"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
@@ -10,7 +10,16 @@
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
     <reuselanguageinvoker>true</reuselanguageinvoker>
-    <news>Experimental Release base on work from MikeSiLVO</news>
+    <news>This experimental release is a ground up rewrite by MikeSiLVO
+Season-aware artwork selection
+Better artwork distribution across all art types
+fix Fanart.tv URLs with special characters
+Tier-based artwork scoring, prefer highest resolution setting
+Fix Fanart.tv season art with no number getting assigned to all seasons instead of specials
+artwork scoring for trimming: language + pixels + vote tiebreaker
+Prioritize user-language clearart from Fanart.tv
+Punctuation agnostic title matching, year filter fallback
+    </news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>
     <assets>
