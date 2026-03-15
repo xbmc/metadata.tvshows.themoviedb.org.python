@@ -18,6 +18,24 @@ _BASE = 'https://api.themoviedb.org/3'
 _MAX_APPENDS = 20
 # {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'season_cast': {s: list}}}
 _cache = OrderedDict()
+_img_base = ''
+
+
+def get_image_base():
+    """Image base URL from /configuration, fetched once per session."""
+    global _img_base
+    if not _img_base:
+        url = '{}{}?{}'.format(_BASE, '/configuration',
+                               urlencode({'api_key': TMDB_API_KEY}))
+        try:
+            req = Request(url, headers=API_HEADERS)
+            with urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+            _img_base = data['images']['secure_base_url']
+            log.debug('TMDB image base: {}'.format(_img_base))
+        except Exception:
+            _img_base = 'https://image.tmdb.org/t/p/'
+    return _img_base
 
 
 class TmdbApi:

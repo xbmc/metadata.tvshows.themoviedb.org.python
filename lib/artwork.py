@@ -7,18 +7,15 @@ quality tier (voted+HD > voted > unvoted), and limited to byte
 budgets (c06/c11) to enforce MySQL TEXT limit.
 """
 
-from math import sqrt
+from lib.api.tmdb import get_image_base
 
-_IMG_ORIGINAL = 'https://image.tmdb.org/t/p/original'
-_IMG_W500 = 'https://image.tmdb.org/t/p/w500'
-_IMG_W780 = 'https://image.tmdb.org/t/p/w780'
-
-# MySQL TEXT = 65,535 bytes; 5K margin for safety
-_C06_BUDGET = 60000
-_C11_BUDGET = 60000
+# MySQL TEXT = 65,535 bytes
+_C06_BUDGET = 64000
+_C11_BUDGET = 64000
 _C11_WRAPPER = 17  # <fanart></fanart>
 
-_SPARSE_THRESHOLD = 3
+_SEASON_MIN = 2
+_SHOW_MIN = 10
 _TEXT_BEARING = frozenset(('poster', 'landscape', 'clearlogo', 'banner', 'clearart'))
 _HD_PIXELS = 1920 * 1080
 
@@ -81,8 +78,12 @@ def set_artwork(li, show_info, settings):
 
 def _classify_images(candidates, images, season, cat_kart, cat_land):
     """Classify images and append to candidates list."""
+    base = get_image_base()
+    w500 = base + 'w500'
+    w780 = base + 'w780'
+
     for raw in images.get('posters', []):
-        entry = _make_entry(raw, _IMG_W500)
+        entry = _make_entry(raw, base, w500)
         if not entry:
             continue
         lang = raw.get('iso_639_1')
@@ -93,7 +94,7 @@ def _classify_images(candidates, images, season, cat_kart, cat_land):
         candidates.append(entry)
 
     for raw in images.get('backdrops', []):
-        entry = _make_entry(raw, _IMG_W780)
+        entry = _make_entry(raw, base, w780)
         if not entry:
             continue
         lang = raw.get('iso_639_1')
@@ -104,7 +105,7 @@ def _classify_images(candidates, images, season, cat_kart, cat_land):
         candidates.append(entry)
 
     for raw in images.get('logos', []):
-        entry = _make_entry(raw, _IMG_W500)
+        entry = _make_entry(raw, base, w500)
         if not entry:
             continue
         entry.update(art_type='clearlogo', column='c06', season=season)
@@ -112,48 +113,47 @@ def _classify_images(candidates, images, season, cat_kart, cat_land):
 
     for art_type in ('banner', 'clearart', 'characterart'):
         for raw in images.get(art_type, []):
-            entry = _make_entry(raw, _IMG_W500)
+            entry = _make_entry(raw, base, w500)
             if not entry:
                 continue
             entry.update(art_type=art_type, column='c06', season=season)
             candidates.append(entry)
 
     for raw in images.get('landscape', []):
-        entry = _make_entry(raw, _IMG_W780)
+        entry = _make_entry(raw, base, w780)
         if not entry:
             continue
         entry.update(art_type='landscape', column='c06', season=season)
         candidates.append(entry)
 
 
-def _type_cap(available):
-    """Limit how many of one type get priority. Grows slowly with count."""
-    if available <= _SPARSE_THRESHOLD:
-        return available
-    return _SPARSE_THRESHOLD + int(sqrt(available))
-
-
 def _select(entries, byte_budget):
-    """Pick art fairly across types, then fill the rest by quality.
+    """Pick the best art per type per season, then fill by quality.
 
-    Each type gets a small share (priority pool). Whatever budget
-    remains is filled with the best-scoring leftovers, usually posters.
+    Every (art_type, season) group gets up to 2 entries in the priority
+    pool so each season has choices. Show-only types get up to 10.
+    Remaining budget fills with the best-scoring leftovers.
 
     """
     if not entries:
         return []
 
-    by_type = {}
+    # Group by (art_type, season)
+    groups = {}
     for e in entries:
-        by_type.setdefault(e['art_type'], []).append(e)
+        groups.setdefault((e['art_type'], e['season']), []).append(e)
 
     priority = []
     overflow = []
-    for type_entries in by_type.values():
-        type_entries.sort(key=lambda e: e['score'], reverse=True)
-        cap = _type_cap(len(type_entries))
-        priority.extend(type_entries[:cap])
-        overflow.extend(type_entries[cap:])
+    for (_, season), group in groups.items():
+        group.sort(key=lambda e: e['score'], reverse=True)
+        if season is None:
+            cap = _SHOW_MIN
+        else:
+            cap = _SEASON_MIN
+        cap = min(cap, len(group))
+        priority.extend(group[:cap])
+        overflow.extend(group[cap:])
 
     priority.sort(key=lambda e: e['score'], reverse=True)
     selected = []
@@ -216,7 +216,7 @@ def _score(entry, prefer_maxres=False):
     return (tier, pixels, va, vc)
 
 
-def _make_entry(raw_image, preview_base):
+def _make_entry(raw_image, img_base, preview_base):
     """Convert a raw image dict into a candidate entry."""
     path = raw_image.get('file_path')
     if not path or path.endswith('.svg'):
@@ -225,7 +225,7 @@ def _make_entry(raw_image, preview_base):
         url = path
         preview = path.replace('/fanart/', '/preview/', 1)
     else:
-        url = '{}{}'.format(_IMG_ORIGINAL, path)
+        url = '{}original{}'.format(img_base, path)
         preview = '{}{}'.format(preview_base, path)
     return {
         'url': url,

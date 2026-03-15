@@ -3,7 +3,7 @@
 	<section id="metadata.tvshows.tmdb.python3">
 		<category id="general" label="128" help="">
 			<group id="1" label="32020">
-				<setting id="lang_metadata" type="string" label="32000" help="">
+				<setting id="languageDetails" type="string" label="32000" help="">
 					<level>0</level>
 					<default>en-US</default>
 					<constraints>
@@ -60,7 +60,7 @@
 				</setting>
 			</group>
 			<group id="2" label="32021">
-				<setting id="cert_country" type="string" label="32003" help="">
+				<setting id="tmdbcertcountry" type="string" label="32003" help="">
 					<level>0</level>
 					<default>us</default>
 					<constraints>
@@ -111,17 +111,17 @@
 						<heading>32003</heading>
 					</control>
 				</setting>
-				<setting id="cert_prefix_enabled" type="boolean" label="32004" help="">
+				<setting id="usecertprefix" type="boolean" label="32004" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="cert_prefix" type="string" label="32005" help="">
+				<setting id="certprefix" type="string" label="32005" help="">
 					<level>0</level>
 					<default>Rated </default>
 					<dependencies>
 						<dependency type="enable">
-							<condition operator="is" setting="cert_prefix_enabled">true</condition>
+							<condition operator="is" setting="usecertprefix">true</condition>
 						</dependency>
 					</dependencies>
 					<control type="edit" format="string">
@@ -130,29 +130,29 @@
 				</setting>
 			</group>
 			<group id="3" label="32022">
-				<setting id="original_title" type="boolean" label="32006" help="">
+				<setting id="keeporiginaltitle" type="boolean" label="32006" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="keywords_tags" type="boolean" label="32007" help="">
+				<setting id="keywordsastags" type="boolean" label="32007" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="studio_origin" type="boolean" label="32010" help="">
+				<setting id="studio_country" type="boolean" label="32010" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
 			</group>
 			<group id="4" label="32011">
-				<setting id="trailer_enabled" type="boolean" label="32016" help="">
+				<setting id="enab_trailer" type="boolean" label="32016" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="trailer_player" type="string" parent="trailer_enabled" label="32012" help="">
+				<setting id="players_opt" type="string" parent="enab_trailer" label="32012" help="">
 					<level>0</level>
 					<default>Tubed</default>
 					<constraints>
@@ -162,7 +162,7 @@
 						</options>
 					</constraints>
 					<dependencies>
-						<dependency type="enable" setting="trailer_enabled" operator="is">true</dependency>
+						<dependency type="enable" setting="enab_trailer" operator="is">true</dependency>
 					</dependencies>
 					<control type="spinner" format="string"/>
 				</setting>
@@ -170,17 +170,17 @@
 		</category>
 		<category id="artwork" label="32050" help="">
 			<group id="1" label="32020">
-				<setting id="lang_images_separate" type="boolean" label="32001" help="">
+				<setting id="usedifferentlangforimages" type="boolean" label="32001" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="lang_images" type="string" parent="lang_images_separate" label="32002" help="">
+				<setting id="languageImages" type="string" parent="usedifferentlangforimages" label="32002" help="">
 					<level>0</level>
 					<default>en-US</default>
 					<dependencies>
 						<dependency type="visible">
-							<condition operator="is" setting="lang_images_separate">true</condition>
+							<condition operator="is" setting="usedifferentlangforimages">true</condition>
 						</dependency>
 					</dependencies>
 					<constraints>
@@ -237,12 +237,12 @@
 				</setting>
 			</group>
 			<group id="2">
-				<setting id="art_landscape" type="boolean" label="32008" help="">
+				<setting id="cat_landscape" type="boolean" label="32008" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="art_keyart" type="boolean" label="32009" help="">
+				<setting id="cat_keyart" type="boolean" label="32009" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
@@ -256,7 +256,7 @@
 		</category>
 		<category id="ratings" label="32100" help="">
 			<group id="1">
-				<setting id="rating_default" type="string" label="32101" help="">
+				<setting id="ratings" type="string" label="32101" help="">
 					<level>0</level>
 					<default>TMDb</default>
 					<constraints>
@@ -268,32 +268,32 @@
 					</constraints>
 					<control type="spinner" format="string"/>
 				</setting>
-				<setting id="rating_imdb" type="boolean" label="32102" help="">
+				<setting id="imdbanyway" type="boolean" label="32102" help="">
 					<level>0</level>
 					<default>false</default>
 					<dependencies>
 						<dependency type="enable">
-							<condition operator="!is" setting="rating_default">IMDb</condition>
+							<condition operator="!is" setting="ratings">IMDb</condition>
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
-				<setting id="rating_trakt" type="boolean" label="32103" help="">
+				<setting id="traktanyway" type="boolean" label="32103" help="">
 					<level>0</level>
 					<default>false</default>
 					<dependencies>
 						<dependency type="enable">
-							<condition operator="!is" setting="rating_default">Trakt</condition>
+							<condition operator="!is" setting="ratings">Trakt</condition>
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
 				</setting>
-				<setting id="rating_tmdb" type="boolean" label="32104" help="">
+				<setting id="tmdbanyway" type="boolean" label="32104" help="">
 					<level>0</level>
 					<default>true</default>
 					<dependencies>
 						<dependency type="enable">
-							<condition operator="!is" setting="rating_default">TMDb</condition>
+							<condition operator="!is" setting="ratings">TMDb</condition>
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
@@ -302,17 +302,17 @@
 		</category>
 		<category id="fanarttv" label="32200" help="">
 			<group id="1">
-				<setting id="fanarttv_enabled" type="boolean" label="32201" help="">
+				<setting id="enable_fanarttv" type="boolean" label="32201" help="">
 					<level>0</level>
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="fanarttv_key" type="string" label="32202" help="">
+				<setting id="fanarttv_clientkey" type="string" label="32202" help="">
 					<level>0</level>
 					<default/>
 					<dependencies>
 						<dependency type="enable">
-							<condition operator="is" setting="fanarttv_enabled">true</condition>
+							<condition operator="is" setting="enable_fanarttv">true</condition>
 						</dependency>
 					</dependencies>
 					<constraints>
@@ -326,7 +326,7 @@
 		</category>
 		<category id="advanced" label="32300" help="">
 			<group id="1">
-				<setting id="log_verbose" type="boolean" label="32301" help="">
+				<setting id="verboselog" type="boolean" label="32301" help="">
 					<level>0</level>
 					<default>false</default>
 					<control type="toggle"/>

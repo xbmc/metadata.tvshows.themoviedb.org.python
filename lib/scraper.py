@@ -12,7 +12,7 @@ import xbmcplugin
 from lib import log
 from lib.artwork import set_artwork
 from lib.api.fanarttv import merge_fanarttv_artwork
-from lib.api.tmdb import TmdbApi
+from lib.api.tmdb import TmdbApi, get_image_base
 from lib.api.imdb import get_rating as imdb_rating, check_update as imdb_check
 from lib.api.trakt import get_show_rating as trakt_show, \
     get_episode_rating as trakt_episode, \
@@ -111,6 +111,7 @@ def _find(handle, api, params, _settings):
             show.get('origin_country', []), country_hint,
         )
     results.sort(key=lambda s: s['_relevance'], reverse=True)
+    img_base = get_image_base()
 
     for show in results:
         name = show.get('name', '')
@@ -139,9 +140,9 @@ def _find(handle, api, params, _settings):
         poster = show.get('poster_path')
         if poster:
             vtag.addAvailableArtwork(
-                'https://image.tmdb.org/t/p/original{}'.format(poster),
+                '{}original{}'.format(img_base, poster),
                 arttype='poster',
-                preview='https://image.tmdb.org/t/p/w500{}'.format(poster),
+                preview='{}w500{}'.format(img_base, poster),
             )
         li.setProperty('relevance', str(show['_relevance']))
         xbmcplugin.addDirectoryItem(
@@ -163,8 +164,16 @@ def _getdetails(handle, api, params, settings):
 
     merge_fanarttv_artwork(show, settings)
 
+    ep_group_data = None
+    if ep_grouping:
+        group = api.get_episode_group(ep_grouping)
+        if group:
+            ep_group_data = group.get('groups', [])
+            log.debug('episode group: {} parts'.format(len(ep_group_data)))
+
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
-    _populate_show(li, show, settings, ep_grouping, named_seasons)
+    _populate_show(li, show, settings, ep_grouping, named_seasons,
+                   ep_group_data)
     set_artwork(li, show, settings)
     xbmcplugin.setResolvedUrl(handle, True, li)
 
@@ -194,7 +203,11 @@ def _getepisodelist(handle, api, params, settings):
             trakt_prefetch(show_imdb, season_nums)
 
     if ep_grouping:
+        before = len(episodes)
         episodes = _apply_episode_grouping(api, ep_grouping, episodes)
+        seasons = sorted(set(s for s, _ in episodes.keys()))
+        log.debug('episode group: {} -> {} episodes, seasons {}'.format(
+            before, len(episodes), seasons))
 
     for (snum, enum) in sorted(episodes.keys()):
         ep = episodes[(snum, enum)]
@@ -280,6 +293,8 @@ def _nfo_url(handle, params):
         return
 
     show_id, provider, ep_grouping, named_seasons = _parse_nfo(nfo)
+    log.debug('NfoUrl: id={}, provider={}, ep_group={}'.format(
+        show_id, provider, ep_grouping or 'none'))
 
     if not show_id:
         xbmcplugin.endOfDirectory(handle)
@@ -402,32 +417,11 @@ def _search_by_external_id(api, title):
 
 def _resolve_show_id(api, params):
     """Extract (show_id, ep_grouping, named_seasons) from params."""
-    uid_str = params.get('uniqueIDs', '')
-    if uid_str:
-        try:
-            ids = json.loads(uid_str)
-            tmdb_id = ids.get('tmdb', '')
-            if tmdb_id:
-                return str(tmdb_id), '', {}
-            # Fall back to IMDB/TVDB lookup
-            for source in _FIND_SOURCES:
-                ext_id = ids.get(source, '')
-                if ext_id:
-                    found = api.find_by_external_id(ext_id, source)
-                    if found:
-                        return found, '', {}
-        except (ValueError, TypeError):
-            pass
-
     url = params.get('url', '')
-    if not url:
-        return '', '', {}
-
-    parts = url.split('|')
-    base = parts[0]
-    if base.isdigit():
-        ep_group = ''
-        named = {}
+    ep_group = ''
+    named = {}
+    if url:
+        parts = url.split('|')
         for part in parts[1:]:
             if part.startswith('ns:'):
                 try:
@@ -437,11 +431,28 @@ def _resolve_show_id(api, params):
                     pass
             elif not ep_group:
                 ep_group = part
-        return base, ep_group, named
 
-    base = url.split('/')[0]
+    uid_str = params.get('uniqueIDs', '')
+    if uid_str:
+        try:
+            ids = json.loads(uid_str)
+            tmdb_id = ids.get('tmdb', '')
+            if tmdb_id:
+                return str(tmdb_id), ep_group, named
+            for source in _FIND_SOURCES:
+                ext_id = ids.get(source, '')
+                if ext_id:
+                    found = api.find_by_external_id(ext_id, source)
+                    if found:
+                        return found, ep_group, named
+        except (ValueError, TypeError):
+            pass
+    if not url:
+        return '', '', {}
+
+    base = url.split('|')[0]
     if base.isdigit():
-        return base, '', {}
+        return base, ep_group, named
     return '', '', {}
 
 
@@ -507,6 +518,7 @@ def _apply_episode_grouping(api, group_id, episodes):
         return episodes
 
     remapped = {}
+    missing = 0
     for grp in group.get('groups', []):
         new_season = grp.get('order', 0)
         for i, ep_entry in enumerate(grp.get('episodes', [])):
@@ -516,6 +528,7 @@ def _apply_episode_grouping(api, group_id, episodes):
 
             cached = episodes.get((orig_s, orig_e))
             if not cached:
+                missing += 1
                 continue
 
             ep = dict(cached)
@@ -523,15 +536,15 @@ def _apply_episode_grouping(api, group_id, episodes):
             ep['org_epnum'] = orig_e
             remapped[(new_season, new_ep)] = ep
 
+    if missing:
+        log.debug('episode group: {} episodes not in cache'.format(missing))
     return remapped if remapped else episodes
 
 
 def _make_actor(member):
     thumb = ''
     if member.get('profile_path'):
-        thumb = 'https://image.tmdb.org/t/p/original{}'.format(
-            member['profile_path']
-        )
+        thumb = '{}original{}'.format(get_image_base(), member['profile_path'])
     return xbmc.Actor(
         member.get('name', ''), member.get('character', ''),
         member.get('order', 0), thumb,
@@ -555,7 +568,8 @@ def _fail(handle):
     )
 
 
-def _populate_show(li, show, settings, ep_grouping='', named_seasons=None):
+def _populate_show(li, show, settings, ep_grouping='', named_seasons=None,
+                   ep_group_data=None):
     vtag = li.getVideoInfoTag()
     name = show.get('name', '')
     original = show.get('original_name', '')
@@ -677,10 +691,16 @@ def _populate_show(li, show, settings, ep_grouping='', named_seasons=None):
 
     # Seasons (with overview)
     named = named_seasons or {}
-    for season in show.get('seasons', []):
-        snum = season.get('season_number', 0)
-        sname = named.get(snum, season.get('name', ''))
-        splot = _clean_plot(season.get('overview', ''))
+    season_source = ep_group_data or show.get('seasons', [])
+    for season in season_source:
+        if ep_group_data:
+            snum = season.get('order', 0)
+            sname = named.get(snum, season.get('name', ''))
+            splot = ''
+        else:
+            snum = season.get('season_number', 0)
+            sname = named.get(snum, season.get('name', ''))
+            splot = _clean_plot(season.get('overview', ''))
         try:
             vtag.addSeason(snum, sname, splot)
         except TypeError:
@@ -756,13 +776,14 @@ def _populate_episode(li, ep, season_num, episode_num,
             vtag.setRating(imdb[0], imdb[1], 'imdb', default == 'IMDb')
 
     # Stills
+    img_base = get_image_base()
     for still in ep.get('images', {}).get('stills', []):
         path = still.get('file_path')
         if path and not path.endswith('.svg'):
             vtag.addAvailableArtwork(
-                'https://image.tmdb.org/t/p/original{}'.format(path),
+                '{}original{}'.format(img_base, path),
                 arttype='thumb',
-                preview='https://image.tmdb.org/t/p/w780{}'.format(path),
+                preview='{}w780{}'.format(img_base, path),
             )
 
     # Crew (deduplicated, matching show-level pattern)
