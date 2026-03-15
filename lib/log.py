@@ -4,7 +4,9 @@
 
 import xbmc
 
-_PREFIX = 'metadata.tvshows.tmdb.python3'
+from lib.config import ADDON
+
+_PREFIX = ADDON.getAddonInfo('id')
 _verbose = False
 
 

@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 import xbmcvfs
 
 from lib import log
-from lib.config import API_HEADERS, ADDON
+from lib.config import ADDON, API_HEADERS
 
 _DATASET_URL = 'https://datasets.imdbws.com/title.ratings.tsv.gz'
 _BATCH_SIZE = 50000

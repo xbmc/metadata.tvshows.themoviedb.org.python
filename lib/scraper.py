@@ -50,12 +50,12 @@ _FIND_SOURCES = ['imdb', 'tvdb']
 
 
 def run_action(handle, action, params):
+    settings = get_settings(params)
+    log.init(settings.get('verbose_log', False))
+
     if action == 'NfoUrl':
         _nfo_url(handle, params)
         return
-
-    settings = get_settings(params)
-    log.init(settings.get('verbose_log', False))
     api = TmdbApi(settings)
 
     if settings.get('default_rating') == 'IMDb' or settings.get('imdb_anyway'):
@@ -303,7 +303,6 @@ def _nfo_url(handle, params):
     # IMDB/TVDB URLs need conversion to TMDB ID via /find
     if provider in ('imdb', 'tvdb'):
         settings = get_settings(params)
-        log.init(settings.get('verbose_log', False))
         api = TmdbApi(settings)
         tmdb_id = api.find_by_external_id(show_id, provider)
         if not tmdb_id:
