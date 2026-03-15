@@ -38,7 +38,8 @@ def get_cache_limit():
     # ~150KB per cached show; scale with available RAM
     _cache_limit = max(10, free_mb // 2)
     from lib import log as _log
-    _log.debug('cache limit: {} shows ({}MB free)'.format(_cache_limit, free_mb))
+    _log.debug('cache limit: {} shows ({}MB free)'.format(
+        _cache_limit, free_mb))
     return _cache_limit
 
 
@@ -59,7 +60,7 @@ FANARTTV_MAPPING = {
 
 
 def get_settings(params=None):
-    path = _path_settings(params)
+    path = _path_settings(None)
 
     def _str(key, default=''):
         return path.get(key, ADDON.getSetting(key)) or default
