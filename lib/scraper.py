@@ -732,8 +732,6 @@ def _populate_episode(li, ep, season_num, episode_num,
     vtag.setPlot(plot)
     vtag.setPlotOutline(plot)
 
-    vtag.setSeason(season_num)
-    vtag.setEpisode(episode_num)
     vtag.setFirstAired(ep.get('air_date', ''))
     vtag.setPremiered(ep.get('air_date', ''))
     vtag.setMediaType('episode')
