@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 import xbmcvfs
 
 from lib import log
-from lib.config import API_HEADERS
+from lib.config import API_HEADERS, ADDON
 
 _DATASET_URL = 'https://datasets.imdbws.com/title.ratings.tsv.gz'
 _BATCH_SIZE = 50000
@@ -98,9 +98,7 @@ def _init_path():
     global _db_path
     if _db_path:
         return
-    addon_data = xbmcvfs.translatePath(
-        'special://profile/addon_data/metadata.tvshows.tmdb.python3/'
-    )
+    addon_data = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
     if not os.path.exists(addon_data):
         os.makedirs(addon_data)
     _db_path = os.path.join(addon_data, 'imdb_ratings.db')
