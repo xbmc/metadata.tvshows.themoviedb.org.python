@@ -22,25 +22,10 @@ TRAKT_CLIENTID = '5e427c3175ad07ecc2e6b28fac93c3170cb0d7f8bd4d287e94629ed12b7daa
 FANARTTV_BASE = 'https://webservice.fanart.tv/v3.2'
 FANARTTV_KEY = '389a849af448f000eb6b0e223ffe84ac'
 
-_cache_limit = 0
-
 
 def get_cache_limit():
-    """Max cached shows, sized to available RAM. Computed once on first use."""
-    global _cache_limit
-    if _cache_limit:
-        return _cache_limit
-    try:
-        import xbmc as _xbmc
-        free_mb = _xbmc.getFreeMem()
-    except Exception:
-        free_mb = 1024
-    # ~150KB per cached show; scale with available RAM
-    _cache_limit = max(10, free_mb // 2)
-    from lib import log as _log
-    _log.debug('cache limit: {} shows ({}MB free)'.format(
-        _cache_limit, free_mb))
-    return _cache_limit
+    """Max shows in memory cache."""
+    return 250
 
 
 FANARTTV_MAPPING = {
@@ -59,8 +44,9 @@ FANARTTV_MAPPING = {
 }
 
 
-def get_settings(params=None):
-    path = _path_settings(None)
+def get_settings():
+    """Build settings dict from addon defaults and per-source overrides."""
+    path = _path_settings()
 
     def _str(key, default=''):
         return path.get(key, ADDON.getSetting(key)) or default
@@ -106,11 +92,10 @@ def get_settings(params=None):
     }
 
 
-def _path_settings(params=None):
-    """Extract per-source path settings from params or query string."""
+def _path_settings():
+    """Extract per-source path settings from query string."""
     try:
-        if params is None:
-            params = dict(parse_qsl(sys.argv[2].lstrip('?')))
+        params = dict(parse_qsl(sys.argv[2].lstrip('?')))
         return json.loads(params.get('pathSettings', '{}'))
     except (IndexError, ValueError, TypeError):
         return {}

@@ -9,10 +9,10 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 
-from lib import log
+from lib import art_cache, log
 from lib.artwork import set_artwork
 from lib.api.fanarttv import merge_fanarttv_artwork
-from lib.api.tmdb import TmdbApi, get_image_base
+from lib.api.tmdb import TmdbApi, get_image_base, _cache
 from lib.api.imdb import get_rating as imdb_rating, check_update as imdb_check
 from lib.api.trakt import get_show_rating as trakt_show, \
     get_episode_rating as trakt_episode, \
@@ -49,13 +49,27 @@ _RE_PAREN_SUFFIX = re.compile(r'\s+\(([^)]+)\)?$')
 _FIND_SOURCES = ['imdb', 'tvdb']
 
 
+_active_show = ''
+_last_action = ''
+
+
 def run_action(handle, action, params):
-    settings = get_settings(params)
+    """Dispatch a Kodi scraper action."""
+    global _last_action
+
+    settings = get_settings()
     log.init(settings.get('verbose_log', False))
+
+    if action == 'getartwork':
+        _evict_all(_cache)
+    elif _last_action == 'getartwork':
+        art_cache.clear()
 
     if action == 'NfoUrl':
         _nfo_url(handle, params)
+        _last_action = action
         return
+
     api = TmdbApi(settings)
 
     if settings.get('default_rating') == 'IMDb' or settings.get('imdb_anyway'):
@@ -70,11 +84,31 @@ def run_action(handle, action, params):
     }
     func = actions.get(action)
     if func:
-        log.debug('action={}'.format(action))
+        log.debug('action={} cache={}'.format(action, len(_cache)))
         func(handle, api, params, settings)
     else:
         log.info('unknown action: {}'.format(action))
         xbmcplugin.endOfDirectory(handle)
+
+    _last_action = action
+
+
+def _evict_previous_show(cache, new_show_id):
+    """Evict the previous show when moving to a new one."""
+    global _active_show
+    if _active_show and _active_show != str(new_show_id):
+        if cache.pop(_active_show, None):
+            log.debug('cache evict show {}'.format(_active_show))
+    _active_show = str(new_show_id)
+
+
+def _evict_all(cache):
+    """Flush entire in-memory cache."""
+    global _active_show
+    if cache:
+        log.debug('cache flush: {} shows'.format(len(cache)))
+        cache.clear()
+    _active_show = ''
 
 
 def _find(handle, api, params, _settings):
@@ -157,12 +191,13 @@ def _getdetails(handle, api, params, settings):
     if not show_id:
         _fail(handle)
         return
+
+    _evict_previous_show(_cache, show_id)
+
     show = api.get_show_details(show_id)
     if not show:
         _fail(handle)
         return
-
-    merge_fanarttv_artwork(show, settings)
 
     ep_group_data = None
     if ep_grouping:
@@ -170,6 +205,10 @@ def _getdetails(handle, api, params, settings):
         if group:
             ep_group_data = group.get('groups', [])
             log.debug('episode group: {} parts'.format(len(ep_group_data)))
+            _add_season_stubs(show, ep_group_data)
+
+    merge_fanarttv_artwork(show, settings)
+    art_cache.store(show_id, show)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     _populate_show(li, show, settings, ep_grouping, named_seasons,
@@ -272,12 +311,14 @@ def _getartwork(handle, api, params, settings):
     if not show_id:
         _fail(handle)
         return
-    show = api.get_show_details(show_id)
-    if not show:
-        _fail(handle)
-        return
 
-    merge_fanarttv_artwork(show, settings)
+    show = art_cache.load(show_id)
+    if not show:
+        show = api.get_show_details(show_id)
+        if not show:
+            _fail(handle)
+            return
+        merge_fanarttv_artwork(show, settings)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     set_artwork(li, show, settings)
@@ -302,7 +343,7 @@ def _nfo_url(handle, params):
 
     # IMDB/TVDB URLs need conversion to TMDB ID via /find
     if provider in ('imdb', 'tvdb'):
-        settings = get_settings(params)
+        settings = get_settings()
         api = TmdbApi(settings)
         tmdb_id = api.find_by_external_id(show_id, provider)
         if not tmdb_id:
@@ -538,6 +579,20 @@ def _apply_episode_grouping(api, group_id, episodes):
     if missing:
         log.debug('episode group: {} episodes not in cache'.format(missing))
     return remapped if remapped else episodes
+
+
+def _add_season_stubs(show, ep_group_data):
+    """Add empty season entries for episode group parts missing from TMDB."""
+    existing = {s.get('season_number', 0) for s in show.get('seasons', [])}
+    added = 0
+    for grp in ep_group_data:
+        snum = grp.get('order', 0)
+        if snum not in existing:
+            show.setdefault('seasons', []).append({'season_number': snum})
+            existing.add(snum)
+            added += 1
+    if added:
+        log.debug('episode group: added {} season stubs'.format(added))
 
 
 def _make_actor(member):
