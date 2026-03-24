@@ -102,6 +102,10 @@ msgctxt "#32050"
 msgid "Artwork"
 msgstr ""
 
+msgctxt "#32051"
+msgid "Preferences"
+msgstr ""
+
 # Ratings settings
 msgctxt "#32100"
 msgid "Ratings"
@@ -134,6 +138,14 @@ msgstr ""
 
 msgctxt "#32202"
 msgid "Personal client key"
+msgstr ""
+
+msgctxt "#32204"
+msgid "Prefer fanart.tv logos"
+msgstr ""
+
+msgctxt "#32205"
+msgid "Prefer fanart.tv artwork"
 msgstr ""
 
 # Advanced settings

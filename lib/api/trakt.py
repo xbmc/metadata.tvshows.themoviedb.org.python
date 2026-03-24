@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from lib import log
-from lib.config import API_HEADERS, TRAKT_CLIENTID, get_cache_limit
+from lib.config import API_HEADERS, CACHE_LIMIT, TRAKT_CLIENTID
 
 _BASE = 'https://api.trakt.tv'
 
@@ -62,7 +62,7 @@ def prefetch_show_ratings(imdb_id, season_nums):
         _cached_shows.move_to_end(imdb_id)
         return
 
-    while len(_cached_shows) >= get_cache_limit():
+    while len(_cached_shows) >= CACHE_LIMIT:
         evict_id, _ = _cached_shows.popitem(last=False)
         to_remove = [k for k in _episode_cache if k[0] == evict_id]
         for k in to_remove:

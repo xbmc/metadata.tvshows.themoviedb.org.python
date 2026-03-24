@@ -5,6 +5,7 @@
 import json
 import os
 import sqlite3
+import time
 
 import xbmcvfs
 
@@ -13,6 +14,7 @@ from lib.config import ADDON
 
 _db_path = ''
 _initialized = False
+_TTL = 86400
 
 
 def _reset_initialized():
@@ -34,10 +36,13 @@ def _open():
     try:
         conn = sqlite3.connect(_db_path)
         if not _initialized:
-            conn.execute('DROP TABLE IF EXISTS art_cache')
             conn.execute(
-                'CREATE TABLE art_cache '
+                'CREATE TABLE IF NOT EXISTS art_cache '
                 '(tmdb_id TEXT PRIMARY KEY, data TEXT)'
+            )
+            conn.execute(
+                'CREATE TABLE IF NOT EXISTS art_meta '
+                '(key TEXT PRIMARY KEY, value TEXT)'
             )
             conn.commit()
             _initialized = True
@@ -69,6 +74,11 @@ def store(tmdb_id, show):
             'VALUES (?, ?)',
             (str(tmdb_id), json.dumps(stripped, separators=(',', ':'))),
         )
+        conn.execute(
+            "INSERT OR REPLACE INTO art_meta (key, value) "
+            "VALUES ('updated', ?)",
+            (str(int(time.time())),),
+        )
         conn.commit()
     except sqlite3.Error as exc:
         _reset_initialized()
@@ -97,17 +107,33 @@ def load(tmdb_id):
     return None
 
 
-def clear():
-    """Wipe all entries. Called when getartwork batch ends."""
+def _wipe(conn, reason):
+    """Delete all data and reclaim disk space."""
+    deleted = conn.execute('DELETE FROM art_cache').rowcount
+    conn.execute('DELETE FROM art_meta')
+    conn.commit()
+    conn.execute('VACUUM')
+    if deleted:
+        log.debug('art_cache: {}, cleared {} entries'.format(reason, deleted))
+    return deleted
+
+
+def check_and_clear():
+    """Clear cache if data is stale or orphaned."""
     conn = _open()
     if not conn:
-        return
+        return False
     try:
-        deleted = conn.execute('DELETE FROM art_cache').rowcount
-        conn.commit()
-        if deleted:
-            log.debug('art_cache: cleared {} entries'.format(deleted))
+        row = conn.execute(
+            "SELECT value FROM art_meta WHERE key='updated'"
+        ).fetchone()
+        if not row:
+            return bool(_wipe(conn, 'orphaned data'))
+        if time.time() - int(row[0]) > _TTL:
+            _wipe(conn, 'TTL expired')
+            return True
     except sqlite3.Error as exc:
-        log.error('art_cache clear failed: {}'.format(exc))
+        log.error('art_cache check_and_clear failed: {}'.format(exc))
     finally:
         conn.close()
+    return False

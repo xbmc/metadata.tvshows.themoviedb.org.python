@@ -3,8 +3,8 @@
 """Artwork classification, scoring, and byte-aware selection.
 
 Images are classified by art type, ranked by language tier then
-quality tier (voted+HD > voted > unvoted), and limited to byte
-budgets (c06/c11) to enforce MySQL TEXT limit.
+resolution, and limited to byte budgets (c06/c11) to enforce
+MySQL TEXT limit.
 """
 
 from lib.api.tmdb import get_image_base
@@ -17,7 +17,6 @@ _C11_WRAPPER = 17  # <fanart></fanart>
 _SEASON_MIN = 2
 _SHOW_MIN = 10
 _TEXT_BEARING = frozenset(('poster', 'landscape', 'clearlogo', 'banner', 'clearart'))
-_HD_PIXELS = 1920 * 1080
 
 
 def set_artwork(li, show_info, settings):
@@ -42,13 +41,17 @@ def set_artwork(li, show_info, settings):
             )
 
     prefer_maxres = settings.get('prefer_maxres', False)
+    prefer_ftv_logos = settings.get('fanarttv_prefer_logos', True)
+    prefer_ftv_art = settings.get('fanarttv_prefer_art', False)
     for c in candidates:
+        is_ftv = c.get('fanarttv', False)
         if c['art_type'] == 'clearlogo':
-            is_fanart = c.get('url', '').startswith('https://assets.fanart.tv/')
             pixels = min((c.get('width') or 0) * (c.get('height') or 0), 800 * 310)
-            base = (is_fanart, pixels, c.get('vote_count') or 0)
+            source_pref = is_ftv and prefer_ftv_logos
         else:
-            base = _score(c, prefer_maxres)
+            pixels = (c.get('width') or 0) * (c.get('height') or 0)
+            source_pref = is_ftv and prefer_ftv_art
+        base = (source_pref, pixels) if prefer_maxres else (source_pref,)
         if c['art_type'] in _TEXT_BEARING:
             lang_tier = 4 - _lang_sort_key(c.get('language'), user_lang)[0]
             c['score'] = (lang_tier,) + base
@@ -187,35 +190,6 @@ def _byte_cost(entry):
     return cost
 
 
-def _score(entry, prefer_maxres=False):
-    """Comparable tuple: (quality_tier, primary, secondary, tiebreaker).
-
-    Tiers: voted+HD(3) > voted(2) > unvoted+HD(1) > unvoted(0).
-    Tier 3 sorts by vote_average unless prefer_maxres, rest by pixels.
-    """
-    w = entry.get('width') or 0
-    h = entry.get('height') or 0
-    pixels = w * h
-    va = entry.get('vote_average') or 0
-    vc = entry.get('vote_count') or 0
-
-    voted = vc > 0
-    hd = pixels >= _HD_PIXELS
-
-    if voted and hd:
-        tier = 3
-    elif voted:
-        tier = 2
-    elif hd:
-        tier = 1
-    else:
-        tier = 0
-
-    if tier == 3 and not prefer_maxres:
-        return (tier, va, pixels, vc)
-    return (tier, pixels, va, vc)
-
-
 def _make_entry(raw_image, img_base, preview_base):
     """Convert a raw image dict into a candidate entry."""
     path = raw_image.get('file_path')
@@ -231,10 +205,9 @@ def _make_entry(raw_image, img_base, preview_base):
         'url': url,
         'preview': preview,
         'language': raw_image.get('iso_639_1'),
-        'vote_average': raw_image.get('vote_average') or 0,
-        'vote_count': raw_image.get('vote_count') or 0,
         'width': raw_image.get('width') or 0,
         'height': raw_image.get('height') or 0,
+        'fanarttv': raw_image.get('type') == 'fanarttv',
     }
 
 

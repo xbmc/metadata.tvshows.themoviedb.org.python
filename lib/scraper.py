@@ -50,24 +50,18 @@ _FIND_SOURCES = ['imdb', 'tvdb']
 
 
 _active_show = ''
-_last_action = ''
 
 
 def run_action(handle, action, params):
     """Dispatch a Kodi scraper action."""
-    global _last_action
-
     settings = get_settings()
     log.init(settings.get('verbose_log', False))
 
-    if action == 'getartwork':
-        _evict_all(_cache)
-    elif _last_action == 'getartwork':
-        art_cache.clear()
+    if action != 'getartwork':
+        art_cache.check_and_clear()
 
     if action == 'NfoUrl':
         _nfo_url(handle, params)
-        _last_action = action
         return
 
     api = TmdbApi(settings)
@@ -90,8 +84,6 @@ def run_action(handle, action, params):
         log.info('unknown action: {}'.format(action))
         xbmcplugin.endOfDirectory(handle)
 
-    _last_action = action
-
 
 def _evict_previous_show(cache, new_show_id):
     """Evict the previous show when moving to a new one."""
@@ -100,15 +92,6 @@ def _evict_previous_show(cache, new_show_id):
         if cache.pop(_active_show, None):
             log.debug('cache evict show {}'.format(_active_show))
     _active_show = str(new_show_id)
-
-
-def _evict_all(cache):
-    """Flush entire in-memory cache."""
-    global _active_show
-    if cache:
-        log.debug('cache flush: {} shows'.format(len(cache)))
-        cache.clear()
-    _active_show = ''
 
 
 def _find(handle, api, params, _settings):
@@ -312,13 +295,20 @@ def _getartwork(handle, api, params, settings):
         _fail(handle)
         return
 
-    show = art_cache.load(show_id)
-    if not show:
-        show = api.get_show_details(show_id)
-        if not show:
-            _fail(handle)
-            return
-        merge_fanarttv_artwork(show, settings)
+    show = _cache.get(str(show_id), {}).get('show')
+    if show:
+        log.debug('getartwork {}: memory hit'.format(show_id))
+    else:
+        show = art_cache.load(show_id)
+        if show:
+            log.debug('getartwork {}: sqlite hit'.format(show_id))
+        else:
+            log.debug('getartwork {}: api fetch'.format(show_id))
+            show = api.get_show_details(show_id)
+            if not show:
+                _fail(handle)
+                return
+            merge_fanarttv_artwork(show, settings)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     set_artwork(li, show, settings)
@@ -364,7 +354,6 @@ def _nfo_url(handle, params):
         handle=handle, url=url, listitem=li, isFolder=True,
     )
     xbmcplugin.endOfDirectory(handle)
-
 
 
 _RE_PUNCT = re.compile(r'[:\-,.!?…\u2013\u2014\']+')

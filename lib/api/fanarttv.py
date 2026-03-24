@@ -65,6 +65,7 @@ def merge_fanarttv_artwork(show_info, settings):
                 'width': width,
                 'height': height,
                 'type': 'fanarttv',
+                'hd': fanarttv_type == 'hdtvlogo',
             }
 
             if is_season:

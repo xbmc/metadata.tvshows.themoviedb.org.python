@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 
 from lib import log
-from lib.config import API_HEADERS, TMDB_API_KEY, get_cache_limit
+from lib.config import API_HEADERS, CACHE_LIMIT, TMDB_API_KEY
 
 _BASE = 'https://api.themoviedb.org/3'
 _MAX_APPENDS = 20
@@ -72,7 +72,7 @@ class TmdbApi:
             return cached
 
         # Evict oldest shows beyond limit
-        while len(_cache) >= get_cache_limit():
+        while len(_cache) >= CACHE_LIMIT:
             evicted_id, _ = _cache.popitem(last=False)
             log.debug('cache evict show {}'.format(evicted_id))
 

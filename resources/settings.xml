@@ -152,7 +152,7 @@
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="players_opt" type="string" parent="enab_trailer" label="32012" help="">
+				<setting id="players_opt" type="string" label="32012" help="">
 					<level>0</level>
 					<default>Tubed</default>
 					<constraints>
@@ -175,11 +175,11 @@
 					<default>false</default>
 					<control type="toggle"/>
 				</setting>
-				<setting id="languageImages" type="string" parent="usedifferentlangforimages" label="32002" help="">
+				<setting id="languageImages" type="string" label="32002" help="">
 					<level>0</level>
 					<default>en-US</default>
 					<dependencies>
-						<dependency type="visible">
+						<dependency type="enable">
 							<condition operator="is" setting="usedifferentlangforimages">true</condition>
 						</dependency>
 					</dependencies>
@@ -236,7 +236,7 @@
 					</control>
 				</setting>
 			</group>
-			<group id="2">
+			<group id="2" label="32051">
 				<setting id="cat_landscape" type="boolean" label="32008" help="">
 					<level>0</level>
 					<default>true</default>
@@ -250,6 +250,48 @@
 				<setting id="art_prefer_maxres" type="boolean" label="32015" help="">
 					<level>0</level>
 					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="3" label="32200">
+				<setting id="enable_fanarttv" type="boolean" label="32201" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="fanarttv_clientkey" type="string" label="32202" help="">
+					<level>0</level>
+					<default/>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_fanarttv">true</condition>
+						</dependency>
+					</dependencies>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>32202</heading>
+					</control>
+				</setting>
+				<setting id="fanarttv_prefer_logos" type="boolean" label="32204" help="">
+					<level>0</level>
+					<default>true</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_fanarttv">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting id="fanarttv_prefer_art" type="boolean" label="32205" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_fanarttv">true</condition>
+						</dependency>
+					</dependencies>
 					<control type="toggle"/>
 				</setting>
 			</group>
@@ -297,30 +339,6 @@
 						</dependency>
 					</dependencies>
 					<control type="toggle"/>
-				</setting>
-			</group>
-		</category>
-		<category id="fanarttv" label="32200" help="">
-			<group id="1">
-				<setting id="enable_fanarttv" type="boolean" label="32201" help="">
-					<level>0</level>
-					<default>true</default>
-					<control type="toggle"/>
-				</setting>
-				<setting id="fanarttv_clientkey" type="string" label="32202" help="">
-					<level>0</level>
-					<default/>
-					<dependencies>
-						<dependency type="enable">
-							<condition operator="is" setting="enable_fanarttv">true</condition>
-						</dependency>
-					</dependencies>
-					<constraints>
-						<allowempty>true</allowempty>
-					</constraints>
-					<control type="edit" format="string">
-						<heading>32202</heading>
-					</control>
 				</setting>
 			</group>
 		</category>

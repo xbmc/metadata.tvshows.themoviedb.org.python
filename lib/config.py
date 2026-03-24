@@ -23,10 +23,7 @@ FANARTTV_BASE = 'https://webservice.fanart.tv/v3.2'
 FANARTTV_KEY = '389a849af448f000eb6b0e223ffe84ac'
 
 
-def get_cache_limit():
-    """Max shows in memory cache."""
-    return 250
-
+CACHE_LIMIT = 250
 
 FANARTTV_MAPPING = {
     'showbackground': 'backdrops',
@@ -88,6 +85,8 @@ def get_settings():
         'tmdb_anyway': _bool('tmdbanyway', True),
         'enable_fanarttv': _bool('enable_fanarttv', True),
         'fanarttv_clientkey': _str('fanarttv_clientkey'),
+        'fanarttv_prefer_logos': _bool('fanarttv_prefer_logos', True),
+        'fanarttv_prefer_art': _bool('fanarttv_prefer_art'),
         'verbose_log': _bool('verboselog'),
     }
 
