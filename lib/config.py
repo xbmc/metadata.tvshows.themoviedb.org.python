@@ -15,12 +15,13 @@ API_HEADERS = {
     'Accept': 'application/json',
 }
 
-
 TMDB_API_KEY = 'af3a53eb387d57fc935e9128468b1899'
+
 TRAKT_CLIENTID = '90901c6be3b2de5a4fa0edf9ab5c75e9a5a0fef2b4ee7373d8b63dcf61f95697'
-FANARTTV_KEY = 'b018086af0e1478479adfc55634db97d'
 
 FANARTTV_BASE = 'https://webservice.fanart.tv/v3.2'
+FANARTTV_KEY = 'b018086af0e1478479adfc55634db97d'
+
 
 CACHE_LIMIT = 250
 
