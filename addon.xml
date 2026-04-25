@@ -13,13 +13,6 @@
     <news>2.0.2
 - Log Fanart.tv and Trakt 404s as info instead of error
 - Wipe in-memory caches after 15 min idle
-    <news>2.0.1
-- Season-aware artwork selection
-- Better artwork distribution across all art types
-- Fix Fanart.tv URLs with special characters
-- Fanart.tv source preference settings
-- Artwork scoring: language + resolution
-- Punctuation agnostic title matching, year filter fallback
 - updated Trakt access
     </news>
     <platform>all</platform>
