@@ -10,6 +10,9 @@
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
   <extension point="xbmc.addon.metadata">
     <reuselanguageinvoker>true</reuselanguageinvoker>
+    <news>2.0.2
+- Log Fanart.tv and Trakt 404s as info instead of error
+- Wipe in-memory caches after 15 min idle
     <news>2.0.1
 - Season-aware artwork selection
 - Better artwork distribution across all art types
