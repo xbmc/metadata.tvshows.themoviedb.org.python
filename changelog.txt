@@ -1,3 +1,6 @@
+2.0.2
+updated Trackt access
+
 2.0.1
 ground up rewrite by MikeSiLVO
 Season-aware artwork selection
