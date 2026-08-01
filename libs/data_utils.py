@@ -88,10 +88,18 @@ def _set_cast(cast_info, vtag):
     imagerooturl, previewrooturl = settings.loadBaseUrls()
     cast = []
     for item in cast_info:
+        roles = item.get('roles', [])
+        order = 10000
+        if roles:
+            role = roles[0].get('character', '')
+            for entry in roles:
+                order = order - entry.get('episode_count', 0)
+        else:
+            role = ''
         actor = {
             'name': item['name'],
-            'role': item.get('character', item.get('character_name', '')),
-            'order': item['order'],
+            'role': role,
+            'order': order,
         }
         thumb = None
         if safe_get(item, 'profile_path') is not None:
@@ -298,7 +306,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 vtag.setTrailer(trailer)
         list_item = set_show_artwork(show_info, list_item)
         _add_season_info(show_info, vtag)
-        _set_cast(show_info['credits']['cast'], vtag)
+        _set_cast(show_info['aggregate_credits']['cast'], vtag)
         _set_rating(show_info, vtag)
     else:
         image = show_info.get('poster_path', '')
