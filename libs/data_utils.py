@@ -87,23 +87,13 @@ def _set_cast(cast_info, vtag):
     """Save cast info to list item"""
     imagerooturl, previewrooturl = settings.loadBaseUrls()
     cast = []
-    for item in cast_info:
+    for order, item in enumerate(cast_info[:200], start=1):
         roles = item.get('roles', [])
-        order = 1
-        if roles:
-            role = roles[0].get('character', '')
-        else:
-            role = ''
-        actor = {
-            'name': item['name'],
-            'role': role,
-            'order': order,
-        }
+        role = roles[0].get('character', '') if roles else ''
         thumb = None
         if safe_get(item, 'profile_path') is not None:
             thumb = imagerooturl + item['profile_path']
-        cast.append(Actor(actor['name'], actor['role'], actor['order'], thumb))
-        order += 1
+        cast.append(Actor(item['name'], role, order, thumb))
     vtag.setCast(cast)
 
 
