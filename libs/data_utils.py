@@ -89,11 +89,9 @@ def _set_cast(cast_info, vtag):
     cast = []
     for item in cast_info:
         roles = item.get('roles', [])
-        order = 10000
+        order = 1
         if roles:
             role = roles[0].get('character', '')
-            for entry in roles:
-                order = order - entry.get('episode_count', 0)
         else:
             role = ''
         actor = {
@@ -105,6 +103,7 @@ def _set_cast(cast_info, vtag):
         if safe_get(item, 'profile_path') is not None:
             thumb = imagerooturl + item['profile_path']
         cast.append(Actor(actor['name'], actor['role'], actor['order'], thumb))
+        order += 1
     vtag.setCast(cast)
 
 
