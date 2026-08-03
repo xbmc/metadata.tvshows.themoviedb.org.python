@@ -295,7 +295,7 @@ def add_main_show_info(list_item, show_info, full_info=True):
                 vtag.setTrailer(trailer)
         list_item = set_show_artwork(show_info, list_item)
         _add_season_info(show_info, vtag)
-        _set_cast(show_info['aggregate_credits']['cast'], vtag)
+        _set_cast(show_info.get('aggregate_credits', {}).get('cast', []), vtag)
         _set_rating(show_info, vtag)
     else:
         image = show_info.get('poster_path', '')
