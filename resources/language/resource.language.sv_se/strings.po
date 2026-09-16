@@ -5,154 +5,155 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: metadata.tvshows.tmdb.python3\n"
-"Report-Msgid-Bugs-To: https://github.com/MikeSiLVO/metadata.tvshows.tmdb.python3\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2026-09-16 14:40+0000\n"
+"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
+"Language-Team: Swedish <https://kodi.weblate.cloud/projects/kodi-add-ons-information-providers/metadata-tvshows-themoviedb-org-python/sv_se/>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: sv_se\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2026.9.1\n"
 
 # General settings
 msgctxt "#32000"
 msgid "Metadata language"
-msgstr ""
+msgstr "Språk för metadata"
 
 msgctxt "#32001"
 msgid "Separate language for images"
-msgstr ""
+msgstr "Separat språk för bilder"
 
 msgctxt "#32002"
 msgid "Image language"
-msgstr ""
+msgstr "Bildspråk"
 
 msgctxt "#32003"
 msgid "Certification country"
-msgstr ""
+msgstr "Land för åldersklassificering"
 
 msgctxt "#32004"
 msgid "Certification prefix"
-msgstr ""
+msgstr "Prefix för åldersklassificering"
 
 msgctxt "#32005"
 msgid "Prefix text"
-msgstr ""
+msgstr "Prefixtext"
 
 msgctxt "#32006"
 msgid "Use original title"
-msgstr ""
+msgstr "Använd originaltitel"
 
 msgctxt "#32007"
 msgid "Keywords as tags"
-msgstr ""
+msgstr "Nyckelord som taggar"
 
 msgctxt "#32008"
 msgid "Categorize backdrops with text as landscape"
-msgstr ""
+msgstr "Kategorisera bakgrunder med text som landskapsbilder"
 
 msgctxt "#32009"
 msgid "Categorize textless posters as key art"
-msgstr ""
+msgstr "Kategorisera textlösa affischer som nyckelbilder"
 
 msgctxt "#32010"
 msgid "Country of origin in studio name"
-msgstr ""
+msgstr "Ursprungsland i studionamnet"
 
 msgctxt "#32011"
 msgid "Trailers"
-msgstr ""
+msgstr "Förhandsvisningar"
 
 msgctxt "#32016"
 msgid "Enable trailers"
-msgstr ""
+msgstr "Aktivera förhandsvisningar"
 
 msgctxt "#32012"
 msgid "Trailer player"
-msgstr ""
+msgstr "Spelare för förhandsvisningar"
 
 msgctxt "#32013"
 msgid "YouTube"
-msgstr ""
+msgstr "YouTube"
 
 msgctxt "#32014"
 msgid "Tubed"
-msgstr ""
+msgstr "Tubed"
 
 msgctxt "#32015"
 msgid "Prefer highest resolution"
-msgstr ""
+msgstr "Föredra högsta upplösning"
 
 # General group headers
 msgctxt "#32020"
 msgid "Language"
-msgstr ""
+msgstr "Språk"
 
 msgctxt "#32021"
 msgid "Certification"
-msgstr ""
+msgstr "Åldersklassificering"
 
 msgctxt "#32022"
 msgid "Content"
-msgstr ""
+msgstr "Innehåll"
 
 # Artwork category
 msgctxt "#32050"
 msgid "Artwork"
-msgstr ""
+msgstr "Bildmaterial"
 
 msgctxt "#32051"
 msgid "Preferences"
-msgstr ""
+msgstr "Inställningar"
 
 # Ratings settings
 msgctxt "#32100"
 msgid "Ratings"
-msgstr ""
+msgstr "Betyg"
 
 msgctxt "#32101"
 msgid "Primary rating source"
-msgstr ""
+msgstr "Primär betygskälla"
 
 msgctxt "#32102"
 msgid "Also fetch IMDb rating"
-msgstr ""
+msgstr "Hämta även betyg från IMDb"
 
 msgctxt "#32103"
 msgid "Also fetch Trakt rating"
-msgstr ""
+msgstr "Hämta även betyg från Trakt"
 
 msgctxt "#32104"
 msgid "Also fetch TMDb rating"
-msgstr ""
+msgstr "Hämta även betyg från TMDb"
 
 # Fanart.tv settings
 msgctxt "#32200"
 msgid "fanart.tv"
-msgstr ""
+msgstr "fanart.tv"
 
 msgctxt "#32201"
 msgid "Fetch art from fanart.tv"
-msgstr ""
+msgstr "Hämta bildmaterial från fanart.tv"
 
 msgctxt "#32202"
 msgid "Personal client key"
-msgstr ""
+msgstr "Personlig klientnyckel"
 
 msgctxt "#32204"
 msgid "Prefer fanart.tv logos"
-msgstr ""
+msgstr "Föredra logotyper från fanart.tv"
 
 msgctxt "#32205"
 msgid "Prefer fanart.tv artwork"
-msgstr ""
+msgstr "Föredra bildmaterial från fanart.tv"
 
 # Advanced settings
 msgctxt "#32300"
 msgid "Advanced"
-msgstr ""
+msgstr "Avancerat"
 
 msgctxt "#32301"
 msgid "Verbose logging"
-msgstr ""
+msgstr "Utförlig loggning"
