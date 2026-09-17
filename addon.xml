@@ -10,7 +10,7 @@
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py" cachepersistence="00:15"/>
   <extension point="xbmc.addon.metadata">
     <reuselanguageinvoker>true</reuselanguageinvoker>
-    <news>1.7.10
+    <news>1.7.12
 ignore image list when API returns an integer
   	</news>
     <platform>all</platform>

@@ -1,4 +1,4 @@
-1.7.10
+1.7.12
 ignore image list when API returns an integer
 
 1.7.9
