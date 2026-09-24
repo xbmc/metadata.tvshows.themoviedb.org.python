@@ -430,6 +430,8 @@ def _sort_image_types(imagelist):
     for image_type, images in list(imagelist.items()):
         if isinstance(images, (list, tuple)):
             imagelist[image_type] = _image_sort(images, image_type)
+        else:
+            del imagelist[image_type]
     return imagelist
 
 
