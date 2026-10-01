@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="metadata.tvshows.themoviedb.org.python"
   name="TMDb TV Shows"
-  version="2.0.9"
+  version="2.0.10"
   provider-name="Team Kodi">
   <requires>
     <import addon="xbmc.python" version="3.0.1"/>
@@ -10,10 +10,8 @@
   <extension point="xbmc.metadata.scraper.tvshows" library="main.py"/>
   <extension point="xbmc.addon.metadata">
     <reuselanguageinvoker>true</reuselanguageinvoker>
-    <news>2.0.9
-- Fix search matching a spin-off when the folder year is wrong
-- Retry episode thumbs and IDs when a request fails
-- Fix combination NFOs with unique IDs being treated as complete
+    <news>2.0.10
+- Fix some episodes being skipped during a library scan
     </news>
     <platform>all</platform>
     <license>GPL-3.0-or-later</license>

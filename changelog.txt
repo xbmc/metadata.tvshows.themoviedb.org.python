@@ -1,3 +1,6 @@
+2.0.10
+Fix some episodes being skipped during a library scan
+
 2.0.9
 Fix search matching a spin-off when the folder year is wrong
 Retry episode thumbs and IDs when a request fails

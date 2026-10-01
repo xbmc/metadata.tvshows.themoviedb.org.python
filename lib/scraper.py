@@ -605,7 +605,7 @@ def _add_season_stubs(show, ep_group_data):
     for grp in ep_group_data:
         snum = grp.get('order', 0)
         if snum not in existing:
-            show.setdefault('seasons', []).append({'season_number': snum})
+            show.setdefault('seasons', []).append({'season_number': snum, 'stub': True})
             existing.add(snum)
             added += 1
     if added:

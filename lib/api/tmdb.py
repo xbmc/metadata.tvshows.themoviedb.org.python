@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""TMDB API v3 client with batched requests and in-memory cache.
-
-Uses append_to_response to minimize API calls. Module-level cache
-survives between Kodi plugin calls via reuselanguageinvoker=true.
-"""
+"""TMDB API v3 client."""
 
 import gzip
 import json
@@ -22,7 +18,7 @@ _HEADERS = dict(API_HEADERS, **{'Accept-Encoding': 'gzip'})
 _MAX_APPENDS = 20
 # soaps credit hundreds, aggregate fallback thousands
 _MAX_CAST = 200
-# {show_id: {'show': dict, 'episodes': {(s,e): dict}}}
+# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'episodes_complete': bool}}
 _cache = OrderedDict()
 _img_base = ''
 
@@ -199,7 +195,7 @@ class TmdbApi:
         """Pre-fetch all episode data for the entire show."""
         show_id = str(show_id)
         entry = _cache.setdefault(show_id, {})
-        if entry.get('episodes'):
+        if entry.get('episodes_complete'):
             return
 
         show = entry.get('show')
@@ -210,6 +206,7 @@ class TmdbApi:
 
         season_nums = [
             s.get('season_number', 0) for s in show.get('seasons', [])
+            if not s.get('stub')
         ]
 
         all_seasons = self._fetch_all_seasons(show_id, season_nums)
@@ -221,6 +218,7 @@ class TmdbApi:
             self._episode_lang_fallback(show_id, episodes)
 
         entry['episodes'] = episodes
+        entry['episodes_complete'] = len(all_seasons) == len(season_nums)
 
     def _fetch_all_seasons(self, show_id, season_nums):
         """Phase 1: Fetch full season data via show endpoint appends."""
