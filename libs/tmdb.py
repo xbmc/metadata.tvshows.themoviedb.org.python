@@ -119,7 +119,7 @@ def find_by_id(unique_ids):
                 search_url, params=params, verboselog=source_settings["VERBOSELOG"])
             if resp is not None:
                 return resp.get('tv_results', [])
-    api_utils.set_headers()
+    api_utils.set_headers({})
     return []
 
 
