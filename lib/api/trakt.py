@@ -2,12 +2,11 @@
 
 """Trakt API client for show and episode ratings."""
 
-import json
 from collections import OrderedDict
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 from lib import log
+from lib.api.request import get_json
 from lib.config import API_HEADERS, CACHE_LIMIT, TRAKT_CLIENTID
 
 _BASE = 'https://api.trakt.tv'
@@ -94,18 +93,9 @@ def get_episode_rating(imdb_id, season, episode):
 
 
 def _get(path, params=None):
+    """GET a Trakt endpoint, returning parsed JSON or None if it failed."""
     url = '{}{}'.format(_BASE, path)
     if params:
         url = '{}?{}'.format(url, urlencode(params))
     log.debug('Trakt GET {}'.format(path))
-    try:
-        req = Request(url, headers=_HEADERS)
-        with urlopen(req, timeout=10) as resp:
-            return json.loads(resp.read().decode('utf-8'))
-    except Exception as exc:
-        from urllib.error import HTTPError
-        if isinstance(exc, HTTPError) and exc.code == 404:
-            log.info('Trakt GET {}: not found'.format(path))
-        else:
-            log.error('Trakt GET {} failed: {}'.format(path, exc))
-        return None
+    return get_json(url, _HEADERS, 'Trakt GET {}'.format(path))

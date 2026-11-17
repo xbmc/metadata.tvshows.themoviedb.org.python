@@ -1,18 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""TMDB API v3 client with batched requests and in-memory cache.
+"""TMDB API v3 client."""
 
-Uses append_to_response to minimize API calls. Module-level cache
-survives between Kodi plugin calls via reuselanguageinvoker=true.
-"""
-
-import gzip
-import json
 from collections import OrderedDict
-from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 
 from lib import log
+from lib.api.request import get_json
 from lib.config import API_HEADERS, CACHE_LIMIT, TMDB_API_KEY
 
 _BASE = 'https://api.themoviedb.org/3'
@@ -22,17 +16,9 @@ _HEADERS = dict(API_HEADERS, **{'Accept-Encoding': 'gzip'})
 _MAX_APPENDS = 20
 # soaps credit hundreds, aggregate fallback thousands
 _MAX_CAST = 200
-# {show_id: {'show': dict, 'episodes': {(s,e): dict}}}
+# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'episodes_complete': bool}}
 _cache = OrderedDict()
 _img_base = ''
-
-
-def _read_json(resp):
-    """Decode a response body, ungzipping it when TMDB compressed it."""
-    raw = resp.read()
-    if resp.headers.get('Content-Encoding') == 'gzip':
-        raw = gzip.decompress(raw)
-    return json.loads(raw.decode('utf-8'))
 
 
 def get_image_base():
@@ -41,14 +27,10 @@ def get_image_base():
     if not _img_base:
         url = '{}{}?{}'.format(_BASE, '/configuration',
                                urlencode({'api_key': TMDB_API_KEY}))
-        try:
-            req = Request(url, headers=_HEADERS)
-            with urlopen(req, timeout=10) as resp:
-                data = _read_json(resp)
-            _img_base = data['images']['secure_base_url']
-            log.debug('TMDB image base: {}'.format(_img_base))
-        except Exception:
-            _img_base = 'https://image.tmdb.org/t/p/'
+        data = get_json(url, _HEADERS, 'TMDB GET /configuration') or {}
+        _img_base = ((data.get('images') or {}).get('secure_base_url')
+                     or 'https://image.tmdb.org/t/p/')
+        log.debug('TMDB image base: {}'.format(_img_base))
     return _img_base
 
 
@@ -196,10 +178,10 @@ class TmdbApi:
                     season_map[snum]['credits'] = credits
 
     def prefetch_episodes(self, show_id):
-        """Pre-fetch all episode data for the entire show."""
+        """Pre-fetch the show's episodes, again on a later call if a season failed."""
         show_id = str(show_id)
         entry = _cache.setdefault(show_id, {})
-        if entry.get('episodes'):
+        if entry.get('episodes_complete'):
             return
 
         show = entry.get('show')
@@ -210,6 +192,7 @@ class TmdbApi:
 
         season_nums = [
             s.get('season_number', 0) for s in show.get('seasons', [])
+            if not s.get('stub')
         ]
 
         all_seasons = self._fetch_all_seasons(show_id, season_nums)
@@ -221,6 +204,7 @@ class TmdbApi:
             self._episode_lang_fallback(show_id, episodes)
 
         entry['episodes'] = episodes
+        entry['episodes_complete'] = len(all_seasons) == len(season_nums)
 
     def _fetch_all_seasons(self, show_id, season_nums):
         """Phase 1: Fetch full season data via show endpoint appends."""
@@ -242,7 +226,7 @@ class TmdbApi:
         return result
 
     def _fetch_episode_extras(self, show_id, season_nums, all_seasons):
-        """Phase 2: Episode images and external_ids, two appends per episode."""
+        """Phase 2: Fetch episode images and external_ids, marking a failed batch for retry."""
         episodes = {}
         pending = []
         for snum in season_nums:
@@ -267,8 +251,6 @@ class TmdbApi:
                 'include_image_language': self._img_lang,
             }
             data = self._get('/tv/{}'.format(show_id), params)
-            if data is None:
-                data = self._get('/tv/{}'.format(show_id), params)
 
             for snum, en, base in batch:
                 ep = dict(base)
@@ -356,14 +338,4 @@ class TmdbApi:
         query = dict(params, api_key=TMDB_API_KEY)
         url = '{}{}?{}'.format(_BASE, path, urlencode(query))
         log.debug('TMDB GET {}'.format(path))
-        try:
-            req = Request(url, headers=_HEADERS)
-            with urlopen(req, timeout=15) as resp:
-                return _read_json(resp)
-        except Exception as exc:
-            from urllib.error import HTTPError
-            if isinstance(exc, HTTPError) and exc.code == 404:
-                log.info('TMDB GET {}: not found'.format(path))
-            else:
-                log.error('TMDB GET {} failed: {}'.format(path, exc))
-            return None
+        return get_json(url, _HEADERS, 'TMDB GET {}'.format(path))

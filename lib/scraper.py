@@ -5,6 +5,7 @@
 import json
 import re
 import time
+import unicodedata
 
 import xbmc
 import xbmcgui
@@ -368,22 +369,29 @@ def _nfo_url(handle, params):
 
 
 _RE_PUNCT = re.compile(r'[:\-,.!?…\u2013\u2014\']+')
+_RE_MARKS = re.compile(r'[^\w\s]+')
 
 
 def _normalize(text):
     return ' '.join(_RE_PUNCT.sub(' ', text).split())
 
 
+def _fold(text):
+    """Fold to lowercase without accents or punctuation, fullwidth forms plain, × and & as words."""
+    text = unicodedata.normalize('NFKD', text)
+    # Latin, Greek and Cyrillic accents only; kana voicing marks and Hangul must survive
+    text = ''.join(c for c in text if not 0x300 <= ord(c) <= 0x36f)
+    text = unicodedata.normalize('NFC', text).casefold()
+    text = text.replace('\N{MULTIPLICATION SIGN}', ' x ').replace('&', ' and ')
+    return ' '.join(_RE_MARKS.sub('', text).split())
+
+
 def _title_relevance(query, title):
-    """0.0-1.0: exact=1.0, prefix=0.95, contained=0.8, all words=0.6."""
+    """0.0-1.0 match of the names lowercased, normalized or folded, looser forms scoring less."""
     q = query.lower()
     t = title.lower()
-    if not q or not t:
-        return 0.0
-    score = _title_match(q, t)
-    if score >= 0.6:
-        return score
-    return _title_match(_normalize(q), _normalize(t))
+    forms = ((q, t, 1.0), (_normalize(q), _normalize(t), 0.99), (_fold(q), _fold(t), 0.98))
+    return max((weight * _title_match(a, b) for a, b, weight in forms if a and b), default=0.0)
 
 
 def _title_match(q, t):
@@ -599,13 +607,13 @@ def _apply_episode_grouping(api, group_id, episodes):
 
 
 def _add_season_stubs(show, ep_group_data):
-    """Add empty season entries for episode group parts missing from TMDB."""
+    """Add stub season entries for episode group parts missing from TMDB."""
     existing = {s.get('season_number', 0) for s in show.get('seasons', [])}
     added = 0
     for grp in ep_group_data:
         snum = grp.get('order', 0)
         if snum not in existing:
-            show.setdefault('seasons', []).append({'season_number': snum})
+            show.setdefault('seasons', []).append({'season_number': snum, 'stub': True})
             existing.add(snum)
             added += 1
     if added:
