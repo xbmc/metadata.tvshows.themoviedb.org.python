@@ -1,3 +1,8 @@
+2.0.10
+Fix some episodes being skipped during a library scan
+Fix a show matching the wrong show when its folder name leaves out punctuation or accents
+Fix a show missing cast, artwork or ratings when a request briefly fails
+
 2.0.9
 Fix search matching a spin-off when the folder year is wrong
 Retry episode thumbs and IDs when a request fails
