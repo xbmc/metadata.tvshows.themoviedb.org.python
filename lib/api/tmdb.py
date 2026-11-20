@@ -1,18 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""TMDB API v3 client with batched requests and in-memory cache.
+"""TMDB API v3 client."""
 
-Uses append_to_response to minimize API calls. Module-level cache
-survives between Kodi plugin calls via reuselanguageinvoker=true.
-"""
-
-import gzip
-import json
+import time
 from collections import OrderedDict
-from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 
 from lib import log
+from lib.api.request import RequestFailed, get_json
 from lib.config import API_HEADERS, CACHE_LIMIT, TMDB_API_KEY
 
 _BASE = 'https://api.themoviedb.org/3'
@@ -22,17 +17,15 @@ _HEADERS = dict(API_HEADERS, **{'Accept-Encoding': 'gzip'})
 _MAX_APPENDS = 20
 # soaps credit hundreds, aggregate fallback thousands
 _MAX_CAST = 200
-# {show_id: {'show': dict, 'episodes': {(s,e): dict}}}
+# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'used': time}}
+# 'episodes' is only ever a show's whole guide
 _cache = OrderedDict()
+# shows whose episodes an interpreter keeps, and seconds it keeps them unused
+_EPISODES_KEPT = 4
+_EPISODES_TTL = 15 * 60
 _img_base = ''
-
-
-def _read_json(resp):
-    """Decode a response body, ungzipping it when TMDB compressed it."""
-    raw = resp.read()
-    if resp.headers.get('Content-Encoding') == 'gzip':
-        raw = gzip.decompress(raw)
-    return json.loads(raw.decode('utf-8'))
+# TMDB's documented image base, for when its configuration can't be read
+_DEFAULT_IMG_BASE = 'https://image.tmdb.org/t/p/'
 
 
 def get_image_base():
@@ -42,14 +35,37 @@ def get_image_base():
         url = '{}{}?{}'.format(_BASE, '/configuration',
                                urlencode({'api_key': TMDB_API_KEY}))
         try:
-            req = Request(url, headers=_HEADERS)
-            with urlopen(req, timeout=10) as resp:
-                data = _read_json(resp)
-            _img_base = data['images']['secure_base_url']
-            log.debug('TMDB image base: {}'.format(_img_base))
-        except Exception:
-            _img_base = 'https://image.tmdb.org/t/p/'
+            data = get_json(url, _HEADERS, 'TMDB GET /configuration')
+            _img_base = ((data or {}).get('images') or {}).get('secure_base_url') or ''
+        except RequestFailed:
+            pass
+        # TMDB's documented base loses nothing, so a failure here doesn't fail the call
+        _img_base = _img_base or _DEFAULT_IMG_BASE
+        log.debug('TMDB image base: {}'.format(_img_base))
     return _img_base
+
+
+def _touch(show_id):
+    """Mark a cached show used now, and the most recently used."""
+    entry = _cache.get(show_id)
+    if entry is not None:
+        entry['used'] = time.time()
+        _cache.move_to_end(show_id)
+
+
+def evict_episodes():
+    """Drop the episodes of shows unused for a while, and of all but the most recently used.
+
+    Shows are evicted by age and count, not when another show's details are asked for: Kodi can
+    run a show's calls on any of several interpreters, each with its own cache.
+    """
+    now = time.time()
+    with_episodes = [show_id for show_id, entry in _cache.items() if 'episodes' in entry]
+    for i, show_id in enumerate(reversed(with_episodes)):
+        entry = _cache[show_id]
+        if i >= _EPISODES_KEPT or now - entry.get('used', 0) > _EPISODES_TTL:
+            del entry['episodes']
+            log.debug('cache evict episodes of show {}'.format(show_id))
 
 
 def _top_role(member):
@@ -113,7 +129,7 @@ class TmdbApi:
         show_id = str(show_id)
         cached = _cache.get(show_id, {}).get('show')
         if cached:
-            _cache.move_to_end(show_id)
+            _touch(show_id)
             return cached
 
         # Evict oldest shows beyond limit
@@ -138,13 +154,19 @@ class TmdbApi:
             if en and en.get('overview'):
                 show['overview'] = en['overview']
 
+        # A request that fails raises RequestFailed, so only a whole show is cached
         self._attach_season_data(show)
         self._set_series_cast(show_id, show)
         _cache.setdefault(show_id, {})['show'] = show
+        _touch(show_id)
         return show
 
     def _set_series_cast(self, show_id, show):
-        """Show cast from the season regulars, or the whole run if none exist."""
+        """Show cast from the season regulars, or the whole run if none exist.
+
+        The seasons' credits came back, or the call failed before this, so an empty list means
+        the show has no regulars, not that their request failed.
+        """
         cast = _season_regulars(show)
         if not cast:
             cast = self._aggregate_cast(show_id)
@@ -186,6 +208,7 @@ class TmdbApi:
                 'include_image_language': self._img_lang,
             })
             if not data:
+                # 404: the show is gone; a failure raises RequestFailed instead
                 continue
             for snum in batch:
                 images = data.get('season/{}/images'.format(snum))
@@ -196,10 +219,15 @@ class TmdbApi:
                     season_map[snum]['credits'] = credits
 
     def prefetch_episodes(self, show_id):
-        """Pre-fetch all episode data for the entire show."""
+        """Pre-fetch all episode data for the entire show.
+
+        Only a whole guide is kept: a request that fails raises RequestFailed, and the next call
+        asks again.
+        """
         show_id = str(show_id)
-        entry = _cache.setdefault(show_id, {})
-        if entry.get('episodes'):
+        entry = _cache.get(show_id, {})
+        if 'episodes' in entry:
+            _touch(show_id)
             return
 
         show = entry.get('show')
@@ -210,6 +238,7 @@ class TmdbApi:
 
         season_nums = [
             s.get('season_number', 0) for s in show.get('seasons', [])
+            if not s.get('stub')
         ]
 
         all_seasons = self._fetch_all_seasons(show_id, season_nums)
@@ -220,7 +249,9 @@ class TmdbApi:
         if not self._is_english:
             self._episode_lang_fallback(show_id, episodes)
 
-        entry['episodes'] = episodes
+        _cache.setdefault(show_id, {})['episodes'] = episodes
+        _touch(show_id)
+        evict_episodes()
 
     def _fetch_all_seasons(self, show_id, season_nums):
         """Phase 1: Fetch full season data via show endpoint appends."""
@@ -234,15 +265,17 @@ class TmdbApi:
                 ),
             })
             if not data:
+                # 404: the show is gone; a failure raises RequestFailed instead
                 continue
             for snum in batch:
+                # TMDB leaves out a season it hasn't, such as an episode group's stub
                 sd = data.get('season/{}'.format(snum))
                 if sd:
                     result[snum] = sd
         return result
 
     def _fetch_episode_extras(self, show_id, season_nums, all_seasons):
-        """Phase 2: Episode images and external_ids, two appends per episode."""
+        """Phase 2: Fetch episode images and external_ids, marking a failed batch for retry."""
         episodes = {}
         pending = []
         for snum in season_nums:
@@ -266,9 +299,12 @@ class TmdbApi:
                 'append_to_response': ','.join(appends),
                 'include_image_language': self._img_lang,
             }
-            data = self._get('/tv/{}'.format(show_id), params)
-            if data is None:
+            try:
                 data = self._get('/tv/{}'.format(show_id), params)
+            except RequestFailed:
+                # the guide itself is whole: each of these episodes' details asks for its own
+                # images and IDs, and fails if it can't get them
+                data = None
 
             for snum, en, base in batch:
                 ep = dict(base)
@@ -301,6 +337,7 @@ class TmdbApi:
                 {'language': 'en-US'}
             )
             if not en:
+                # 404; a failure raises RequestFailed instead
                 continue
             for en_ep in en.get('episodes', []):
                 enum = en_ep.get('episode_number', 0)
@@ -315,8 +352,13 @@ class TmdbApi:
                     ep['overview'] = en_ep['overview']
 
     def get_episode(self, show_id, season_num, episode_num):
-        """Cache-first episode read, one API call on a miss or a failed prefetch batch."""
+        """Cache-first episode read, one API call on a miss or a failed prefetch batch.
+
+        A miss, on an interpreter that didn't list the show, asks for the episode alone: in a
+        scan's replay that cost fewer requests than fetching the show's guide or the season.
+        """
         show_id = str(show_id)
+        _touch(show_id)
         cached = _cache.get(show_id, {}).get('episodes', {}).get(
             (season_num, episode_num)
         )
@@ -333,14 +375,15 @@ class TmdbApi:
             }
         )
         if not data:
+            # 404: no such episode, or no images and IDs for it
             return cached
         if cached:
             del cached['_retry']
             cached['images'] = data.get('images', {})
             cached['external_ids'] = data.get('external_ids', {})
             return cached
-        entry = _cache.setdefault(show_id, {})
-        entry.setdefault('episodes', {})[(season_num, episode_num)] = data
+        # Not kept: 'episodes' holds only a whole guide, which getepisodelist would otherwise
+        # take for the show's
         return data
 
     def get_cached_episodes(self, show_id):
@@ -352,18 +395,11 @@ class TmdbApi:
         return self._get('/tv/episode_group/{}'.format(group_id), {})
 
     def _get(self, path, params):
-        """GET a TMDB endpoint, returning parsed JSON or None if it failed."""
+        """GET a TMDB endpoint: parsed JSON, or None for a 404.
+
+        Raises RequestFailed when the request fails, after one retry.
+        """
         query = dict(params, api_key=TMDB_API_KEY)
         url = '{}{}?{}'.format(_BASE, path, urlencode(query))
         log.debug('TMDB GET {}'.format(path))
-        try:
-            req = Request(url, headers=_HEADERS)
-            with urlopen(req, timeout=15) as resp:
-                return _read_json(resp)
-        except Exception as exc:
-            from urllib.error import HTTPError
-            if isinstance(exc, HTTPError) and exc.code == 404:
-                log.info('TMDB GET {}: not found'.format(path))
-            else:
-                log.error('TMDB GET {} failed: {}'.format(path, exc))
-            return None
+        return get_json(url, _HEADERS, 'TMDB GET {}'.format(path))
