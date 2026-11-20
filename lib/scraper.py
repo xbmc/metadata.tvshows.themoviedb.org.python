@@ -225,7 +225,9 @@ def _getepisodelist(handle, api, params, settings):
         xbmcplugin.endOfDirectory(handle)
         return
 
-    api.prefetch_episodes(show_id)
+    # The seasons Kodi has episodes to look up of (seasons=1,2), unless the list is an episode
+    # group's, whose seasons aren't TMDB's
+    api.prefetch_episodes(show_id, None if ep_grouping else _seasons_wanted(params))
 
     episodes = api.get_cached_episodes(show_id)
     if not episodes:
@@ -246,6 +248,15 @@ def _getepisodelist(handle, api, params, settings):
         if show_imdb:
             season_nums = set(s for s, _ in episodes.keys())
             trakt_prefetch(show_imdb, season_nums)
+
+    # A Kodi that takes an episode's details from its list item asks for them (complete=1); older
+    # versions don't, and call getepisodedetails for each episode instead
+    complete = params.get('complete') == '1'
+    show_imdb_id = ''
+    if complete:
+        show = api.get_show_details(show_id)
+        if show:
+            show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
 
     if ep_grouping:
         before = len(episodes)
@@ -268,11 +279,26 @@ def _getepisodelist(handle, api, params, settings):
         org_s = ep.get('org_seasonnum', snum)
         org_e = ep.get('org_epnum', enum)
         ep_url = '{}/{}/{}'.format(show_id, org_s, org_e)
+        # The details getepisodedetails would give, where the list's numbers are the episode's own
+        # rather than an episode group's
+        if complete and (org_s, org_e) == (snum, enum):
+            full = api.get_episode(show_id, org_s, org_e)
+            if full:
+                _populate_episode(li, full, org_s, org_e, settings, show_imdb_id)
+                li.setProperty('video.complete', 'true')
         xbmcplugin.addDirectoryItem(
             handle=handle, url=ep_url,
             listitem=li, isFolder=False,
         )
     xbmcplugin.endOfDirectory(handle)
+
+
+def _seasons_wanted(params):
+    """The seasons named by seasons=, or None for all"""
+    try:
+        return {int(n) for n in params.get('seasons', '').split(',') if n.strip()} or None
+    except ValueError:
+        return None
 
 
 def _getepisodedetails(handle, api, params, settings):
