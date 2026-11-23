@@ -30,14 +30,6 @@ class TestImdbRatings(unittest.TestCase):
         self.assertNotIn('imdb', show['ratings'])
         self.assertFalse(self.addon.kodi.logged('left out'))
 
-    def test_no_dataset_and_none_loads(self):
-        self.store['loaded'] = False
-        show = self.addon.call('getdetails', url='100')
-        self.assertTrue(show['succeeded'])
-        self.assertNotIn('imdb', show['ratings'])
-        self.assertTrue(self.addon.kodi.logged(
-            'the IMDb rating left out: IMDb ratings: no dataset loaded'))
-
     def test_no_wait_of_its_own(self):
         # Waiting for a first load is the module's: the add-on neither refreshes nor waits
         self.store['loaded'] = False

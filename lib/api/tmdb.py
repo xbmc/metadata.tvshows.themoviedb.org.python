@@ -68,12 +68,6 @@ def evict_episodes():
             log.debug('cache evict episodes of show {}'.format(show_id))
 
 
-def _left_out(what, exc):
-    """Log a part of a show's details left out because its request failed, after the retry"""
-    log.info('{} left out: {}'.format(what, exc))
-    return False
-
-
 def _top_role(member):
     """Character the actor played most, which TMDB lists first."""
     roles = member.get('roles') or []
@@ -155,44 +149,30 @@ class TmdbApi:
         if not show:
             return None
 
-        # A part that fails, after its request's retry, is left out and logged; a show without
-        # one isn't cached, so that the next call asks again
-        whole = True
         if not self._is_english and not show.get('overview'):
-            try:
-                en = self._get('/tv/{}'.format(show_id), {'language': 'en-US'})
-            except RequestFailed as exc:
-                en = None
-                whole = _left_out('the English overview', exc)
+            en = self._get('/tv/{}'.format(show_id), {'language': 'en-US'})
             if en and en.get('overview'):
                 show['overview'] = en['overview']
 
-        if self._attach_season_data(show):
-            whole = self._set_series_cast(show_id, show) and whole
-        else:
-            # Without every season's cast the regulars can't be told apart, and the whole run's
-            # cast would be everyone who ever appeared: the show's own, its latest season's, stays
-            whole = False
-        if whole:
-            _cache.setdefault(show_id, {})['show'] = show
-            _touch(show_id)
+        # A request that fails raises RequestFailed, so only a whole show is cached
+        self._attach_season_data(show)
+        self._set_series_cast(show_id, show)
+        _cache.setdefault(show_id, {})['show'] = show
+        _touch(show_id)
         return show
 
     def _set_series_cast(self, show_id, show):
         """Show cast from the season regulars, or the whole run if none exist.
 
-        Returns False when the whole run's cast was needed and its request failed.
+        The seasons' credits came back, or the call failed before this, so an empty list means
+        the show has no regulars, not that their request failed.
         """
         cast = _season_regulars(show)
         if not cast:
-            try:
-                cast = self._aggregate_cast(show_id)
-            except RequestFailed as exc:
-                return _left_out("the show's cast", exc)
+            cast = self._aggregate_cast(show_id)
         if cast:
             show.setdefault('credits', {})['cast'] = cast
             log.debug('series cast: {}'.format(len(cast)))
-        return True
 
     def _aggregate_cast(self, show_id):
         """Fallback for shows credited per episode with no season regulars."""
@@ -209,11 +189,7 @@ class TmdbApi:
         } for i, member in enumerate(data.get('cast', [])[:_MAX_CAST])]
 
     def _attach_season_data(self, show):
-        """Batch-fetch and attach per-season images and regular cast.
-
-        Returns False when a batch's request failed, and its seasons' images and cast were left out.
-        """
-        whole = True
+        """Batch-fetch and attach per-season images and regular cast."""
         seasons = show.get('seasons', [])
         season_map = {s.get('season_number', 0): s for s in seasons}
         show_id = show['id']
@@ -226,17 +202,13 @@ class TmdbApi:
             for n in batch:
                 appends.append('season/{}/images'.format(n))
                 appends.append('season/{}/credits'.format(n))
-            try:
-                data = self._get('/tv/{}'.format(show_id), {
-                    'language': self._lang,
-                    'append_to_response': ','.join(appends),
-                    'include_image_language': self._img_lang,
-                })
-            except RequestFailed as exc:
-                whole = _left_out('the images and cast of seasons {}'.format(batch), exc)
-                continue
+            data = self._get('/tv/{}'.format(show_id), {
+                'language': self._lang,
+                'append_to_response': ','.join(appends),
+                'include_image_language': self._img_lang,
+            })
             if not data:
-                # 404: the show is gone
+                # 404: the show is gone; a failure raises RequestFailed instead
                 continue
             for snum in batch:
                 images = data.get('season/{}/images'.format(snum))
@@ -245,7 +217,6 @@ class TmdbApi:
                 credits = data.get('season/{}/credits'.format(snum))
                 if credits:
                     season_map[snum]['credits'] = credits
-        return whole
 
     def prefetch_episodes(self, show_id):
         """Pre-fetch the show's episodes.
@@ -361,17 +332,12 @@ class TmdbApi:
                 need.add(snum)
 
         for snum in need:
-            try:
-                en = self._get(
-                    '/tv/{}/season/{}'.format(show_id, snum),
-                    {'language': 'en-US'}
-                )
-            except RequestFailed as exc:
-                # The guide is kept without it: not keeping it would cost a request an episode
-                _left_out('the English text of season {}'.format(snum), exc)
-                continue
+            en = self._get(
+                '/tv/{}/season/{}'.format(show_id, snum),
+                {'language': 'en-US'}
+            )
             if not en:
-                # 404
+                # 404; a failure raises RequestFailed instead
                 continue
             for en_ep in en.get('episodes', []):
                 enum = en_ep.get('episode_number', 0)

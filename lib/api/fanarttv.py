@@ -23,7 +23,7 @@ def merge_fanarttv_artwork(show_info, settings):
     data = _fetch(tvdb_id, settings.get('fanarttv_clientkey', ''))
     if not data:
         # 404: Fanart.tv has no art for the show, an answer that needn't be asked for again. A
-        # failure raises RequestFailed instead, and is asked again on the next call.
+        # failure raises RequestFailed instead, and the call fails.
         show_info['_fanarttv_merged'] = True
         return
 

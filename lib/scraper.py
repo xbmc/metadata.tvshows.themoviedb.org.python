@@ -105,8 +105,9 @@ def run_action(handle, action, params):
             xbmcplugin.endOfDirectory(handle)
     except RequestFailed as exc:
         # The show, its episode list or an episode couldn't be had, after the request's retry:
-        # the call fails, and Kodi 23 tells a failed search from one that found nothing (a part
-        # that fails is left out instead, see _part())
+        # the call fails, and Kodi 23 tells a failed search from one that found nothing. A part
+        # that fails, a rating or fanart.tv's art, fails the call too: Kodi 23 reports it and tries
+        # the look-up again, rather than add the show or episode without it.
         log.error('{} failed: {}'.format(action, exc))
         if action in _LISTING_ACTIONS:
             xbmcplugin.endOfDirectory(handle, succeeded=False)
@@ -210,15 +211,9 @@ def _getdetails(handle, api, params, settings):
             log.debug('episode group: {} parts'.format(len(ep_group_data)))
             _add_season_stubs(show, ep_group_data)
 
-    # The art is kept on disk, where getartwork on any interpreter takes it as it is, only when
-    # nothing was left out: fanart.tv's art merged, and the show cached, as only a whole one is
-    try:
-        merge_fanarttv_artwork(show, settings)
-    except RequestFailed as exc:
-        log.info("fanart.tv's art left out: {}".format(exc))
-    else:
-        if _cache.get(str(show_id), {}).get('show') is show:
-            art_cache.store(show_id, show)
+    # A part that failed failed the call before this, so the art kept on disk is whole
+    merge_fanarttv_artwork(show, settings)
+    art_cache.store(show_id, show)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     _populate_show(li, show, settings, ep_grouping, named_seasons,
@@ -305,7 +300,7 @@ def _getepisodedetails(handle, api, params, settings):
     # Show's IMDB ID needed for Trakt episode ratings, and only for them
     show_imdb_id = ''
     if settings.get('default_rating') == 'Trakt' or settings.get('trakt_anyway'):
-        show = _part('the Trakt rating', api.get_show_details, show_id)
+        show = api.get_show_details(show_id)
         if show:
             show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
 
@@ -328,7 +323,7 @@ def _getartwork(handle, api, params, settings):
     if show:
         log.debug('getartwork {}: memory hit'.format(show_id))
         # merged once: here again only if its request failed on an earlier call
-        _part("fanart.tv's art", merge_fanarttv_artwork, show, settings)
+        merge_fanarttv_artwork(show, settings)
     else:
         show = art_cache.load(show_id)
         if show:
@@ -339,7 +334,7 @@ def _getartwork(handle, api, params, settings):
             if not show:
                 _fail(handle)
                 return
-            _part("fanart.tv's art", merge_fanarttv_artwork, show, settings)
+            merge_fanarttv_artwork(show, settings)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     set_artwork(li, show, settings)
@@ -663,16 +658,6 @@ def _fail(handle):
     )
 
 
-def _part(what, fetch, *args):
-    """A part of a show's or an episode's details, or None when its request failed after the
-    retry: the part is left out, logged, and the call goes on without it."""
-    try:
-        return fetch(*args)
-    except RequestFailed as exc:
-        log.info('{} left out: {}'.format(what, exc))
-        return None
-
-
 def _populate_show(li, show, settings, ep_grouping='', named_seasons=None,
                    ep_group_data=None):
     vtag = li.getVideoInfoTag()
@@ -745,12 +730,12 @@ def _populate_show(li, show, settings, ep_grouping='', named_seasons=None,
         )
 
     if imdb_id and (default == 'Trakt' or settings.get('trakt_anyway')):
-        trakt = _part('the Trakt rating', trakt_show, imdb_id)
+        trakt = trakt_show(imdb_id)
         if trakt:
             vtag.setRating(trakt[0], trakt[1], 'trakt', default == 'Trakt')
 
     if imdb_id and (default == 'IMDb' or settings.get('imdb_anyway')):
-        imdb = _part('the IMDb rating', imdb_rating, imdb_id)
+        imdb = imdb_rating(imdb_id)
         if imdb:
             vtag.setRating(imdb[0], imdb[1], 'imdb', default == 'IMDb')
 
@@ -867,14 +852,14 @@ def _populate_episode(li, ep, season_num, episode_num,
 
     # Trakt uses show IMDB ID, not episode IMDB ID
     if show_imdb_id and (default == 'Trakt' or settings.get('trakt_anyway')):
-        trakt = _part('the Trakt rating', trakt_episode, show_imdb_id, season_num, episode_num)
+        trakt = trakt_episode(show_imdb_id, season_num, episode_num)
         if trakt:
             vtag.setRating(
                 trakt[0], trakt[1], 'trakt', default == 'Trakt',
             )
 
     if ep_imdb_id and (default == 'IMDb' or settings.get('imdb_anyway')):
-        imdb = _part('the IMDb rating', imdb_rating, ep_imdb_id)
+        imdb = imdb_rating(ep_imdb_id)
         if imdb:
             vtag.setRating(imdb[0], imdb[1], 'imdb', default == 'IMDb')
 
