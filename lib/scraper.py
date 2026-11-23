@@ -228,9 +228,12 @@ def _getepisodelist(handle, api, params, settings):
         xbmcplugin.endOfDirectory(handle)
         return
 
-    api.prefetch_episodes(show_id)
+    # The seasons Kodi has episodes to look up of (seasons=1,2), unless the list is an episode
+    # group's, whose seasons aren't TMDB's. Only those are listed, whatever else is kept.
+    seasons = None if ep_grouping else _seasons_wanted(params)
+    api.prefetch_episodes(show_id, seasons)
 
-    episodes = api.get_cached_episodes(show_id)
+    episodes = api.get_cached_episodes(show_id, seasons)
     if not episodes:
         xbmcplugin.endOfDirectory(handle)
         return
@@ -298,6 +301,14 @@ def _getepisodelist(handle, api, params, settings):
             listitem=li, isFolder=False,
         )
     xbmcplugin.endOfDirectory(handle)
+
+
+def _seasons_wanted(params):
+    """The seasons named by seasons=, or None for all"""
+    try:
+        return {int(n) for n in params.get('seasons', '').split(',') if n.strip()} or None
+    except ValueError:
+        return None
 
 
 def _getepisodedetails(handle, api, params, settings):

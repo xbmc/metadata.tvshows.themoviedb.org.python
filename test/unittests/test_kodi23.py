@@ -170,6 +170,52 @@ class TestKodi23(unittest.TestCase):
         self.assertEqual(listed['items'], ['100/1/1'])
         self.assertIsNone(listed['listitems'][0].properties.get('video.complete'))
 
+    # ---------------------------------------------------------------- seasons=
+
+    def test_episode_list_of_the_seasons_asked_for(self):
+        listed = self.addon.call('getepisodelist', url=guide(tmdb='300'), seasons='20,22')
+        self.assertEqual(listed['items'], ['300/20/1', '300/22/1'])
+        self.assertEqual(self.asked['all_seasons'], 1)
+
+    def test_more_seasons_asked_for_later(self):
+        self.addon.call('getepisodelist', url=guide(tmdb='300'), seasons='1')
+        listed = self.addon.call('getepisodelist', url=guide(tmdb='300'), seasons='2')
+        # only the season asked for, though season 1 is kept: Kodi could match an episode of it
+        self.assertEqual(listed['items'], ['300/2/1'])
+        self.assertEqual(self.asked['all_seasons'], 2)
+        listed = self.addon.call('getepisodelist', url=guide(tmdb='300'))
+        self.assertEqual(len(listed['items']), 22)
+        asked = dict(self.asked)
+        listed = self.addon.call('getepisodelist', url=guide(tmdb='300'), seasons='1,99')
+        self.assertEqual(listed['items'], ['300/1/1'])
+        self.assertEqual(self.asked, asked)  # all kept
+
+    def test_trakt_ratings_of_seasons_asked_for_later(self):
+        addon = Addon(self, {'ratings': 'Trakt'})
+        for season in ('1', '2', '1'):
+            listed = addon.call('getepisodelist', url=guide(tmdb='300'), complete='1',
+                                seasons=season)
+            self.assertEqual(listed['listitems'][0].tag.calls['setRating']['trakt'][0], 7.25)
+        self.assertEqual(addon.sites.asked['trakt_season'], 2)  # each season's once
+        self.assertEqual(addon.sites.asked.get('trakt_episode', 0), 0)
+
+    def test_seasons_the_show_hasnt(self):
+        listed = self.addon.call('getepisodelist', url=guide(), seasons='7')
+        self.assertEqual(len(listed['items']), 17)  # all
+
+    def test_seasons_of_an_episode_group(self):
+        # its seasons aren't TMDB's: all of TMDB's are fetched
+        listed = self.addon.call('getepisodelist', url=guide(ep_group='g1'), seasons='2')
+        self.assertEqual(len(listed['items']), 12)  # the group's
+        self.assertEqual(self.addon.cache['100']['seasons_fetched'], {0, 1, 2})
+
+    def test_a_failed_season_keeps_nothing_of_it(self):
+        self.failing['all_seasons'] = 1
+        self.addon.call('getepisodelist', url=guide(tmdb='300'), seasons='3')
+        self.assertNotIn('episodes', self.addon.cache.get('300', {}))
+        self.assertEqual(self.addon.call('getepisodelist', url=guide(tmdb='300'),
+                                         seasons='3')['items'], ['300/3/1'])
+
 
 if __name__ == '__main__':
     unittest.main()

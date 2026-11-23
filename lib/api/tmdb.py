@@ -17,8 +17,9 @@ _HEADERS = dict(API_HEADERS, **{'Accept-Encoding': 'gzip'})
 _MAX_APPENDS = 20
 # soaps credit hundreds, aggregate fallback thousands
 _MAX_CAST = 200
-# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'used': time}}
-# 'episodes' is only ever a show's whole guide
+# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'seasons_fetched': set,
+#             'episodes_complete': bool, 'used': time}}
+# 'episodes' holds whole seasons: those in 'seasons_fetched'
 _cache = OrderedDict()
 # shows whose episodes an interpreter keeps, and seconds it keeps them unused. Kodi's reworked
 # video scanner looks up to 8 shows ahead of the one it adds (16 when so set), each listing its
@@ -65,6 +66,8 @@ def evict_episodes():
         entry = _cache[show_id]
         if i >= _EPISODES_KEPT or now - entry.get('used', 0) > _EPISODES_TTL:
             del entry['episodes']
+            entry.pop('seasons_fetched', None)
+            entry.pop('episodes_complete', None)
             log.debug('cache evict episodes of show {}'.format(show_id))
 
 
@@ -218,15 +221,16 @@ class TmdbApi:
                 if credits:
                     season_map[snum]['credits'] = credits
 
-    def prefetch_episodes(self, show_id):
-        """Pre-fetch the show's episodes.
+    def prefetch_episodes(self, show_id, seasons=None):
+        """Pre-fetch the show's episodes, of the seasons given or of all. Seasons the show hasn't
+        don't count: if it has none of them, all.
 
-        Only a whole guide is kept: a request that fails raises RequestFailed, nothing is kept,
-        and the next call asks again.
+        Only whole seasons are kept: a request that fails raises RequestFailed, nothing of it is
+        kept, and the next call asks again.
         """
         show_id = str(show_id)
         entry = _cache.get(show_id, {})
-        if 'episodes' in entry:
+        if entry.get('episodes_complete'):
             _touch(show_id)
             return
 
@@ -240,16 +244,25 @@ class TmdbApi:
             s.get('season_number', 0) for s in show.get('seasons', [])
             if not s.get('stub')
         ]
+        entry = _cache.setdefault(show_id, {})
+        fetched = entry.get('seasons_fetched', set())
+        wanted = [n for n in season_nums if seasons and n in seasons] or season_nums
+        missing = [n for n in wanted if n not in fetched]
 
-        all_seasons = self._fetch_all_seasons(show_id, season_nums)
-        episodes = self._fetch_episode_extras(
-            show_id, season_nums, all_seasons
-        )
+        if missing:
+            all_seasons = self._fetch_all_seasons(show_id, missing)
+            episodes = self._fetch_episode_extras(
+                show_id, missing, all_seasons
+            )
 
-        if not self._is_english:
-            self._episode_lang_fallback(show_id, episodes)
+            if not self._is_english:
+                self._episode_lang_fallback(show_id, episodes)
 
-        _cache.setdefault(show_id, {})['episodes'] = episodes
+            entry = _cache.setdefault(show_id, {})
+            entry.setdefault('episodes', {}).update(episodes)
+            # A season TMDB left out of an answer has nothing to fetch: a failure raised instead
+            entry['seasons_fetched'] = fetched | set(missing)
+        entry['episodes_complete'] = all(n in entry.get('seasons_fetched', ()) for n in season_nums)
         _touch(show_id)
         evict_episodes()
 
@@ -382,13 +395,19 @@ class TmdbApi:
             cached['images'] = data.get('images', {})
             cached['external_ids'] = data.get('external_ids', {})
             return cached
-        # Not kept: 'episodes' holds only a whole guide, which getepisodelist would otherwise
-        # take for the show's
+        # Not kept: 'episodes' holds only whole seasons, which getepisodelist would otherwise
+        # take this one's for
         return data
 
-    def get_cached_episodes(self, show_id):
-        """All cached episodes for iteration. Empty dict if not prefetched."""
-        return _cache.get(str(show_id), {}).get('episodes', {})
+    def get_cached_episodes(self, show_id, seasons=None):
+        """Cached episodes for iteration, of the seasons given or of all. Seasons the show hasn't
+        don't count: if it has none of them, all. Empty dict if not prefetched."""
+        entry = _cache.get(str(show_id), {})
+        episodes = entry.get('episodes', {})
+        wanted = set(seasons or ()) & entry.get('seasons_fetched', set())
+        if wanted:
+            return {key: ep for key, ep in episodes.items() if key[0] in wanted}
+        return episodes
 
     def get_episode_group(self, group_id):
         """Fetch alternate episode ordering."""
