@@ -17,7 +17,7 @@ from lib.api import trakt
 from lib.api.fanarttv import merge_fanarttv_artwork
 from lib.api.request import RequestFailed
 from lib.api.tmdb import TmdbApi, get_image_base, _cache
-from lib.api.imdb import get_rating as imdb_rating, check_update as imdb_check
+from lib.api.imdb import get_rating as imdb_rating
 from lib.api.trakt import get_show_rating as trakt_show, \
     get_episode_rating as trakt_episode, \
     prefetch_show_ratings as trakt_prefetch
@@ -89,9 +89,6 @@ def run_action(handle, action, params):
             return
 
         api = TmdbApi(settings)
-
-        if settings.get('default_rating') == 'IMDb' or settings.get('imdb_anyway'):
-            imdb_check()
 
         actions = {
             'find': _find,

@@ -1,4 +1,5 @@
-"""Stand-ins for Kodi's python modules, and for TMDB, Fanart.tv and Trakt answering the add-on's requests, to run the add-on's calls in a test."""
+"""Stand-ins for Kodi's python modules and script.module.imdbratings, and for TMDB, Fanart.tv and
+Trakt answering the add-on's requests, to run the add-on's calls in a test."""
 import importlib
 import json
 import os
@@ -60,7 +61,7 @@ class Actor:
 
 
 class Kodi:
-    """Kodi's modules, stood in for, and what the add-on did"""
+    """Kodi's modules and script.module.imdbratings, stood in for, and what the add-on did"""
 
     def __init__(self, settings, profile):
         self.logs, self.results, self.items = [], [], {}
@@ -68,6 +69,9 @@ class Kodi:
         self.settings = dict(DEFAULTS, **settings)
         self.profile = profile
         self.abort = False
+        # script.module.imdbratings' store: its ratings, whether a dataset is loaded, and what
+        # refresh() does
+        self.imdb = {'ratings': {}, 'loaded': True, 'refresh': None}
 
     def logged(self, text):
         return any(text in msg for _, msg in self.logs)
@@ -122,7 +126,13 @@ class Kodi:
         xbmcaddon.Addon = Addon
         xbmcvfs = types.ModuleType('xbmcvfs')
         xbmcvfs.translatePath = lambda path: path
-        return {m.__name__: m for m in (xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs)}
+        imdbratings = types.ModuleType('imdbratings')
+        imdbratings.get_rating = lambda imdb_id: (
+            kodi.imdb['ratings'].get(imdb_id) if kodi.imdb['loaded'] else None)
+        imdbratings.dataset_date = lambda: '2026-11-14' if kodi.imdb['loaded'] else None
+        imdbratings.refresh = lambda abort=None, on_download=None: (
+            kodi.imdb['refresh']() if kodi.imdb['refresh'] else False)
+        return {m.__name__: m for m in (xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs, imdbratings)}
 
 
 # ---------------------------------------------------------------- TMDB, Fanart.tv and Trakt
