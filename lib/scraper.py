@@ -16,7 +16,7 @@ from lib.artwork import set_artwork
 from lib.api import trakt
 from lib.api.fanarttv import merge_fanarttv_artwork
 from lib.api.request import RequestFailed
-from lib.api.tmdb import TmdbApi, get_image_base, _cache
+from lib.api.tmdb import TmdbApi, get_image_base, _cache, evict_episodes
 from lib.api.imdb import get_rating as imdb_rating
 from lib.api.trakt import get_show_rating as trakt_show, \
     get_episode_rating as trakt_episode, \
@@ -56,8 +56,6 @@ _FIND_SOURCES = ['imdb', 'tvdb']
 # actions Kodi reads as a listing, which end with endOfDirectory()
 _LISTING_ACTIONS = ('find', 'getepisodelist', 'NfoUrl')
 
-_active_show = ''
-
 _IDLE_TTL = 15 * 60
 _last_activity = 0
 
@@ -82,6 +80,7 @@ def run_action(handle, action, params):
 
     if action != 'getartwork':
         art_cache.check_and_clear()
+    evict_episodes()
 
     try:
         if action == 'NfoUrl':
@@ -113,15 +112,6 @@ def run_action(handle, action, params):
             xbmcplugin.endOfDirectory(handle)
         else:
             _fail(handle)
-
-
-def _evict_previous_show(cache, new_show_id):
-    """Evict the previous show when moving to a new one."""
-    global _active_show
-    if _active_show and _active_show != str(new_show_id):
-        if cache.pop(_active_show, None):
-            log.debug('cache evict show {}'.format(_active_show))
-    _active_show = str(new_show_id)
 
 
 def _find(handle, api, params, _settings):
@@ -205,8 +195,6 @@ def _getdetails(handle, api, params, settings):
     if not show_id:
         _fail(handle)
         return
-
-    _evict_previous_show(_cache, show_id)
 
     show = api.get_show_details(show_id)
     if not show:
@@ -314,11 +302,12 @@ def _getepisodedetails(handle, api, params, settings):
         _fail(handle)
         return
 
-    # Show's IMDB ID needed for Trakt episode ratings
-    show = _part("the show's IMDb id", api.get_show_details, show_id)
+    # Show's IMDB ID needed for Trakt episode ratings, and only for them
     show_imdb_id = ''
-    if show:
-        show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
+    if settings.get('default_rating') == 'Trakt' or settings.get('trakt_anyway'):
+        show = _part('the Trakt rating', api.get_show_details, show_id)
+        if show:
+            show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
 
     li = xbmcgui.ListItem(ep.get('name', ''), offscreen=True)
     _populate_episode(

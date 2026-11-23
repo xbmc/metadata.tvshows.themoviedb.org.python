@@ -181,7 +181,7 @@ class TestFailures(unittest.TestCase):
         episode = addon.call('getepisodedetails', url='100/1/3')
         self.assertTrue(episode['succeeded'])
         self.assertNotIn('trakt', episode['ratings'])
-        self.assertTrue(addon.kodi.logged("the show's IMDb id left out: TMDB GET /tv/100 failed"))
+        self.assertTrue(addon.kodi.logged('the Trakt rating left out: TMDB GET /tv/100 failed'))
 
 
 if __name__ == '__main__':

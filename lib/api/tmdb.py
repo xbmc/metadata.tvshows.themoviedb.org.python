@@ -2,6 +2,7 @@
 
 """TMDB API v3 client."""
 
+import time
 from collections import OrderedDict
 from urllib.parse import urlencode
 
@@ -16,9 +17,14 @@ _HEADERS = dict(API_HEADERS, **{'Accept-Encoding': 'gzip'})
 _MAX_APPENDS = 20
 # soaps credit hundreds, aggregate fallback thousands
 _MAX_CAST = 200
-# {show_id: {'show': dict, 'episodes': {(s,e): dict}}}
+# {show_id: {'show': dict, 'episodes': {(s,e): dict}, 'used': time}}
 # 'episodes' is only ever a show's whole guide
 _cache = OrderedDict()
+# shows whose episodes an interpreter keeps, and seconds it keeps them unused. Kodi's reworked
+# video scanner looks up to 8 shows ahead of the one it adds (16 when so set), each listing its
+# episodes before the scan asks for those of the show before it: more than that are kept.
+_EPISODES_KEPT = 20
+_EPISODES_TTL = 15 * 60
 _img_base = ''
 
 
@@ -37,6 +43,29 @@ def get_image_base():
                      or 'https://image.tmdb.org/t/p/')
         log.debug('TMDB image base: {}'.format(_img_base))
     return _img_base
+
+
+def _touch(show_id):
+    """Mark a cached show used now, and the most recently used."""
+    entry = _cache.get(show_id)
+    if entry is not None:
+        entry['used'] = time.time()
+        _cache.move_to_end(show_id)
+
+
+def evict_episodes():
+    """Drop the episodes of shows unused for a while, and of all but the most recently used.
+
+    Shows are evicted by age and count, not when another show's details are asked for: Kodi can
+    run a show's calls on any of several interpreters, each with its own cache.
+    """
+    now = time.time()
+    with_episodes = [show_id for show_id, entry in _cache.items() if 'episodes' in entry]
+    for i, show_id in enumerate(reversed(with_episodes)):
+        entry = _cache[show_id]
+        if i >= _EPISODES_KEPT or now - entry.get('used', 0) > _EPISODES_TTL:
+            del entry['episodes']
+            log.debug('cache evict episodes of show {}'.format(show_id))
 
 
 def _left_out(what, exc):
@@ -106,7 +135,7 @@ class TmdbApi:
         show_id = str(show_id)
         cached = _cache.get(show_id, {}).get('show')
         if cached:
-            _cache.move_to_end(show_id)
+            _touch(show_id)
             return cached
 
         # Evict oldest shows beyond limit
@@ -146,6 +175,7 @@ class TmdbApi:
             whole = False
         if whole:
             _cache.setdefault(show_id, {})['show'] = show
+            _touch(show_id)
         return show
 
     def _set_series_cast(self, show_id, show):
@@ -226,6 +256,7 @@ class TmdbApi:
         show_id = str(show_id)
         entry = _cache.get(show_id, {})
         if 'episodes' in entry:
+            _touch(show_id)
             return
 
         show = entry.get('show')
@@ -248,6 +279,8 @@ class TmdbApi:
             self._episode_lang_fallback(show_id, episodes)
 
         _cache.setdefault(show_id, {})['episodes'] = episodes
+        _touch(show_id)
+        evict_episodes()
 
     def _fetch_all_seasons(self, show_id, season_nums):
         """Phase 1: Fetch full season data via show endpoint appends."""
@@ -359,6 +392,7 @@ class TmdbApi:
         scan's replay that cost fewer requests than fetching the show's guide or the season.
         """
         show_id = str(show_id)
+        _touch(show_id)
         cached = _cache.get(show_id, {}).get('episodes', {}).get(
             (season_num, episode_num)
         )
