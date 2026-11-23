@@ -353,6 +353,7 @@ class Addon:
         test.addCleanup(sys.path.remove, ADDON)
         self.scraper = importlib.import_module('lib.scraper')
         self.request = importlib.import_module('lib.api.request')
+        test.addCleanup(self.request.SESSION.close)
         self.tmdb = importlib.import_module('lib.api.tmdb')
         self.sites = Sites(self.request.RequestFailed)
         if fake_sites:
