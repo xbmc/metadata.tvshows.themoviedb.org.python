@@ -5,6 +5,7 @@
 import json
 import re
 import time
+import unicodedata
 
 import xbmc
 import xbmcgui
@@ -14,8 +15,9 @@ from lib import art_cache, log
 from lib.artwork import set_artwork
 from lib.api import trakt
 from lib.api.fanarttv import merge_fanarttv_artwork
-from lib.api.tmdb import TmdbApi, get_image_base, _cache
-from lib.api.imdb import get_rating as imdb_rating, check_update as imdb_check
+from lib.api.request import RequestFailed
+from lib.api.tmdb import TmdbApi, get_image_base, _cache, evict_episodes
+from lib.api.imdb import get_rating as imdb_rating
 from lib.api.trakt import get_show_rating as trakt_show, \
     get_episode_rating as trakt_episode, \
     prefetch_show_ratings as trakt_prefetch
@@ -51,8 +53,8 @@ _RE_PAREN_SUFFIX = re.compile(r'\s+\(([^)]+)\)?$')
 
 _FIND_SOURCES = ['imdb', 'tvdb']
 
-
-_active_show = ''
+# actions Kodi reads as a listing, which end with endOfDirectory()
+_LISTING_ACTIONS = ('find', 'getepisodelist', 'NfoUrl')
 
 _IDLE_TTL = 15 * 60
 _last_activity = 0
@@ -78,39 +80,38 @@ def run_action(handle, action, params):
 
     if action != 'getartwork':
         art_cache.check_and_clear()
+    evict_episodes()
 
-    if action == 'NfoUrl':
-        _nfo_url(handle, params)
-        return
+    try:
+        if action == 'NfoUrl':
+            _nfo_url(handle, params)
+            return
 
-    api = TmdbApi(settings)
+        api = TmdbApi(settings)
 
-    if settings.get('default_rating') == 'IMDb' or settings.get('imdb_anyway'):
-        imdb_check()
-
-    actions = {
-        'find': _find,
-        'getdetails': _getdetails,
-        'getepisodelist': _getepisodelist,
-        'getepisodedetails': _getepisodedetails,
-        'getartwork': _getartwork,
-    }
-    func = actions.get(action)
-    if func:
-        log.debug('action={} cache={}'.format(action, len(_cache)))
-        func(handle, api, params, settings)
-    else:
-        log.info('unknown action: {}'.format(action))
-        xbmcplugin.endOfDirectory(handle)
-
-
-def _evict_previous_show(cache, new_show_id):
-    """Evict the previous show when moving to a new one."""
-    global _active_show
-    if _active_show and _active_show != str(new_show_id):
-        if cache.pop(_active_show, None):
-            log.debug('cache evict show {}'.format(_active_show))
-    _active_show = str(new_show_id)
+        actions = {
+            'find': _find,
+            'getdetails': _getdetails,
+            'getepisodelist': _getepisodelist,
+            'getepisodedetails': _getepisodedetails,
+            'getartwork': _getartwork,
+        }
+        func = actions.get(action)
+        if func:
+            log.debug('action={} cache={}'.format(action, len(_cache)))
+            func(handle, api, params, settings)
+        else:
+            log.info('unknown action: {}'.format(action))
+            xbmcplugin.endOfDirectory(handle)
+    except RequestFailed as exc:
+        # The show, its episode list or an episode couldn't be had, after the request's retry:
+        # the call fails, as when the request answered nothing (a part that fails is left out
+        # instead, see _part())
+        log.error('{} failed: {}'.format(action, exc))
+        if action in _LISTING_ACTIONS:
+            xbmcplugin.endOfDirectory(handle)
+        else:
+            _fail(handle)
 
 
 def _find(handle, api, params, _settings):
@@ -195,10 +196,9 @@ def _getdetails(handle, api, params, settings):
         _fail(handle)
         return
 
-    _evict_previous_show(_cache, show_id)
-
     show = api.get_show_details(show_id)
     if not show:
+        # TMDB has no show with this id. Kodi can't yet be told "not found" from a failure.
         _fail(handle)
         return
 
@@ -210,8 +210,15 @@ def _getdetails(handle, api, params, settings):
             log.debug('episode group: {} parts'.format(len(ep_group_data)))
             _add_season_stubs(show, ep_group_data)
 
-    merge_fanarttv_artwork(show, settings)
-    art_cache.store(show_id, show)
+    # The art is kept on disk, where getartwork on any interpreter takes it as it is, only when
+    # nothing was left out: fanart.tv's art merged, and the show cached, as only a whole one is
+    try:
+        merge_fanarttv_artwork(show, settings)
+    except RequestFailed as exc:
+        log.info("fanart.tv's art left out: {}".format(exc))
+    else:
+        if _cache.get(str(show_id), {}).get('show') is show:
+            art_cache.store(show_id, show)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     _populate_show(li, show, settings, ep_grouping, named_seasons,
@@ -236,7 +243,11 @@ def _getepisodelist(handle, api, params, settings):
     # Prefetch Trakt ratings per-season instead of per-episode
     default = settings.get('default_rating', 'TMDb')
     if default == 'Trakt' or settings.get('trakt_anyway'):
-        show = api.get_show_details(show_id)
+        try:
+            show = api.get_show_details(show_id)
+        except RequestFailed:
+            # only the prefetch is lost: each episode's details asks Trakt for its own rating
+            show = None
         show_imdb = ''
         if show:
             show_imdb = show.get('external_ids', {}).get('imdb_id', '')
@@ -291,11 +302,12 @@ def _getepisodedetails(handle, api, params, settings):
         _fail(handle)
         return
 
-    # Show's IMDB ID needed for Trakt episode ratings
-    show = api.get_show_details(show_id)
+    # Show's IMDB ID needed for Trakt episode ratings, and only for them
     show_imdb_id = ''
-    if show:
-        show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
+    if settings.get('default_rating') == 'Trakt' or settings.get('trakt_anyway'):
+        show = _part('the Trakt rating', api.get_show_details, show_id)
+        if show:
+            show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
 
     li = xbmcgui.ListItem(ep.get('name', ''), offscreen=True)
     _populate_episode(
@@ -315,6 +327,8 @@ def _getartwork(handle, api, params, settings):
     show = _cache.get(str(show_id), {}).get('show')
     if show:
         log.debug('getartwork {}: memory hit'.format(show_id))
+        # merged once: here again only if its request failed on an earlier call
+        _part("fanart.tv's art", merge_fanarttv_artwork, show, settings)
     else:
         show = art_cache.load(show_id)
         if show:
@@ -325,7 +339,7 @@ def _getartwork(handle, api, params, settings):
             if not show:
                 _fail(handle)
                 return
-            merge_fanarttv_artwork(show, settings)
+            _part("fanart.tv's art", merge_fanarttv_artwork, show, settings)
 
     li = xbmcgui.ListItem(show.get('name', ''), offscreen=True)
     set_artwork(li, show, settings)
@@ -368,22 +382,29 @@ def _nfo_url(handle, params):
 
 
 _RE_PUNCT = re.compile(r'[:\-,.!?…\u2013\u2014\']+')
+_RE_MARKS = re.compile(r'[^\w\s]+')
 
 
 def _normalize(text):
     return ' '.join(_RE_PUNCT.sub(' ', text).split())
 
 
+def _fold(text):
+    """Fold to lowercase without accents or punctuation, fullwidth forms plain, × and & as words."""
+    text = unicodedata.normalize('NFKD', text)
+    # Latin, Greek and Cyrillic accents only; kana voicing marks and Hangul must survive
+    text = ''.join(c for c in text if not 0x300 <= ord(c) <= 0x36f)
+    text = unicodedata.normalize('NFC', text).casefold()
+    text = text.replace('\N{MULTIPLICATION SIGN}', ' x ').replace('&', ' and ')
+    return ' '.join(_RE_MARKS.sub('', text).split())
+
+
 def _title_relevance(query, title):
-    """0.0-1.0: exact=1.0, prefix=0.95, contained=0.8, all words=0.6."""
+    """0.0-1.0 match of the names lowercased, normalized or folded, looser forms scoring less."""
     q = query.lower()
     t = title.lower()
-    if not q or not t:
-        return 0.0
-    score = _title_match(q, t)
-    if score >= 0.6:
-        return score
-    return _title_match(_normalize(q), _normalize(t))
+    forms = ((q, t, 1.0), (_normalize(q), _normalize(t), 0.99), (_fold(q), _fold(t), 0.98))
+    return max((weight * _title_match(a, b) for a, b, weight in forms if a and b), default=0.0)
 
 
 def _title_match(q, t):
@@ -572,6 +593,9 @@ def _apply_episode_grouping(api, group_id, episodes):
     """Remap episode numbers per episode group ordering."""
     group = api.get_episode_group(group_id)
     if not group:
+        # 404: TMDB has no such group now. A failure raises RequestFailed instead, rather than
+        # number the episodes in aired order without a word.
+        log.info('episode group {} not found, episodes in aired order'.format(group_id))
         return episodes
 
     remapped = {}
@@ -599,13 +623,13 @@ def _apply_episode_grouping(api, group_id, episodes):
 
 
 def _add_season_stubs(show, ep_group_data):
-    """Add empty season entries for episode group parts missing from TMDB."""
+    """Add stub season entries for episode group parts missing from TMDB."""
     existing = {s.get('season_number', 0) for s in show.get('seasons', [])}
     added = 0
     for grp in ep_group_data:
         snum = grp.get('order', 0)
         if snum not in existing:
-            show.setdefault('seasons', []).append({'season_number': snum})
+            show.setdefault('seasons', []).append({'season_number': snum, 'stub': True})
             existing.add(snum)
             added += 1
     if added:
@@ -637,6 +661,16 @@ def _fail(handle):
     xbmcplugin.setResolvedUrl(
         handle, False, xbmcgui.ListItem(offscreen=True)
     )
+
+
+def _part(what, fetch, *args):
+    """A part of a show's or an episode's details, or None when its request failed after the
+    retry: the part is left out, logged, and the call goes on without it."""
+    try:
+        return fetch(*args)
+    except RequestFailed as exc:
+        log.info('{} left out: {}'.format(what, exc))
+        return None
 
 
 def _populate_show(li, show, settings, ep_grouping='', named_seasons=None,
@@ -711,12 +745,12 @@ def _populate_show(li, show, settings, ep_grouping='', named_seasons=None,
         )
 
     if imdb_id and (default == 'Trakt' or settings.get('trakt_anyway')):
-        trakt = trakt_show(imdb_id)
+        trakt = _part('the Trakt rating', trakt_show, imdb_id)
         if trakt:
             vtag.setRating(trakt[0], trakt[1], 'trakt', default == 'Trakt')
 
     if imdb_id and (default == 'IMDb' or settings.get('imdb_anyway')):
-        imdb = imdb_rating(imdb_id)
+        imdb = _part('the IMDb rating', imdb_rating, imdb_id)
         if imdb:
             vtag.setRating(imdb[0], imdb[1], 'imdb', default == 'IMDb')
 
@@ -833,14 +867,14 @@ def _populate_episode(li, ep, season_num, episode_num,
 
     # Trakt uses show IMDB ID, not episode IMDB ID
     if show_imdb_id and (default == 'Trakt' or settings.get('trakt_anyway')):
-        trakt = trakt_episode(show_imdb_id, season_num, episode_num)
+        trakt = _part('the Trakt rating', trakt_episode, show_imdb_id, season_num, episode_num)
         if trakt:
             vtag.setRating(
                 trakt[0], trakt[1], 'trakt', default == 'Trakt',
             )
 
     if ep_imdb_id and (default == 'IMDb' or settings.get('imdb_anyway')):
-        imdb = imdb_rating(ep_imdb_id)
+        imdb = _part('the IMDb rating', imdb_rating, ep_imdb_id)
         if imdb:
             vtag.setRating(imdb[0], imdb[1], 'imdb', default == 'IMDb')
 

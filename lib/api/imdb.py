@@ -1,219 +1,62 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""IMDb ratings via official dataset (title.ratings.tsv.gz).
+"""IMDb ratings from script.module.imdbratings.
 
-Downloads the ~7MB gzipped TSV from IMDb's dataset program, parses it
-into a SQLite database for instant indexed lookups. Uses HTTP
-Last-Modified header to avoid redundant downloads.
+The module keeps one store of IMDb's ratings dataset (title.ratings.tsv.gz), shared by every
+add-on and interpreter that uses it, and updated by one of them at a time. It checks IMDb for a
+newer dataset itself, makes the first load, and waits for another add-on's.
 """
 
-import gzip
-import io
 import os
-import sqlite3
-import time
-from urllib.request import Request, urlopen
 
+import imdbratings
 import xbmcvfs
 
 from lib import log
-from lib.config import ADDON, API_HEADERS
+from lib.api.request import RequestFailed
+from lib.config import ADDON
 
-_DATASET_URL = 'https://datasets.imdbws.com/title.ratings.tsv.gz'
-_BATCH_SIZE = 50000
-
-_CHECK_INTERVAL = 6 * 3600
-
-_db_path = ''
-_conn = None
-_last_check = 0.0
+_old_store_checked = False
 
 
 def get_rating(imdb_id):
-    """Lookup IMDb rating. Returns (rating, votes) or None."""
+    """Lookup IMDb rating. Returns (rating, votes), or None when the dataset has none for the id.
+
+    Raises RequestFailed when there is no dataset to look in: the store can't be read, or no
+    dataset has been loaded yet. imdbratings.get_rating() returns None for that too;
+    dataset_date() tells the two apart, as it is None only before a first load or when the store
+    can't be read.
+    """
     if not imdb_id:
         return None
-    _ensure_db()
-    if not _conn:
-        return None
-    try:
-        row = _conn.execute(
-            'SELECT rating, votes FROM ratings WHERE tconst = ?',
-            (imdb_id,)
-        ).fetchone()
-        if row:
-            return float(row[0]), int(row[1])
-    except sqlite3.Error:
-        pass
-    return None
+    _remove_old_store()
+    # dataset_date() is read before the rating: a first load that ends between the two reads
+    # would otherwise pass for a show or episode without a rating
+    loaded = imdbratings.dataset_date() is not None
+    rating = imdbratings.get_rating(imdb_id)
+    if rating is not None or loaded:
+        return rating
+    # No dataset before the read: one loaded meanwhile, by this call or another add-on, is read
+    # again; still none, there is nothing to look in
+    if imdbratings.dataset_date() is not None:
+        return imdbratings.get_rating(imdb_id)
+    raise RequestFailed('IMDb ratings: no dataset loaded')
 
 
-def check_update():
-    """HEAD-check remote dataset and download if newer. Skips if checked recently."""
-    global _conn, _last_check
-    now = time.time()
-    if (now - _last_check) < _CHECK_INTERVAL:
+def _remove_old_store():
+    """Remove the add-on's own copy of the dataset, which the module's store replaces."""
+    global _old_store_checked
+    if _old_store_checked:
         return
-    _last_check = now
-
-    _init_path()
-
-    remote_mod = _head_last_modified()
-    if not remote_mod:
-        return
-
-    local_mod = _get_local_last_modified()
-    if local_mod == remote_mod:
-        log.debug('IMDb dataset: up to date ({})'.format(local_mod))
-        return
-
-    log.info('IMDb dataset: update available (local={}, remote={})'.format(
-        local_mod or 'none', remote_mod
-    ))
-
-    if _conn:
-        _conn.close()
-        _conn = None
-
-    _download_and_import(remote_mod)
-
-
-def _ensure_db():
-    """Open DB connection if not already open."""
-    global _conn
-    _init_path()
-
-    if _conn:
-        return
-
-    if os.path.exists(_db_path):
-        try:
-            _conn = sqlite3.connect(_db_path)
-        except sqlite3.Error as exc:
-            log.error('IMDb DB connect failed: {}'.format(exc))
-
-
-def _init_path():
-    """Set _db_path once."""
-    global _db_path
-    if _db_path:
-        return
-    addon_data = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
-    if not os.path.exists(addon_data):
-        os.makedirs(addon_data)
-    _db_path = os.path.join(addon_data, 'imdb_ratings.db')
-
-
-def _head_last_modified():
-    """HEAD request to get Last-Modified header. Returns string or None."""
-    try:
-        req = Request(_DATASET_URL, method='HEAD', headers={
-            'User-Agent': API_HEADERS['User-Agent'],
-        })
-        with urlopen(req, timeout=10) as resp:
-            return resp.getheader('Last-Modified')
-    except Exception as exc:
-        log.error('IMDb HEAD check failed: {}'.format(exc))
-        return None
-
-
-def _get_local_last_modified():
-    """Read stored Last-Modified from DB meta table."""
-    if not _db_path or not os.path.exists(_db_path):
-        return None
-    if _conn:
-        try:
-            row = _conn.execute(
-                "SELECT value FROM meta WHERE key = 'last_modified'"
-            ).fetchone()
-            return row[0] if row else None
-        except sqlite3.Error:
-            return None
-    conn = None
-    try:
-        conn = sqlite3.connect(_db_path)
-        row = conn.execute(
-            "SELECT value FROM meta WHERE key = 'last_modified'"
-        ).fetchone()
-        return row[0] if row else None
-    except sqlite3.Error:
-        return None
-    finally:
-        if conn:
-            conn.close()
-
-
-def _download_and_import(last_modified):
-    """Download dataset and rebuild SQLite DB. Writes to temp file first."""
-    log.info('IMDb dataset: downloading title.ratings.tsv.gz')
-    data = _download()
-    if not data:
-        return
-
-    tmp_path = _db_path + '.tmp'
-    log.info('IMDb dataset: parsing into SQLite')
-    conn = None
-    try:
-        conn = sqlite3.connect(tmp_path)
-        conn.execute(
-            'CREATE TABLE ratings '
-            '(tconst TEXT PRIMARY KEY, rating REAL, votes INTEGER)'
-        )
-        conn.execute(
-            'CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)'
-        )
-
-        batch = []
-        with gzip.GzipFile(fileobj=io.BytesIO(data)) as gz:
-            for raw_line in gz:
-                line = raw_line.decode('utf-8').rstrip('\n')
-                if line.startswith('tconst'):
-                    continue
-                parts = line.split('\t')
-                if len(parts) < 3:
-                    continue
-                try:
-                    batch.append((parts[0], float(parts[1]), int(parts[2])))
-                except (ValueError, IndexError):
-                    continue
-                if len(batch) >= _BATCH_SIZE:
-                    conn.executemany(
-                        'INSERT INTO ratings VALUES (?, ?, ?)', batch
-                    )
-                    batch.clear()
-        if batch:
-            conn.executemany('INSERT INTO ratings VALUES (?, ?, ?)', batch)
-
-        conn.execute(
-            "INSERT INTO meta VALUES ('last_modified', ?)",
-            (last_modified,)
-        )
-        conn.commit()
-        conn.close()
-        conn = None
-
-        os.replace(tmp_path, _db_path)
-        log.info('IMDb dataset: done')
-    except (sqlite3.Error, ValueError, OSError) as exc:
-        log.error('IMDb dataset import failed: {}'.format(exc))
-        if conn:
-            conn.close()
-        if os.path.exists(tmp_path):
+    _old_store_checked = True
+    profile = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
+    for name in ('imdb_ratings.db', 'imdb_ratings.db.tmp'):
+        path = os.path.join(profile, name)
+        if os.path.exists(path):
             try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
-
-
-def _download():
-    """Download the gzipped TSV. Returns bytes or None."""
-    try:
-        req = Request(_DATASET_URL, headers={
-            'User-Agent': API_HEADERS['User-Agent'],
-            'Accept-Encoding': 'identity',
-        })
-        with urlopen(req, timeout=30) as resp:
-            return resp.read()
-    except Exception as exc:
-        log.error('IMDb dataset download failed: {}'.format(exc))
-        return None
+                os.remove(path)
+                log.info('removed the old IMDb ratings cache {}'.format(name))
+            except OSError as exc:
+                # still open somewhere: try again on the next call
+                _old_store_checked = False
+                log.debug('old IMDb ratings cache {} not removed: {}'.format(name, exc))

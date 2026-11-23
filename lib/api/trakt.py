@@ -2,12 +2,11 @@
 
 """Trakt API client for show and episode ratings."""
 
-import json
 from collections import OrderedDict
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 from lib import log
+from lib.api.request import RequestFailed, get_json
 from lib.config import API_HEADERS, CACHE_LIMIT, TRAKT_CLIENTID
 
 _BASE = 'https://api.trakt.tv'
@@ -37,8 +36,12 @@ def get_show_rating(imdb_id):
 
 def prefetch_season_ratings(imdb_id, season):
     """Fetch all episode ratings for a season in one call, cache results."""
-    data = _get('/shows/{}/seasons/{}'.format(imdb_id, season),
-                {'extended': 'full'})
+    try:
+        data = _get('/shows/{}/seasons/{}'.format(imdb_id, season),
+                    {'extended': 'full'})
+    except RequestFailed:
+        # only the prefetch is lost: each episode's details asks for its own rating
+        return
     if not data or not isinstance(data, list):
         return
     for ep in data:
@@ -94,18 +97,12 @@ def get_episode_rating(imdb_id, season, episode):
 
 
 def _get(path, params=None):
+    """GET a Trakt endpoint: parsed JSON, or None for a 404.
+
+    Raises RequestFailed when the request fails, after one retry.
+    """
     url = '{}{}'.format(_BASE, path)
     if params:
         url = '{}?{}'.format(url, urlencode(params))
     log.debug('Trakt GET {}'.format(path))
-    try:
-        req = Request(url, headers=_HEADERS)
-        with urlopen(req, timeout=10) as resp:
-            return json.loads(resp.read().decode('utf-8'))
-    except Exception as exc:
-        from urllib.error import HTTPError
-        if isinstance(exc, HTTPError) and exc.code == 404:
-            log.info('Trakt GET {}: not found'.format(path))
-        else:
-            log.error('Trakt GET {} failed: {}'.format(path, exc))
-        return None
+    return get_json(url, _HEADERS, 'Trakt GET {}'.format(path))
