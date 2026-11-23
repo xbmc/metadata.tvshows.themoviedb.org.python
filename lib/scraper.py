@@ -250,6 +250,17 @@ def _getepisodelist(handle, api, params, settings):
             season_nums = set(s for s, _ in episodes.keys())
             trakt_prefetch(show_imdb, season_nums)
 
+    # A Kodi that takes an episode's details from its list item asks for them (complete=1); older
+    # versions don't, and call getepisodedetails for each episode instead. An episode group's list
+    # gives none, as its numbers aren't the episodes' own.
+    complete = not ep_grouping and params.get('complete') == '1'
+    show_imdb_id = ''
+    if complete and (default == 'Trakt' or settings.get('trakt_anyway')):
+        # the show's IMDb id, for the Trakt ratings
+        show = api.get_show_details(show_id)
+        if show:
+            show_imdb_id = show.get('external_ids', {}).get('imdb_id', '')
+
     if ep_grouping:
         before = len(episodes)
         episodes = _apply_episode_grouping(api, ep_grouping, episodes)
@@ -271,6 +282,17 @@ def _getepisodelist(handle, api, params, settings):
         org_s = ep.get('org_seasonnum', snum)
         org_e = ep.get('org_epnum', enum)
         ep_url = '{}/{}/{}'.format(show_id, org_s, org_e)
+        # The details getepisodedetails would give. When they can't be had the item is listed
+        # unmarked, of which Kodi takes only the fields above: it asks getepisodedetails for the
+        # episode if it matches a file, and only that episode can fail.
+        if complete:
+            try:
+                full = api.get_episode(show_id, org_s, org_e)
+                if full:
+                    _populate_episode(li, full, org_s, org_e, settings, show_imdb_id)
+                    li.setProperty('video.complete', 'true')
+            except RequestFailed as exc:
+                log.info('episode {} listed without its details: {}'.format(ep_url, exc))
         xbmcplugin.addDirectoryItem(
             handle=handle, url=ep_url,
             listitem=li, isFolder=False,

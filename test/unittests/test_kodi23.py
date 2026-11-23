@@ -122,6 +122,54 @@ class TestKodi23(unittest.TestCase):
         self.assertEqual(self.asked['find'], 1)
         self.assertEqual(self.asked.get('show', 0), 0)
 
+    # ---------------------------------------------------------------- complete=1
+
+    def test_episode_list_with_the_details(self):
+        listed = self.addon.call('getepisodelist', url=guide(), complete='1')
+        self.assertEqual(len(listed['items']), 17)
+        item = listed['listitems'][4]  # 1x3
+        self.assertEqual(item.properties.get('video.complete'), 'true')
+        self.assertEqual(item.tag.calls.get('setPlot'), 'Overview 1.3')
+        self.assertEqual(self.asked.get('episode', 0), 0)  # all from the guide
+
+    def test_episode_list_without_the_details(self):
+        listed = self.addon.call('getepisodelist', url=guide())
+        self.assertFalse(any(i.properties.get('video.complete') for i in listed['listitems']))
+
+    def test_episode_group_list_without_the_details(self):
+        # its numbers aren't the episodes' own: Kodi asks for each one's details instead
+        listed = self.addon.call('getepisodelist', url=guide(ep_group='g1'), complete='1')
+        self.assertFalse(any(i.properties.get('video.complete') for i in listed['listitems']))
+
+    def test_episode_list_with_the_details_and_trakt_ratings(self):
+        addon = Addon(self, {'ratings': 'Trakt'})
+        listed = addon.call('getepisodelist', url=guide(), complete='1')
+        item = listed['listitems'][4]
+        self.assertEqual(item.tag.calls['setRating']['trakt'][0], 7.25)
+
+    def test_an_episode_whose_details_fail_is_listed_without_them(self):
+        self.failing.update(episode_extras=1, episode=1)
+        listed = self.addon.call('getepisodelist', url=guide(), complete='1')
+        self.assertTrue(listed['succeeded'])
+        self.assertEqual(len(listed['items']), 17)
+        self.assertIsNone(listed['listitems'][0].properties.get('video.complete'))
+        self.assertEqual(listed['listitems'][1].properties.get('video.complete'), 'true')
+        # what Kodi asks if the episode matches a file
+        self.assertTrue(self.addon.call('getepisodedetails', url=listed['items'][0])['succeeded'])
+
+    def test_an_episode_whose_rating_fails_is_listed_without_its_details(self):
+        addon = Addon(self, {'ratings': 'Trakt'})
+        addon.sites.failing.update(trakt_season=3, trakt_episode=1)
+        listed = addon.call('getepisodelist', url=guide(), complete='1')
+        self.assertTrue(listed['succeeded'])
+        marked = [i.properties.get('video.complete') for i in listed['listitems']]
+        self.assertEqual(marked, [None] + ['true'] * 16)
+
+    def test_episode_group_numbered_as_aired_without_the_details(self):
+        listed = self.addon.call('getepisodelist', url=guide(ep_group='same'), complete='1')
+        self.assertEqual(listed['items'], ['100/1/1'])
+        self.assertIsNone(listed['listitems'][0].properties.get('video.complete'))
+
 
 if __name__ == '__main__':
     unittest.main()

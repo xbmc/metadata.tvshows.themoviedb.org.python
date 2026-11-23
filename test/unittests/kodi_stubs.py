@@ -256,6 +256,10 @@ def _answer(path, q):
             if p.endswith('/g1'):
                 return {'groups': [{'order': 1, 'episodes': [
                     {'season_number': 1, 'episode_number': e, 'order': 12 - e} for e in range(1, 13)]}]}
+            if p.endswith('/same'):
+                # numbered as aired: only its being a group's tells it apart
+                return {'groups': [{'order': 1, 'episodes': [
+                    {'season_number': 1, 'episode_number': 1, 'order': 0}]}]}
             return None
         m = re.match(r'/tv/(\d+)(/.*)?$', p)
         return _tv(int(m.group(1)), m.group(2) or '', q) if m else None
