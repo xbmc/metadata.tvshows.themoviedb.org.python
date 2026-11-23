@@ -53,7 +53,7 @@ _RE_PAREN_SUFFIX = re.compile(r'\s+\(([^)]+)\)?$')
 
 _FIND_SOURCES = ['imdb', 'tvdb']
 
-# actions Kodi reads as a listing, which end with endOfDirectory()
+# actions Kodi reads as a listing, which tell a failure with endOfDirectory(succeeded=False)
 _LISTING_ACTIONS = ('find', 'getepisodelist', 'NfoUrl')
 
 _IDLE_TTL = 15 * 60
@@ -105,11 +105,11 @@ def run_action(handle, action, params):
             xbmcplugin.endOfDirectory(handle)
     except RequestFailed as exc:
         # The show, its episode list or an episode couldn't be had, after the request's retry:
-        # the call fails, as when the request answered nothing (a part that fails is left out
-        # instead, see _part())
+        # the call fails, and Kodi 23 tells a failed search from one that found nothing (a part
+        # that fails is left out instead, see _part())
         log.error('{} failed: {}'.format(action, exc))
         if action in _LISTING_ACTIONS:
-            xbmcplugin.endOfDirectory(handle)
+            xbmcplugin.endOfDirectory(handle, succeeded=False)
         else:
             _fail(handle)
 
