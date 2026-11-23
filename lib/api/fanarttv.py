@@ -2,20 +2,15 @@
 
 """Fanart.tv client: fetch and merge banners, clearart, characterart, etc."""
 
-import json
-from urllib.request import Request, urlopen
 from urllib.parse import quote, urlencode
 
 from lib import log
+from lib.api.request import get_json
 from lib.config import API_HEADERS, FANARTTV_BASE, FANARTTV_KEY, FANARTTV_MAPPING
 
 
 def merge_fanarttv_artwork(show_info, settings):
-    """Merge Fanart.tv images into show_info's images dicts.
-
-    Entries have type='fanarttv' so artwork.py uses the raw URL
-    instead of prepending TMDB image paths.
-    """
+    """Merge Fanart.tv images into the show's and its seasons' image lists, once per show."""
     if not settings.get('enable_fanarttv'):
         return
     if show_info.get('_fanarttv_merged'):
@@ -27,6 +22,9 @@ def merge_fanarttv_artwork(show_info, settings):
 
     data = _fetch(tvdb_id, settings.get('fanarttv_clientkey', ''))
     if not data:
+        # 404: Fanart.tv has no art for the show, an answer that needn't be asked for again. A
+        # failure raises RequestFailed instead, and the call fails.
+        show_info['_fanarttv_merged'] = True
         return
 
     show_info['_fanarttv_merged'] = True
@@ -95,19 +93,13 @@ def _safe_url(url):
 
 
 def _fetch(tvdb_id, client_key):
+    """Fetch the art listing for a show, or None if it has none (a 404).
+
+    Raises RequestFailed when the request fails, after one retry.
+    """
     params = {'api_key': FANARTTV_KEY}
     if client_key:
         params['client_key'] = client_key
     url = '{}/tv/{}?{}'.format(FANARTTV_BASE, tvdb_id, urlencode(params))
     log.debug('Fanart.tv GET /tv/{}'.format(tvdb_id))
-    try:
-        req = Request(url, headers=API_HEADERS)
-        with urlopen(req, timeout=10) as resp:
-            return json.loads(resp.read().decode('utf-8'))
-    except Exception as exc:
-        from urllib.error import HTTPError
-        if isinstance(exc, HTTPError) and exc.code == 404:
-            log.info('Fanart.tv GET /tv/{}: not found'.format(tvdb_id))
-        else:
-            log.error('Fanart.tv GET /tv/{} failed: {}'.format(tvdb_id, exc))
-        return None
+    return get_json(url, API_HEADERS, 'Fanart.tv GET /tv/{}'.format(tvdb_id))
