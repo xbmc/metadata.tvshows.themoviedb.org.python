@@ -312,8 +312,11 @@ def _getepisodedetails(handle, api, params, settings):
 
 
 def _getartwork(handle, api, params, settings):
+    # Kodi passes the show's default id, which an nfo can make another site's (a TVDB id). When it
+    # passes the unique ids too, the default is among them: only a TMDB id there, or one found
+    # from another site's, is TMDB's.
     show_id = params.get('id')
-    if not show_id:
+    if params.get('uniqueIDs') or not show_id:
         show_id, _, _ = _resolve_show_id(api, params)
     if not show_id:
         _fail(handle)

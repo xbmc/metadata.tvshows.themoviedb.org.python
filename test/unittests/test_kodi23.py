@@ -98,6 +98,30 @@ class TestKodi23(unittest.TestCase):
         addon = Addon(self, {'ratings': 'Trakt'})
         self.assertTrue(addon.call('getdetails', url='101')['succeeded'])  # not on Trakt
 
+    # ---------------------------------------------------------------- getartwork's unique ids
+
+    def test_artwork_by_the_tmdb_id_among_the_unique_ids(self):
+        # An nfo made the show's default id TVDB's
+        art = self.addon.call('getartwork', id='500',
+                              uniqueIDs=json.dumps({'tmdb': '100', 'tvdb': '500'}))
+        self.assertTrue(art['succeeded'])
+        self.assertEqual(self.asked.get('find', 0), 0)
+
+    def test_artwork_by_another_sites_unique_id(self):
+        art = self.addon.call('getartwork', id='500', uniqueIDs=json.dumps({'imdb': 'tt0000100'}))
+        self.assertTrue(art['succeeded'])
+        self.assertEqual(self.asked['find'], 1)
+
+    def test_artwork_by_the_id_alone(self):
+        self.assertTrue(self.addon.call('getartwork', id='100')['succeeded'])
+
+    def test_artwork_not_by_another_sites_id_tmdb_hasnt(self):
+        # TVDB's id 100 isn't TMDB's show 100
+        art = self.addon.call('getartwork', id='100', uniqueIDs=json.dumps({'tvdb': '100'}))
+        self.assertFalse(art['succeeded'])
+        self.assertEqual(self.asked['find'], 1)
+        self.assertEqual(self.asked.get('show', 0), 0)
+
 
 if __name__ == '__main__':
     unittest.main()
