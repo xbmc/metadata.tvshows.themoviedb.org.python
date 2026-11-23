@@ -18,8 +18,16 @@ _MAX_RETRY_AFTER = 10
 _GZIP_MAGIC = b'\x1f\x8b'
 
 
+class RequestFailed(Exception):
+    """A request that still failed after its retry. Unlike a 404, it doesn't tell that what was
+    asked for isn't there."""
+
+
 def get_json(url, headers, label):
-    """GET parsed JSON, or None for a 404 or failure; retries once, except a 4xx other than 429."""
+    """GET parsed JSON, or None for a 404; retries once, except a 4xx other than 429.
+
+    Raises RequestFailed when the request still fails.
+    """
     for attempt in (1, 2):
         try:
             with urlopen(Request(url, headers=headers), timeout=_TIMEOUT) as resp:
@@ -43,7 +51,7 @@ def get_json(url, headers, label):
             if not xbmc.Monitor().waitForAbort(pause):
                 continue
         log.error('{} failed: {}'.format(label, reason))
-        return None
+        raise RequestFailed('{} failed: {}'.format(label, reason))
 
 
 def _decode(raw, encoding):

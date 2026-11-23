@@ -267,7 +267,7 @@ def _answer(path, q):
 
 
 def _kind(path, q):
-    """The kind of request, for Sites.asked"""
+    """The kind of request, for Sites.asked and Sites.failing"""
     if path.startswith('/3/'):
         p = path[2:]
         app = q.get('append_to_response', '')
@@ -302,10 +302,12 @@ def _kind(path, q):
 
 
 class Sites:
-    """TMDB, Fanart.tv and Trakt, answering get_json(): asked counts the requests of each kind"""
+    """TMDB, Fanart.tv and Trakt, answering get_json(): asked counts the requests of each kind,
+    failing[kind] = n makes the next n of them fail (raise RequestFailed, after their retry)"""
 
-    def __init__(self):
-        self.asked = {}
+    def __init__(self, request_failed):
+        self.asked, self.failing = {}, {}
+        self.request_failed = request_failed
 
     def get_json(self, url, headers, label):
         parts = urlsplit(url)
@@ -314,6 +316,9 @@ class Sites:
         q = dict(parse_qsl(parts.query))
         kind = _kind(path, q)
         self.asked[kind] = self.asked.get(kind, 0) + 1
+        if self.failing.get(kind):
+            self.failing[kind] -= 1
+            raise self.request_failed('{} failed: a stand-in failure'.format(label))
         data = _answer(path, q)
         return None if data is None else json.loads(json.dumps(data))
 
@@ -339,7 +344,7 @@ class Addon:
         self.scraper = importlib.import_module('lib.scraper')
         self.request = importlib.import_module('lib.api.request')
         self.tmdb = importlib.import_module('lib.api.tmdb')
-        self.sites = Sites()
+        self.sites = Sites(self.request.RequestFailed)
         if fake_sites:
             for name in ('lib.api.tmdb', 'lib.api.trakt', 'lib.api.fanarttv'):
                 patch = mock.patch.object(sys.modules[name], 'get_json', side_effect=self.sites.get_json)

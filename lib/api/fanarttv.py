@@ -22,6 +22,9 @@ def merge_fanarttv_artwork(show_info, settings):
 
     data = _fetch(tvdb_id, settings.get('fanarttv_clientkey', ''))
     if not data:
+        # 404: Fanart.tv has no art for the show, an answer that needn't be asked for again. A
+        # failure raises RequestFailed instead, and is asked again on the next call.
+        show_info['_fanarttv_merged'] = True
         return
 
     show_info['_fanarttv_merged'] = True
@@ -90,7 +93,10 @@ def _safe_url(url):
 
 
 def _fetch(tvdb_id, client_key):
-    """Fetch the art listing for a show, or None if it has none or the request failed."""
+    """Fetch the art listing for a show, or None if it has none (a 404).
+
+    Raises RequestFailed when the request fails, after one retry.
+    """
     params = {'api_key': FANARTTV_KEY}
     if client_key:
         params['client_key'] = client_key
