@@ -1,4 +1,5 @@
 """get_json() against a local HTTP server: the retry, the timeout, and a 404 told from a failure."""
+import email.utils
 import gzip
 import socket
 import threading
@@ -111,6 +112,18 @@ class TestGetJson(unittest.TestCase):
     def test_429_waits_ten_seconds_at_most(self):
         self.get('/c2', ('status', 429, {'Retry-After': '3600'}), ('json', '{}'))
         self.assertEqual(self.addon.kodi.waits, [10])
+
+    def test_429_waits_until_the_date_given(self):
+        when = email.utils.formatdate(time.time() + 6, usegmt=True)
+        self.get('/c3', ('status', 429, {'Retry-After': when}), ('json', '{}'))
+        self.assertEqual(len(self.addon.kodi.waits), 1)
+        self.assertTrue(4 <= self.addon.kodi.waits[0] <= 6, self.addon.kodi.waits)
+
+    def test_429_with_a_date_gone_by_or_no_date(self):
+        when = email.utils.formatdate(time.time() - 60, usegmt=True)
+        self.get('/c4', ('status', 429, {'Retry-After': when}), ('json', '{}'))
+        self.get('/c5', ('status', 429, {'Retry-After': 'soon'}), ('json', '{}'))
+        self.assertEqual(self.addon.kodi.waits, [1, 1])
 
     def test_404_is_not_found(self):
         self.assertIsNone(self.get('/d', ('status', 404, {})))

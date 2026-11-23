@@ -4,6 +4,8 @@
 
 import gzip
 import json
+import time
+from email.utils import parsedate_to_datetime
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -62,8 +64,14 @@ def _decode(raw, encoding):
 
 
 def _retry_after(headers):
-    """Seconds a 429 asks to wait, between the usual pause and the cap."""
+    """Seconds a 429 asks to wait, between the usual pause and the cap. Retry-After is a number
+    of seconds or an HTTP date (RFC 9110, 10.2.3)."""
+    value = headers.get('Retry-After') if headers else None
     try:
-        return min(_MAX_RETRY_AFTER, max(_RETRY_PAUSE, float(headers.get('Retry-After'))))
+        seconds = float(value)
     except (TypeError, ValueError):
-        return _RETRY_PAUSE
+        try:
+            seconds = parsedate_to_datetime(value).timestamp() - time.time()
+        except (TypeError, ValueError, OverflowError, OSError):
+            return _RETRY_PAUSE
+    return min(_MAX_RETRY_AFTER, max(_RETRY_PAUSE, seconds))
